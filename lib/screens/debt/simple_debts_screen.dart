@@ -117,7 +117,7 @@ class SimpleDebtsScreen extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
+Cotton processing is not related to this and it is not necessary to include it here. Only cotton information should be entered. This entire section is not necessary.      child: InkWell(
         onTap: () => Navigator.push(
           context, 
           MaterialPageRoute(builder: (_) => DebtTransactionHistoryScreen(debt: debt))
@@ -385,6 +385,21 @@ class SimpleDebtsScreen extends StatelessWidget {
                   if (amount > debt.remainingAmount) return 'Аз боқимонда зиёд';
                   return null;
                 },
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    amountController.text = debt.remainingAmount.toStringAsFixed(2);
+                  },
+                  icon: const Icon(Icons.payments, size: 16),
+                  label: const Text('Пардохти пурра'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.blue,
+                    side: const BorderSide(color: Colors.blue),
+                  ),
+                ),
               ),
             ],
           ),

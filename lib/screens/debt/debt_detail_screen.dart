@@ -121,10 +121,37 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Text('Remaining: ${_debt.remainingAmount.toStringAsFixed(2)} ${_debt.currency}'),
             const SizedBox(height: 16),
-            TextFormField(controller: amountController, decoration: InputDecoration(labelText: 'Amount', suffixText: _debt.currency), keyboardType: TextInputType.number, validator: (v) { if (v?.isEmpty == true) return 'Required'; final a = double.tryParse(v!); if (a == null || a <= 0) return 'Invalid'; if (a > _debt.remainingAmount) return 'Exceeds remaining'; return null; }),
+            TextFormField(
+              controller: amountController, 
+              decoration: InputDecoration(
+                labelText: 'Amount', 
+                suffixText: _debt.currency,
+                border: const OutlineInputBorder(),
+              ), 
+              keyboardType: TextInputType.number, 
+              validator: (v) { 
+                if (v?.isEmpty == true) return 'Required'; 
+                final a = double.tryParse(v!); 
+                if (a == null || a <= 0) return 'Invalid'; 
+                if (a > _debt.remainingAmount) return 'Exceeds remaining'; 
+                return null; 
+              }
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => amountController.text = _debt.remainingAmount.toStringAsFixed(2), 
+                icon: const Icon(Icons.payments, size: 16),
+                label: const Text('Pay Remaining Amount'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.blue,
+                  side: const BorderSide(color: Colors.blue),
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
-            TextFormField(controller: noteController, decoration: const InputDecoration(labelText: 'Note (optional)')),
-            TextButton(onPressed: () => amountController.text = _debt.remainingAmount.toStringAsFixed(2), child: const Text('Pay Full Amount')),
+            TextFormField(controller: noteController, decoration: const InputDecoration(labelText: 'Note (optional)', border: OutlineInputBorder())),
           ]),
         ),
         actions: [
