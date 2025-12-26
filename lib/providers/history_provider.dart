@@ -112,7 +112,7 @@ class HistoryProvider with ChangeNotifier {
 
   Future<void> addPaymentHistory(Payment payment, Debt debt, Person person) async {
     final history = TransactionHistory(
-      date: payment.paymentDateTime,
+      date: payment.date,
       type: TransactionType.moneyPaid,
       category: TransactionCategory.money,
       amount: payment.amount,

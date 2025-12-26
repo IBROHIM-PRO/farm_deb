@@ -6,6 +6,7 @@ import '../providers/cattle_registry_provider.dart';
 import '../providers/cotton_registry_provider.dart';
 import '../theme/app_theme.dart';
 import 'debt/debts_screen.dart';
+import 'debt/simple_debts_screen.dart';
 import 'cotton/fields_screen.dart';
 import 'cattle_registry/cattle_registry_screen.dart';
 import 'cotton_registry/cotton_purchase_registry_screen.dart';
@@ -128,9 +129,10 @@ class _DashboardView extends StatelessWidget {
                       crossAxisSpacing: 16,
                       childAspectRatio: 0.95,
                     ),
-                    itemCount: 5,
+                    itemCount: 6,
                     itemBuilder: (context, index) {
                       final items = [
+                        ('Идоракунии қарзҳо', 'Сабт ва пайгирии қарзҳо', Icons.account_balance_wallet, 'debt', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SimpleDebtsScreen()))),
                         ('Харидании пахта', 'Реестри харидани пахта', Icons.shopping_cart, 'cotton_purchase', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonPurchaseRegistryScreen()))),
                         ('Коркарди пахта', 'Реестри коркарди пахта', Icons.precision_manufacturing, 'cotton_processing', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonProcessingRegistryScreen()))),
                         ('Реестри чорво', 'Идоракунии чорво', Icons.pets, 'cattle', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleRegistryScreen()))),

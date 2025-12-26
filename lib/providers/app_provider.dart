@@ -182,7 +182,7 @@ class AppProvider with ChangeNotifier {
     final payment = Payment(
       debtId: debt.id!,
       amount: amount,
-      paymentDateTime: DateTime.now(),
+      date: DateTime.now(),
     );
     
     final paymentId = await _db.insertPayment(payment);

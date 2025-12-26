@@ -91,7 +91,7 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(color: Colors.green.withOpacity(0.05), borderRadius: BorderRadius.circular(8)),
-                    child: Row(children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle), child: const Icon(Icons.check, color: Colors.green, size: 16)), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('${p.amount.toStringAsFixed(2)} ${_debt.currency}', style: const TextStyle(fontWeight: FontWeight.bold)), Text(DateFormat('MMM dd, yyyy', 'en_US').format(p.paymentDateTime), style: Theme.of(context).textTheme.bodySmall), if (p.note != null) Text(p.note!, style: Theme.of(context).textTheme.bodySmall)]))]),
+                    child: Row(children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle), child: const Icon(Icons.check, color: Colors.green, size: 16)), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('${p.amount.toStringAsFixed(2)} ${_debt.currency}', style: const TextStyle(fontWeight: FontWeight.bold)), Text(DateFormat('MMM dd, yyyy', 'en_US').format(p.date), style: Theme.of(context).textTheme.bodySmall), if (p.note != null) Text(p.note!, style: Theme.of(context).textTheme.bodySmall)]))]),
                   )),
                 ],
               ),
