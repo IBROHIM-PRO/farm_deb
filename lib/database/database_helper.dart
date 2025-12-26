@@ -442,6 +442,41 @@ class DatabaseHelper {
       ON payments (debtId, date DESC)
     ''');
 
+    // Cotton Warehouse Tables
+    await db.execute('''
+      CREATE TABLE raw_cotton_warehouse (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cottonType TEXT NOT NULL,
+        pieces INTEGER NOT NULL DEFAULT 0,
+        totalWeight REAL NOT NULL DEFAULT 0.0,
+        lastUpdated TEXT NOT NULL,
+        notes TEXT DEFAULT ''
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE processed_cotton_warehouse (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pieces INTEGER NOT NULL DEFAULT 0,
+        totalWeight REAL NOT NULL DEFAULT 0.0,
+        weightPerPiece REAL NOT NULL DEFAULT 25.0,
+        lastUpdated TEXT NOT NULL,
+        notes TEXT DEFAULT '',
+        batchNumber TEXT
+      )
+    ''');
+
+    // Create indexes for warehouse tables
+    await db.execute('''
+      CREATE INDEX idx_raw_cotton_type 
+      ON raw_cotton_warehouse (cottonType)
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_processed_cotton_date 
+      ON processed_cotton_warehouse (lastUpdated DESC)
+    ''');
+
     // Cotton Management Tables
     await db.execute('''
       CREATE TABLE fields (
