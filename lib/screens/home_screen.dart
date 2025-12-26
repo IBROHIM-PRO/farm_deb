@@ -4,6 +4,8 @@ import '../providers/app_provider.dart';
 import '../providers/history_provider.dart';
 import '../providers/cattle_registry_provider.dart';
 import '../providers/cotton_registry_provider.dart';
+import '../providers/cotton_warehouse_provider.dart';
+import '../utils/data_persistence_manager.dart';
 import '../theme/app_theme.dart';
 import 'debt/debts_screen.dart';
 import 'debt/simple_debts_screen.dart';
@@ -30,12 +32,29 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await DataPersistenceManager.initializeAllProviders(context);
+      } catch (e) {
+        debugPrint('Error initializing data: $e');
+        // Fallback to individual initialization if manager fails
+        _fallbackInitialization();
+      }
+    });
+  }
+
+  /// Fallback initialization method in case DataPersistenceManager fails
+  void _fallbackInitialization() {
+    try {
       context.read<AppProvider>().loadAllData();
       context.read<HistoryProvider>().loadAllHistory();
       context.read<CattleRegistryProvider>().loadAllData();
       context.read<CottonRegistryProvider>().loadAllData();
-    });
+      context.read<CottonWarehouseProvider>().loadAllData();
+      debugPrint('Fallback initialization completed');
+    } catch (e) {
+      debugPrint('Fallback initialization failed: $e');
+    }
   }
 
   @override

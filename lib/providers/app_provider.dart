@@ -125,47 +125,58 @@ class AppProvider with ChangeNotifier {
   /// 
   /// Throws [ArgumentError] if validation fails
   Future<void> addDebt({required int personId, required double amount, required String currency, required DebtType type}) async {
-    // Core validation as per theoretical design
-    final validationError = Debt.validate(
-      totalAmount: amount,
-      currency: currency,
-      personId: personId,
-    );
-    if (validationError != null) {
-      throw ArgumentError(validationError);
-    }
-    
-    // Verify person exists
-    final person = getPersonById(personId);
-    if (person == null) {
-      throw ArgumentError('Person with ID $personId not found');
-    }
-    
-    // Check for existing active debt (exact match: person + type + currency)
-    final typeString = type == DebtType.given ? 'Given' : 'Taken';
-    final existingDebt = await _db.getActiveDebt(personId, typeString, currency);
-    
-    if (existingDebt != null) {
-      // CONSOLIDATE: Update existing debt instead of creating new one
-      final consolidatedDebt = Debt.consolidate(existingDebt, amount);
-      await _db.updateDebt(consolidatedDebt);
-      await _historyProvider.addDebtHistory(consolidatedDebt, person);
-    } else {
-      // CREATE: New debt entry
-      final newDebt = Debt(
-        personId: personId,
-        totalAmount: amount,
-        remainingAmount: amount,
-        currency: currency,
-        type: type,
-        date: DateTime.now(),
-        status: DebtStatus.active,
-      );
+    try {
+      debugPrint('🔄 Adding debt: ${amount} ${currency} for person ${personId}');
       
-      final debtId = await _db.insertDebt(newDebt);
-      await _historyProvider.addDebtHistory(newDebt.copyWith(id: debtId), person);
+      // Core validation as per theoretical design
+      final validationError = Debt.validate(
+        totalAmount: amount,
+        currency: currency,
+        personId: personId,
+      );
+      if (validationError != null) {
+        throw ArgumentError(validationError);
+      }
+      
+      // Verify person exists
+      final person = getPersonById(personId);
+      if (person == null) {
+        throw ArgumentError('Person with ID $personId not found');
+      }
+      
+      // Check for existing active debt (exact match: person + type + currency)
+      final typeString = type == DebtType.given ? 'Given' : 'Taken';
+      final existingDebt = await _db.getActiveDebt(personId, typeString, currency);
+      
+      if (existingDebt != null) {
+        // CONSOLIDATE: Update existing debt instead of creating new one
+        debugPrint('📝 Consolidating with existing debt ${existingDebt.id}');
+        final consolidatedDebt = Debt.consolidate(existingDebt, amount);
+        await _db.updateDebt(consolidatedDebt);
+        await _historyProvider.addDebtHistory(consolidatedDebt, person);
+        debugPrint('✅ Debt consolidated successfully');
+      } else {
+        // CREATE: New debt entry
+        debugPrint('📝 Creating new debt entry');
+        final newDebt = Debt(
+          personId: personId,
+          totalAmount: amount,
+          remainingAmount: amount,
+          currency: currency,
+          type: type,
+          date: DateTime.now(),
+          status: DebtStatus.active,
+        );
+        
+        final debtId = await _db.insertDebt(newDebt);
+        await _historyProvider.addDebtHistory(newDebt.copyWith(id: debtId), person);
+        debugPrint('✅ New debt created successfully with ID: ${debtId}');
+      }
+      await loadAllData();
+    } catch (e) {
+      debugPrint('❌ Error adding debt: $e');
+      rethrow;
     }
-    await loadAllData();
   }
 
   /// Partial Repayment - Core workflow from theoretical design
@@ -175,28 +186,34 @@ class AppProvider with ChangeNotifier {
   /// 
   /// Throws [ArgumentError] if validation fails
   Future<void> makePayment({required Debt debt, required double amount}) async {
-    // Process payment using core debt logic
-    final updatedDebt = debt.processPayment(amount);
-    
-    // Simple payment record for history tracking
-    final payment = Payment(
-      debtId: debt.id!,
-      amount: amount,
-      date: DateTime.now(),
-    );
-    
-    final paymentId = await _db.insertPayment(payment);
-    
-    // Update debt with new balance and status
-    await _db.updateDebt(updatedDebt);
-    
-    // Create payment history entry
-    final person = getPersonById(debt.personId);
-    if (person != null) {
-      await _historyProvider.addPaymentHistory(payment.copyWith(id: paymentId), updatedDebt, person);
+    try {
+      // Process payment using core debt logic
+      final updatedDebt = debt.processPayment(amount);
+      
+      // Simple payment record for history tracking
+      final payment = Payment(
+        debtId: debt.id!,
+        amount: amount,
+        date: DateTime.now(),
+      );
+      
+      final paymentId = await _db.insertPayment(payment);
+      
+      // Update debt with new balance and status
+      await _db.updateDebt(updatedDebt);
+      
+      // Create payment history entry
+      final person = getPersonById(debt.personId);
+      if (person != null) {
+        await _historyProvider.addPaymentHistory(payment.copyWith(id: paymentId), updatedDebt, person);
+      }
+      
+      await loadAllData();
+      debugPrint('✅ Payment recorded successfully: ${amount} for debt ${debt.id}');
+    } catch (e) {
+      debugPrint('❌ Error recording payment: $e');
+      rethrow;
     }
-    
-    await loadAllData();
   }
 
   Future<List<Payment>> getPaymentsForDebt(int debtId) async => await _db.getPaymentsByDebtId(debtId);
