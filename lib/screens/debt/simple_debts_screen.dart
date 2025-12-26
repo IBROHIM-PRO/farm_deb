@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/app_provider.dart';
 import '../../models/person.dart';
 import '../../models/debt.dart';
+import 'debt_transaction_history_screen.dart';
 
 /// Simple Debt Management Screen - Exactly as per theoretical design
 /// Displays all debts with: total amount, remaining amount, currency, type, status
@@ -116,11 +117,17 @@ class SimpleDebtsScreen extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: InkWell(
+        onTap: () => Navigator.push(
+          context, 
+          MaterialPageRoute(builder: (_) => DebtTransactionHistoryScreen(debt: debt))
+        ),
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -169,7 +176,8 @@ class SimpleDebtsScreen extends StatelessWidget {
                 ),
               ),
             ],
-          ],
+            ],
+          ),
         ),
       ),
     );

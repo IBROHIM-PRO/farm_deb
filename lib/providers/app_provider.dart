@@ -648,4 +648,11 @@ class AppProvider with ChangeNotifier {
       'totalCosts': totalCosts, 'profit': totalIncome - totalCosts,
     };
   }
+
+  /// Get all payments for a specific debt
+  Future<List<Payment>> getPaymentsByDebtId(int debtId) async {
+    final db = await _db.database;
+    final maps = await db.query('payments', where: 'debtId = ?', whereArgs: [debtId], orderBy: 'date DESC');
+    return maps.map((map) => Payment.fromMap(map)).toList();
+  }
 }
