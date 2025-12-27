@@ -5,7 +5,6 @@ import '../../providers/cotton_registry_provider.dart';
 import '../../models/cotton_purchase_registry.dart';
 import '../../models/cotton_purchase_item.dart';
 import 'add_cotton_purchase_screen.dart';
-import 'cotton_purchase_detail_screen.dart';
 
 class CottonPurchaseRegistryScreen extends StatefulWidget {
   const CottonPurchaseRegistryScreen({super.key});
@@ -26,7 +25,6 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
           IconButton(
             onPressed: _showStatistics,
             icon: const Icon(Icons.analytics),
-            tooltip: 'Омор',
           ),
           IconButton(
             onPressed: () => Navigator.push(
@@ -34,7 +32,6 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
               MaterialPageRoute(builder: (_) => const AddCottonPurchaseScreen()),
             ),
             icon: const Icon(Icons.add),
-            tooltip: 'Харидании нав',
           ),
         ],
       ),
@@ -139,102 +136,24 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
   }
 
   Widget _buildPurchaseCard(CottonPurchaseRegistry purchase, Map<String, dynamic> summary) {
-    final items = summary['items'] as List<CottonPurchaseItem>;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => CottonPurchaseDetailScreen(purchaseId: purchase.id!)),
-        ),
+        onTap: () => _showFullPurchaseDetails(purchase, summary),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Date
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  DateFormat('dd/MM/yyyy').format(purchase.purchaseDate),
-                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Cotton types as chips
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: items.map((item) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: _getCottonTypeColor(item.cottonType).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      item.cottonTypeDisplay,
-                      style: TextStyle(
-                        color: _getCottonTypeColor(item.cottonType),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 8),
-
-              // Summary row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildSmallInfo('Вазн', '${(summary['totalWeight'] as num?)?.toDouble()?.toStringAsFixed(1) ?? '0.0'} кг'),
-                  _buildSmallInfo('Донаҳо', '${summary['totalUnits']} дона'),
-                  _buildSmallInfo('Нарх', '${(summary['grandTotal'] as num?)?.toDouble()?.toStringAsFixed(0) ?? '0'} сомонӣ', color: Colors.green),
-                ],
-              ),
-
-              // Transportation cost
-              if (purchase.transportationCost > 0)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.local_shipping, size: 12, color: Colors.orange),
-                      const SizedBox(width: 4),
-                      Text('Интиқол: ${purchase.transportationCost.toStringAsFixed(0)} TJS',
-                          style: const TextStyle(fontSize: 11, color: Colors.orange)),
-                    ],
-                  ),
-                ),
-
-              // Notes
-              if (purchase.notes != null && purchase.notes!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.note, size: 12, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          purchase.notes!,
-                          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              Text('Сана: ${DateFormat('dd/MM/yyyy').format(purchase.purchaseDate)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text('Таъминикунанда: ${purchase.supplierName}'),
+              const SizedBox(height: 4),
+              Text('Ҳамагӣ нарх: ${(summary['grandTotal'] as num?)?.toDouble()?.toStringAsFixed(0) ?? '0'} сомонӣ',
+                  style: const TextStyle(color: Colors.green)),
             ],
           ),
         ),
@@ -242,14 +161,43 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
     );
   }
 
-  Widget _buildSmallInfo(String label, String value, {Color color = Colors.grey}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-        const SizedBox(height: 2),
-        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
-      ],
+  void _showFullPurchaseDetails(CottonPurchaseRegistry purchase, Map<String, dynamic> summary) {
+    final items = summary['items'] as List<CottonPurchaseItem>;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Маълумоти пурраи харид', textAlign: TextAlign.center),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Сана: ${DateFormat('dd/MM/yyyy').format(purchase.purchaseDate)}'),
+              const SizedBox(height: 8),
+              Text('Таъминикунанда: ${purchase.supplierName}'),
+              const SizedBox(height: 8),
+              Text('Нархҳо ва миқдорҳо:', style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              ...items.map((item) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text(
+                        '${item.cottonTypeDisplay}: ${item.weight.toStringAsFixed(1)} кг, ${item.units} дона, ${item.price.toStringAsFixed(0)} сомонӣ'),
+                  )),
+              const SizedBox(height: 8),
+              Text('Ҳамагӣ вазн: ${(summary['totalWeight'] as num?)?.toDouble()?.toStringAsFixed(1) ?? '0.0'} кг'),
+              Text('Ҳамагӣ донаҳо: ${summary['totalUnits']}'),
+              Text('Ҳамагӣ нарх: ${(summary['grandTotal'] as num?)?.toDouble()?.toStringAsFixed(0) ?? '0'} сомонӣ'),
+              if (purchase.transportationCost > 0)
+                Text('Интиқол: ${purchase.transportationCost.toStringAsFixed(0)} TJS'),
+              if (purchase.notes != null && purchase.notes!.isNotEmpty)
+                Text('Эзоҳ: ${purchase.notes!}'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Пӯшидан')),
+        ],
+      ),
     );
   }
 
@@ -262,7 +210,7 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
           const SizedBox(height: 16),
           Text('Ҳеҷ хариданӣ сабт нашудааст', style: TextStyle(fontSize: 18, color: Colors.grey[600])),
           const SizedBox(height: 8),
-          Text('Барои сабти харидании пахта тугмаи плюсро пахш кунед',
+          Text('Барои сабти харид тугмаи плюсро пахш кунед',
               style: TextStyle(fontSize: 14, color: Colors.grey[500]), textAlign: TextAlign.center),
         ],
       ),
@@ -278,17 +226,6 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
     }).toList();
   }
 
-  Color _getCottonTypeColor(CottonType type) {
-    switch (type) {
-      case CottonType.lint:
-        return Colors.green;
-      case CottonType.uluk:
-        return Colors.blue;
-      case CottonType.valakno:
-        return Colors.orange;
-    }
-  }
-
   void _showStatistics() {
     final provider = context.read<CottonRegistryProvider>();
     final stats = provider.overallStatistics;
@@ -296,10 +233,10 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Омори харидании пахта'),
+        title: const Text('Омори харид'),
         content: SingleChildScrollView(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildStatRow('Ҳамагӣ хариданӣ:', '${stats['totalPurchases']}'),
               _buildStatRow('Ҳамагӣ коркард:', '${stats['totalProcessed']}'),
@@ -326,7 +263,7 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
 
   Widget _buildStatRow(String label, String value, {Color? color}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
