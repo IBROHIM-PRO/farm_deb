@@ -1,3 +1,5 @@
+// lib/screens/debt/simple_debts_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,6 +18,17 @@ class SimpleDebtsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Идоракунии қарзҳо'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddDebtScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Consumer<AppProvider>(
         builder: (context, provider, _) {
@@ -40,24 +53,10 @@ class SimpleDebtsScreen extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'simple_debts_fab',
-        icon: const Icon(Icons.add),
-        label: const Text('Илова кардани қарз'),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const AddDebtScreen(),
-            ),
-          );
-        },
-      ),
     );
   }
 
   // ---------------- EMPTY STATE ----------------
-
   Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
@@ -71,17 +70,14 @@ class SimpleDebtsScreen extends StatelessWidget {
             style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
           const SizedBox(height: 16),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.add),
-            label: const Text('Илова кардани қарз'),
+          ElevatedButton(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const AddDebtScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const AddDebtScreen()),
               );
             },
+            child: const Icon(Icons.add),
           ),
         ],
       ),
@@ -89,7 +85,6 @@ class SimpleDebtsScreen extends StatelessWidget {
   }
 
   // ---------------- SUMMARY ----------------
-
   Widget _buildSummaryCard(AppProvider provider) {
     final totals = provider.getDebtTotalsByCurrency();
 
@@ -145,7 +140,6 @@ class SimpleDebtsScreen extends StatelessWidget {
   }
 
   // ---------------- DEBT CARD ----------------
-
   Widget _buildDebtCard(
       BuildContext context, Debt debt, AppProvider provider) {
     final person = provider.getPersonById(debt.personId);
@@ -231,7 +225,6 @@ class SimpleDebtsScreen extends StatelessWidget {
   }
 
   // ---------------- PAYMENT ----------------
-
   void _showPaymentDialog(BuildContext context, Debt debt) {
     final controller = TextEditingController();
     final key = GlobalKey<FormState>();
@@ -268,7 +261,7 @@ class SimpleDebtsScreen extends StatelessWidget {
                       debt: debt,
                       amount: double.parse(controller.text),
                     );
-                if (ctx.mounted) Navigator.pop(ctx);
+                Navigator.pop(ctx); // танҳо диалог пӯшида мешавад
               }
             },
             child: const Text('Пардохт'),
