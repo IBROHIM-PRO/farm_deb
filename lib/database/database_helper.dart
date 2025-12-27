@@ -49,386 +49,14 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path, 
-      version: 8,  // Incremented for Cotton Warehouse tables
+      version: 1,  // Reset to version 1 - complete database rebuild
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      // Add new columns to cotton_harvests table
-      await db.execute('ALTER TABLE cotton_harvests ADD COLUMN lintWeight REAL');
-      await db.execute('ALTER TABLE cotton_harvests ADD COLUMN ulukWeight REAL');
-      await db.execute('ALTER TABLE cotton_harvests ADD COLUMN valaknoWeight REAL');
-      await db.execute('ALTER TABLE cotton_harvests ADD COLUMN extraValaknoWeight REAL');
-      
-      // Add new column to cotton_sales table
-      await db.execute('ALTER TABLE cotton_sales ADD COLUMN weightPerUnit REAL');
-    }
-    
-    if (oldVersion < 3) {
-      // Add new columns to cattle table for age category, seller, freight
-      await db.execute('ALTER TABLE cattle ADD COLUMN ageCategory TEXT DEFAULT \'adult\'');
-      await db.execute('ALTER TABLE cattle ADD COLUMN sellerName TEXT');
-      await db.execute('ALTER TABLE cattle ADD COLUMN freightCost REAL DEFAULT 0');
-      
-      // Add new columns to cattle_records for feeding & medication details
-      await db.execute('ALTER TABLE cattle_records ADD COLUMN feedType TEXT');
-      await db.execute('ALTER TABLE cattle_records ADD COLUMN supplier TEXT');
-      await db.execute('ALTER TABLE cattle_records ADD COLUMN medicineName TEXT');
-      await db.execute('ALTER TABLE cattle_records ADD COLUMN medicineType TEXT');
-      await db.execute('ALTER TABLE cattle_records ADD COLUMN monitoringMonth INTEGER');
-      
-      // Add new columns to cattle_sales for slaughter details
-      await db.execute('ALTER TABLE cattle_sales ADD COLUMN slaughterDate TEXT');
-      await db.execute('ALTER TABLE cattle_sales ADD COLUMN liveWeight REAL');
-    }
-    
-    if (oldVersion < 4) {
-      // Add payment tracking columns for cattle purchases (installment support)
-      await db.execute('ALTER TABLE cattle ADD COLUMN purchasePaymentStatus TEXT DEFAULT \'paid\'');
-      await db.execute('ALTER TABLE cattle ADD COLUMN paidAmount REAL DEFAULT 0');
-    }
-    
-    if (oldVersion < 5) {
-      // Create cotton stock management tables
-      await db.execute('''
-        CREATE TABLE cotton_types (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL UNIQUE,
-          pricePerKg REAL NOT NULL
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cotton_batches (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          cottonTypeId INTEGER NOT NULL,
-          weightKg REAL NOT NULL,
-          units INTEGER NOT NULL,
-          arrivalDate TEXT NOT NULL,
-          source TEXT NOT NULL,
-          pricePerKg REAL NOT NULL,
-          freightCost REAL NOT NULL,
-          totalCost REAL NOT NULL,
-          remainingWeightKg REAL NOT NULL,
-          remainingUnits INTEGER NOT NULL,
-          FOREIGN KEY (cottonTypeId) REFERENCES cotton_types (id) ON DELETE CASCADE
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cotton_dispatches (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          batchId INTEGER NOT NULL,
-          weightKg REAL NOT NULL,
-          units INTEGER NOT NULL,
-          dispatchDate TEXT NOT NULL,
-          destination TEXT NOT NULL,
-          FOREIGN KEY (batchId) REFERENCES cotton_batches (id) ON DELETE CASCADE
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cotton_processing (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          processingDate TEXT NOT NULL,
-          lintWeight REAL,
-          ulukWeight REAL,
-          valaknoWeight REAL,
-          extraValaknoWeight REAL,
-          lintUnits INTEGER,
-          ulukUnits INTEGER,
-          valaknoUnits INTEGER,
-          extraValaknoUnits INTEGER,
-          totalInputWeight REAL NOT NULL,
-          processedOutputWeight REAL NOT NULL,
-          processedUnits INTEGER NOT NULL,
-          yieldPercentage REAL NOT NULL
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE buyers (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL UNIQUE,
-          phone TEXT,
-          notes TEXT
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cotton_stock_sales (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          buyerId INTEGER NOT NULL,
-          saleDate TEXT NOT NULL,
-          unitWeight REAL NOT NULL,
-          units INTEGER NOT NULL,
-          totalWeight REAL NOT NULL,
-          pricePerKg REAL,
-          pricePerUnit REAL,
-          totalAmount REAL,
-          FOREIGN KEY (buyerId) REFERENCES buyers (id) ON DELETE CASCADE
-        )
-      ''');
-      
-      // Insert default cotton types
-      await db.execute('INSERT INTO cotton_types (name, pricePerKg) VALUES (?, ?)', ['Lint', 500.0]);
-      await db.execute('INSERT INTO cotton_types (name, pricePerKg) VALUES (?, ?)', ['Uluk', 500.0]);
-      await db.execute('INSERT INTO cotton_types (name, pricePerKg) VALUES (?, ?)', ['Valakno', 250.0]);
-    }
-    
-    if (oldVersion < 6) {
-      // Create transaction history table
-      await db.execute('''
-        CREATE TABLE transaction_history (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          date TEXT NOT NULL,
-          type TEXT NOT NULL,
-          category TEXT NOT NULL,
-          amount REAL,
-          currency TEXT,
-          quantity REAL,
-          quantityUnit TEXT,
-          personName TEXT NOT NULL,
-          personPhone TEXT,
-          description TEXT NOT NULL,
-          notes TEXT,
-          sourceTable TEXT NOT NULL,
-          sourceId INTEGER NOT NULL
-        )
-      ''');
-
-      // Create indexes for better performance
-      await db.execute('CREATE INDEX idx_transaction_history_date ON transaction_history (date DESC)');
-      await db.execute('CREATE INDEX idx_transaction_history_person ON transaction_history (personName)');
-      await db.execute('CREATE INDEX idx_transaction_history_type ON transaction_history (type, category)');
-    }
-    
-    if (oldVersion < 7) {
-      // Create Registry-based Cattle Management Tables
-      await db.execute('''
-        CREATE TABLE cattle_registry (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          earTag TEXT NOT NULL UNIQUE,
-          gender TEXT NOT NULL,
-          ageCategory TEXT NOT NULL,
-          registrationDate TEXT NOT NULL,
-          status TEXT NOT NULL
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cattle_purchases (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          cattleId INTEGER NOT NULL,
-          purchaseDate TEXT NOT NULL,
-          weightAtPurchase REAL NOT NULL,
-          pricePerKg REAL,
-          totalPrice REAL,
-          currency TEXT NOT NULL,
-          sellerName TEXT,
-          transportationCost REAL NOT NULL,
-          paymentStatus TEXT NOT NULL,
-          paidAmount REAL NOT NULL,
-          notes TEXT,
-          FOREIGN KEY (cattleId) REFERENCES cattle_registry (id) ON DELETE CASCADE
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cattle_expenses (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          cattleId INTEGER NOT NULL,
-          expenseType TEXT NOT NULL,
-          itemName TEXT NOT NULL,
-          quantity REAL NOT NULL,
-          quantityUnit TEXT NOT NULL,
-          cost REAL NOT NULL,
-          currency TEXT NOT NULL,
-          supplier TEXT,
-          expenseDate TEXT NOT NULL,
-          notes TEXT,
-          FOREIGN KEY (cattleId) REFERENCES cattle_registry (id) ON DELETE CASCADE
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cattle_weights (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          cattleId INTEGER NOT NULL,
-          measurementDate TEXT NOT NULL,
-          weight REAL NOT NULL,
-          weightUnit TEXT NOT NULL,
-          notes TEXT,
-          FOREIGN KEY (cattleId) REFERENCES cattle_registry (id) ON DELETE CASCADE
-        )
-      ''');
-      
-      // Create Registry-based Cotton Management Tables
-      await db.execute('''
-        CREATE TABLE cotton_purchase_registry (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          purchaseDate TEXT NOT NULL,
-          supplierName TEXT NOT NULL,
-          transportationCost REAL NOT NULL,
-          notes TEXT
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cotton_purchase_items (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          purchaseId INTEGER NOT NULL,
-          cottonType TEXT NOT NULL,
-          weight REAL NOT NULL,
-          units INTEGER NOT NULL,
-          pricePerKg REAL NOT NULL,
-          totalPrice REAL NOT NULL,
-          notes TEXT,
-          FOREIGN KEY (purchaseId) REFERENCES cotton_purchase_registry (id) ON DELETE CASCADE
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cotton_processing_registry (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          linkedPurchaseId INTEGER NOT NULL,
-          processingDate TEXT,
-          notes TEXT,
-          FOREIGN KEY (linkedPurchaseId) REFERENCES cotton_purchase_registry (id) ON DELETE CASCADE
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cotton_processing_inputs (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          processingId INTEGER NOT NULL,
-          cottonType TEXT NOT NULL,
-          unitsUsed INTEGER NOT NULL,
-          weightUsed REAL NOT NULL,
-          sourcePurchaseItemId INTEGER NOT NULL,
-          FOREIGN KEY (processingId) REFERENCES cotton_processing_registry (id) ON DELETE CASCADE,
-          FOREIGN KEY (sourcePurchaseItemId) REFERENCES cotton_purchase_items (id) ON DELETE CASCADE
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cotton_processing_outputs (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          processingId INTEGER NOT NULL,
-          cottonType TEXT NOT NULL,
-          batchWeightPerUnit REAL NOT NULL,
-          numberOfUnits INTEGER NOT NULL,
-          totalWeight REAL NOT NULL,
-          FOREIGN KEY (processingId) REFERENCES cotton_processing_registry (id) ON DELETE CASCADE
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cotton_inventory (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          cottonType TEXT NOT NULL,
-          batchSize REAL NOT NULL,
-          availableUnits INTEGER NOT NULL,
-          totalWeight REAL NOT NULL,
-          sourceProcessingId INTEGER NOT NULL,
-          FOREIGN KEY (sourceProcessingId) REFERENCES cotton_processing_registry (id) ON DELETE CASCADE
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cotton_sale_registry (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          saleDate TEXT NOT NULL,
-          buyerName TEXT,
-          cottonType TEXT NOT NULL,
-          batchSize REAL NOT NULL,
-          unitsSold INTEGER NOT NULL,
-          weightSold REAL NOT NULL,
-          pricePerKg REAL NOT NULL,
-          totalAmount REAL NOT NULL,
-          paymentStatus TEXT NOT NULL,
-          sourceInventoryId INTEGER NOT NULL,
-          notes TEXT,
-          FOREIGN KEY (sourceInventoryId) REFERENCES cotton_inventory (id) ON DELETE CASCADE
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE cotton_traceability (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          cottonType TEXT NOT NULL,
-          traceabilityCode TEXT NOT NULL UNIQUE,
-          purchaseId INTEGER NOT NULL,
-          purchaseDate TEXT NOT NULL,
-          supplierName TEXT NOT NULL,
-          originalWeight REAL NOT NULL,
-          originalUnits REAL NOT NULL,
-          processingId INTEGER,
-          processingDate TEXT,
-          processedWeight REAL,
-          processedUnits REAL,
-          saleId INTEGER,
-          saleDate TEXT,
-          buyerName TEXT,
-          soldWeight REAL,
-          soldUnits REAL,
-          status TEXT NOT NULL,
-          FOREIGN KEY (purchaseId) REFERENCES cotton_purchase_registry (id) ON DELETE CASCADE,
-          FOREIGN KEY (processingId) REFERENCES cotton_processing_registry (id) ON DELETE SET NULL,
-          FOREIGN KEY (saleId) REFERENCES cotton_sale_registry (id) ON DELETE SET NULL
-        )
-      ''');
-      
-      // Create indexes for Registry-based tables
-      await db.execute('CREATE INDEX idx_cattle_registry_eartag ON cattle_registry (earTag)');
-      await db.execute('CREATE INDEX idx_cattle_registry_status ON cattle_registry (status)');
-      await db.execute('CREATE INDEX idx_cattle_expenses_cattle ON cattle_expenses (cattleId, expenseDate DESC)');
-      await db.execute('CREATE INDEX idx_cattle_weights_cattle ON cattle_weights (cattleId, measurementDate DESC)');
-      await db.execute('CREATE INDEX idx_cotton_purchase_date ON cotton_purchase_registry (purchaseDate DESC)');
-      await db.execute('CREATE INDEX idx_cotton_inventory_type_batch ON cotton_inventory (cottonType, batchSize)');
-      await db.execute('CREATE INDEX idx_cotton_traceability_code ON cotton_traceability (traceabilityCode)');
-      await db.execute('CREATE INDEX idx_cotton_traceability_status ON cotton_traceability (status)');
-    }
-    
-    if (oldVersion < 8) {
-      // Create Cotton Warehouse Tables
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS raw_cotton_warehouse (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          cottonType TEXT NOT NULL,
-          pieces INTEGER NOT NULL DEFAULT 0,
-          totalWeight REAL NOT NULL DEFAULT 0.0,
-          lastUpdated TEXT NOT NULL,
-          notes TEXT DEFAULT ''
-        )
-      ''');
-
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS processed_cotton_warehouse (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          pieces INTEGER NOT NULL DEFAULT 0,
-          totalWeight REAL NOT NULL DEFAULT 0.0,
-          weightPerPiece REAL NOT NULL DEFAULT 25.0,
-          lastUpdated TEXT NOT NULL,
-          notes TEXT DEFAULT '',
-          batchNumber TEXT
-        )
-      ''');
-
-      // Create indexes for warehouse tables
-      await db.execute('''
-        CREATE INDEX IF NOT EXISTS idx_raw_cotton_type 
-        ON raw_cotton_warehouse (cottonType)
-      ''');
-
-      await db.execute('''
-        CREATE INDEX IF NOT EXISTS idx_processed_cotton_date 
-        ON processed_cotton_warehouse (lastUpdated DESC)
-      ''');
-    }
+    // No migrations needed - starting fresh from version 1
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -757,6 +385,192 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX idx_transaction_history_date ON transaction_history (date DESC)');
     await db.execute('CREATE INDEX idx_transaction_history_person ON transaction_history (personName)');
     await db.execute('CREATE INDEX idx_transaction_history_type ON transaction_history (type, category)');
+
+    // Cotton Registry Management Tables
+    await db.execute('''
+      CREATE TABLE cotton_purchase_registry (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        purchaseDate TEXT NOT NULL,
+        supplierName TEXT NOT NULL,
+        transportationCost REAL NOT NULL,
+        notes TEXT
+      )
+    ''');
+    
+    await db.execute('''
+      CREATE TABLE cotton_purchase_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        purchaseId INTEGER NOT NULL,
+        cottonType TEXT NOT NULL,
+        weight REAL NOT NULL,
+        units INTEGER NOT NULL,
+        pricePerKg REAL NOT NULL,
+        totalPrice REAL NOT NULL,
+        notes TEXT,
+        transferredToWarehouse INTEGER DEFAULT 0,
+        FOREIGN KEY (purchaseId) REFERENCES cotton_purchase_registry (id) ON DELETE CASCADE
+      )
+    ''');
+    
+    await db.execute('''
+      CREATE TABLE cotton_processing_registry (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        linkedPurchaseId INTEGER NOT NULL,
+        processingDate TEXT,
+        notes TEXT,
+        FOREIGN KEY (linkedPurchaseId) REFERENCES cotton_purchase_registry (id) ON DELETE CASCADE
+      )
+    ''');
+    
+    await db.execute('''
+      CREATE TABLE cotton_processing_inputs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        processingId INTEGER NOT NULL,
+        cottonType TEXT NOT NULL,
+        unitsUsed INTEGER NOT NULL,
+        weightUsed REAL NOT NULL,
+        sourcePurchaseItemId INTEGER NOT NULL,
+        FOREIGN KEY (processingId) REFERENCES cotton_processing_registry (id) ON DELETE CASCADE,
+        FOREIGN KEY (sourcePurchaseItemId) REFERENCES cotton_purchase_items (id) ON DELETE CASCADE
+      )
+    ''');
+    
+    await db.execute('''
+      CREATE TABLE cotton_processing_outputs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        processingId INTEGER NOT NULL,
+        cottonType TEXT NOT NULL,
+        batchWeightPerUnit REAL NOT NULL,
+        numberOfUnits INTEGER NOT NULL,
+        totalWeight REAL NOT NULL,
+        FOREIGN KEY (processingId) REFERENCES cotton_processing_registry (id) ON DELETE CASCADE
+      )
+    ''');
+    
+    await db.execute('''
+      CREATE TABLE cotton_inventory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cottonType TEXT NOT NULL,
+        batchSize REAL NOT NULL,
+        availableUnits INTEGER NOT NULL,
+        totalWeight REAL NOT NULL,
+        sourceProcessingId INTEGER NOT NULL,
+        FOREIGN KEY (sourceProcessingId) REFERENCES cotton_processing_registry (id) ON DELETE CASCADE
+      )
+    ''');
+    
+    await db.execute('''
+      CREATE TABLE cotton_sale_registry (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        saleDate TEXT NOT NULL,
+        buyerName TEXT,
+        cottonType TEXT NOT NULL,
+        batchSize REAL NOT NULL,
+        unitsSold INTEGER NOT NULL,
+        weightSold REAL NOT NULL,
+        pricePerKg REAL NOT NULL,
+        totalAmount REAL NOT NULL,
+        paymentStatus TEXT NOT NULL,
+        sourceInventoryId INTEGER NOT NULL,
+        notes TEXT,
+        FOREIGN KEY (sourceInventoryId) REFERENCES cotton_inventory (id) ON DELETE CASCADE
+      )
+    ''');
+    
+    await db.execute('''
+      CREATE TABLE cotton_traceability (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cottonType TEXT NOT NULL,
+        traceabilityCode TEXT NOT NULL UNIQUE,
+        purchaseId INTEGER NOT NULL,
+        purchaseDate TEXT NOT NULL,
+        supplierName TEXT NOT NULL,
+        originalWeight REAL NOT NULL,
+        originalUnits REAL NOT NULL,
+        processingId INTEGER,
+        processingDate TEXT,
+        processedWeight REAL,
+        processedUnits REAL,
+        saleId INTEGER,
+        saleDate TEXT,
+        buyerName TEXT,
+        soldWeight REAL,
+        soldUnits REAL,
+        status TEXT NOT NULL,
+        FOREIGN KEY (purchaseId) REFERENCES cotton_purchase_registry (id) ON DELETE CASCADE,
+        FOREIGN KEY (processingId) REFERENCES cotton_processing_registry (id) ON DELETE SET NULL,
+        FOREIGN KEY (saleId) REFERENCES cotton_sale_registry (id) ON DELETE SET NULL
+      )
+    ''');
+
+    // Cattle Registry Management Tables
+    await db.execute('''
+      CREATE TABLE cattle_registry (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        earTag TEXT NOT NULL UNIQUE,
+        gender TEXT NOT NULL,
+        ageCategory TEXT NOT NULL,
+        registrationDate TEXT NOT NULL,
+        status TEXT NOT NULL
+      )
+    ''');
+    
+    await db.execute('''
+      CREATE TABLE cattle_purchases (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cattleId INTEGER NOT NULL,
+        purchaseDate TEXT NOT NULL,
+        weightAtPurchase REAL NOT NULL,
+        pricePerKg REAL,
+        totalPrice REAL,
+        currency TEXT NOT NULL,
+        sellerName TEXT,
+        transportationCost REAL NOT NULL,
+        paymentStatus TEXT NOT NULL,
+        paidAmount REAL NOT NULL,
+        notes TEXT,
+        FOREIGN KEY (cattleId) REFERENCES cattle_registry (id) ON DELETE CASCADE
+      )
+    ''');
+    
+    await db.execute('''
+      CREATE TABLE cattle_expenses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cattleId INTEGER NOT NULL,
+        expenseType TEXT NOT NULL,
+        itemName TEXT NOT NULL,
+        quantity REAL NOT NULL,
+        quantityUnit TEXT NOT NULL,
+        cost REAL NOT NULL,
+        currency TEXT NOT NULL,
+        supplier TEXT,
+        expenseDate TEXT NOT NULL,
+        notes TEXT,
+        FOREIGN KEY (cattleId) REFERENCES cattle_registry (id) ON DELETE CASCADE
+      )
+    ''');
+    
+    await db.execute('''
+      CREATE TABLE cattle_weights (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cattleId INTEGER NOT NULL,
+        measurementDate TEXT NOT NULL,
+        weight REAL NOT NULL,
+        weightUnit TEXT NOT NULL,
+        notes TEXT,
+        FOREIGN KEY (cattleId) REFERENCES cattle_registry (id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Create indexes for registry tables
+    await db.execute('CREATE INDEX idx_cattle_registry_eartag ON cattle_registry (earTag)');
+    await db.execute('CREATE INDEX idx_cattle_registry_status ON cattle_registry (status)');
+    await db.execute('CREATE INDEX idx_cattle_expenses_cattle ON cattle_expenses (cattleId, expenseDate DESC)');
+    await db.execute('CREATE INDEX idx_cattle_weights_cattle ON cattle_weights (cattleId, measurementDate DESC)');
+    await db.execute('CREATE INDEX idx_cotton_purchase_date ON cotton_purchase_registry (purchaseDate DESC)');
+    await db.execute('CREATE INDEX idx_cotton_inventory_type_batch ON cotton_inventory (cottonType, batchSize)');
+    await db.execute('CREATE INDEX idx_cotton_traceability_code ON cotton_traceability (traceabilityCode)');
+    await db.execute('CREATE INDEX idx_cotton_traceability_status ON cotton_traceability (status)');
   }
 
   // Person CRUD
