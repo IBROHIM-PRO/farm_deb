@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../providers/cotton_registry_provider.dart';
 import '../../models/cotton_purchase_registry.dart';
-import '../../models/cotton_purchase_item.dart';
 import '../../models/cotton_processing_registry.dart';
+import '../../providers/cotton_registry_provider.dart';
+import '../../providers/cotton_warehouse_provider.dart';
 import '../../models/cotton_processing_input.dart';
 import '../../models/cotton_processing_output.dart';
-import '../../models/cotton_processing_calculator.dart';
+import '../../models/cotton_purchase_item.dart';
+import '../../models/raw_cotton_warehouse.dart';
+import '../../models/processed_cotton_warehouse.dart';
 
 /// Add Cotton Processing Screen - Process cotton from purchases
 /// Implements the complex processing formulas and automatic calculations
@@ -30,9 +32,12 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
   final _lintWeightController = TextEditingController();
   final _ulukWeightController = TextEditingController();
   final _valaknoWeightController = TextEditingController();
+  final _lintPiecesController = TextEditingController();
+  final _ulukPiecesController = TextEditingController();
+  final _valaknoPiecesController = TextEditingController();
   bool isValaknoManualOverride = false;
   
-  // Simple batch output for processed cotton
+  // Simple batch output for processed cotton (modal)
   final _weightController = TextEditingController();
   final _piecesController = TextEditingController();
   
@@ -52,6 +57,9 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
     _lintWeightController.dispose();
     _ulukWeightController.dispose();
     _valaknoWeightController.dispose();
+    _lintPiecesController.dispose();
+    _ulukPiecesController.dispose();
+    _valaknoPiecesController.dispose();
     _weightController.dispose();
     _piecesController.dispose();
     _notesController.dispose();
@@ -130,9 +138,12 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
               _buildRawCottonInputs(),
               const SizedBox(height: 24),
               
-              // Simple batch input for processed cotton output
-              _buildSectionTitle('Натиҷаи коркард - Дастаи пахтаи коркардшуда'),
-              _buildSimpleBatchInput(),
+              // Processing summary and percentage
+              _buildProcessingSummary(),
+              const SizedBox(height: 24),
+              
+              // Add processed cotton button (opens modal)
+              _buildAddProcessedCottonButton(),
               const SizedBox(height: 24),
               
               // Output batches list
@@ -171,74 +182,158 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Lint Input
-            TextFormField(
-              controller: _lintWeightController,
-              decoration: const InputDecoration(
-                labelText: 'Линт (кг)',
-                border: OutlineInputBorder(),
-                suffixText: 'кг',
-                hintText: 'Вазни пахтаи линт',
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              validator: (value) {
-                if (value?.isNotEmpty == true) {
-                  final v = double.tryParse(value!);
-                  if (v == null || v <= 0) return 'Вазни дуруст ворид кунед';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            
-            // Uluk Input
-            TextFormField(
-              controller: _ulukWeightController,
-              decoration: const InputDecoration(
-                labelText: 'Улук (кг)',
-                border: OutlineInputBorder(),
-                suffixText: 'кг',
-                hintText: 'Вазни пахтаи улук',
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              validator: (value) {
-                if (value?.isNotEmpty == true) {
-                  final v = double.tryParse(value!);
-                  if (v == null || v <= 0) return 'Вазни дуруст ворид кунед';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            
-            // Valakno Input (with auto-calculation)
-            TextFormField(
-              controller: _valaknoWeightController,
-              decoration: InputDecoration(
-                labelText: 'Валакно (кг)',
-                border: const OutlineInputBorder(),
-                suffixText: 'кг',
-                hintText: 'Ба таври автоматӣ ҳисоб мешавад',
-                helperText: isValaknoManualOverride ? 
-                  'Дастӣ тағйир дода шуд' : 
-                  'Автоматӣ: ${_getValaknoFormula()}',
-                helperStyle: TextStyle(
-                  color: isValaknoManualOverride ? Colors.orange : Colors.blue,
-                  fontSize: 12,
+            // Lint Input Row
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _lintWeightController,
+                    decoration: const InputDecoration(
+                      labelText: 'Линт (кг)',
+                      border: OutlineInputBorder(),
+                      suffixText: 'кг',
+                      hintText: 'Вазн',
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    validator: (value) {
+                      if (value?.isNotEmpty == true) {
+                        final v = double.tryParse(value!);
+                        if (v == null || v <= 0) return 'Вазни дуруст ворид кунед';
+                      }
+                      return null;
+                    },
+                  ),
                 ),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              validator: (value) {
-                if (value?.isNotEmpty == true) {
-                  final v = double.tryParse(value!);
-                  if (v == null || v <= 0) return 'Вазни дуруст ворид кунед';
-                }
-                return null;
-              },
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 1,
+                  child: TextFormField(
+                    controller: _lintPiecesController,
+                    decoration: const InputDecoration(
+                      labelText: 'Адад',
+                      border: OutlineInputBorder(),
+                      suffixText: 'дона',
+                      hintText: 'Шумора',
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value?.isNotEmpty == true) {
+                        final v = int.tryParse(value!);
+                        if (v == null || v <= 0) return 'Адади дуруст ворид кунед';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Uluk Input Row
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _ulukWeightController,
+                    decoration: const InputDecoration(
+                      labelText: 'Улук (кг)',
+                      border: OutlineInputBorder(),
+                      suffixText: 'кг',
+                      hintText: 'Вазн',
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    validator: (value) {
+                      if (value?.isNotEmpty == true) {
+                        final v = double.tryParse(value!);
+                        if (v == null || v <= 0) return 'Вазни дуруст ворид кунед';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 1,
+                  child: TextFormField(
+                    controller: _ulukPiecesController,
+                    decoration: const InputDecoration(
+                      labelText: 'Адад',
+                      border: OutlineInputBorder(),
+                      suffixText: 'дона',
+                      hintText: 'Шумора',
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value?.isNotEmpty == true) {
+                        final v = int.tryParse(value!);
+                        if (v == null || v <= 0) return 'Адади дуруст ворид кунед';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Valakno Input Row (with auto-calculation)
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _valaknoWeightController,
+                    decoration: InputDecoration(
+                      labelText: 'Валакно (кг)',
+                      border: const OutlineInputBorder(),
+                      suffixText: 'кг',
+                      hintText: 'Автоматӣ',
+                      helperText: isValaknoManualOverride ? 
+                        'Дастӣ тағйир дода шуд' : 
+                        'Автоматӣ: ${_getValaknoFormula()}',
+                      helperStyle: TextStyle(
+                        color: isValaknoManualOverride ? Colors.orange : Colors.blue,
+                        fontSize: 11,
+                      ),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    validator: (value) {
+                      if (value?.isNotEmpty == true) {
+                        final v = double.tryParse(value!);
+                        if (v == null || v <= 0) return 'Вазни дуруст ворид кунед';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 1,
+                  child: TextFormField(
+                    controller: _valaknoPiecesController,
+                    decoration: const InputDecoration(
+                      labelText: 'Адад',
+                      border: OutlineInputBorder(),
+                      suffixText: 'дона',
+                      hintText: 'Шумора',
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value?.isNotEmpty == true) {
+                        final v = int.tryParse(value!);
+                        if (v == null || v <= 0) return 'Адади дуруст ворид кунед';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
             ),
             
             if (isValaknoManualOverride) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               TextButton.icon(
                 onPressed: () {
                   setState(() {
@@ -246,7 +341,7 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                     _calculateValakno();
                   });
                 },
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh, size: 16),
                 label: const Text('Ба ҳисоби автоматӣ баргардонед'),
               ),
             ],
@@ -270,11 +365,111 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
     return 'Линт ё улук ворид кунед';
   }
 
-  Widget _buildSimpleBatchInput() {
+  double get _totalRawCottonWeight {
+    final lintKg = double.tryParse(_lintWeightController.text) ?? 0;
+    final ulukKg = double.tryParse(_ulukWeightController.text) ?? 0;
+    final valaknoKg = double.tryParse(_valaknoWeightController.text) ?? 0;
+    return lintKg + ulukKg + valaknoKg;
+  }
+
+  double get _totalProcessedCottonWeight {
+    return outputBatches.fold(0.0, (sum, batch) => sum + batch.totalWeight);
+  }
+
+  double get _processingPercentage {
+    final totalRaw = _totalRawCottonWeight;
+    if (totalRaw == 0) return 0;
+    return (_totalProcessedCottonWeight / totalRaw) * 100;
+  }
+
+  Widget _buildProcessingSummary() {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ҷамъбасти коркард',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Ҳамагӣ пахтаи хом:'),
+                Text(
+                  '${_totalRawCottonWeight.toStringAsFixed(2)} кг (100%)',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Пахтаи коркардшуда:'),
+                Text(
+                  '${_totalProcessedCottonWeight.toStringAsFixed(2)} кг (${_processingPercentage.toStringAsFixed(1)}%)',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(
+              value: _processingPercentage / 100,
+              backgroundColor: Colors.grey[300],
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Фоизи коркард: ${_processingPercentage.toStringAsFixed(1)}%',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddProcessedCottonButton() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Пахтаи коркардшуда',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _showAddProcessedCottonModal,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.all(16),
+                ),
+                icon: const Icon(Icons.add),
+                label: const Text('Илова кардани пахтаи коркардшуда'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddProcessedCottonModal() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Дастаи пахтаи коркардшуда'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             TextFormField(
               controller: _weightController,
@@ -307,20 +502,31 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _addSimpleBatch,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Илова кардани баста'),
-            ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Бекор'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (_weightController.text.isNotEmpty && _piecesController.text.isNotEmpty) {
+                _addSimpleBatch();
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.purple,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Илова кардан'),
+          ),
+        ],
       ),
     );
   }
+
 
   void _addSimpleBatch() {
     if (!_formKey.currentState!.validate()) return;
@@ -441,6 +647,9 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
     _lintWeightController.clear();
     _ulukWeightController.clear();
     _valaknoWeightController.clear();
+    _lintPiecesController.clear();
+    _ulukPiecesController.clear();
+    _valaknoPiecesController.clear();
     _weightController.clear();
     _piecesController.clear();
     _notesController.clear();
@@ -465,29 +674,96 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
     
     try {
       final provider = context.read<CottonRegistryProvider>();
+      final warehouseProvider = context.read<CottonWarehouseProvider>();
       
       // Use auto-selected purchase or create a simple record
       int purchaseId = selectedPurchase?.id ?? 1;
       
-      // Create simple processing registry
+      // Create processing registry with raw cotton inputs
       final processing = CottonProcessingRegistry(
         linkedPurchaseId: purchaseId,
         processingDate: processingDate,
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       );
       
-      // Create simple input record (just mark as processed)
-      final inputs = <CottonProcessingInput>[
-        CottonProcessingInput(
-          processingId: 0,
-          cottonType: CottonType.lint, // Default input type
-          unitsUsed: outputBatches.fold(0, (sum, batch) => sum + batch.numberOfUnits),
-          weightUsed: outputBatches.fold(0.0, (sum, batch) => sum + batch.totalWeight),
-          sourcePurchaseItemId: 0,
-        ),
-      ];
+      // Create input records for raw cotton used
+      final inputs = <CottonProcessingInput>[];
       
-      // Save processing with simplified inputs and outputs
+      // Add lint input if specified
+      final lintKg = double.tryParse(_lintWeightController.text) ?? 0;
+      final lintPieces = int.tryParse(_lintPiecesController.text) ?? 0;
+      if (lintKg > 0 && lintPieces > 0) {
+        inputs.add(CottonProcessingInput(
+          processingId: 0,
+          cottonType: CottonType.lint,
+          unitsUsed: lintPieces,
+          weightUsed: lintKg,
+          sourcePurchaseItemId: 0,
+        ));
+      }
+      
+      // Add uluk input if specified
+      final ulukKg = double.tryParse(_ulukWeightController.text) ?? 0;
+      final ulukPieces = int.tryParse(_ulukPiecesController.text) ?? 0;
+      if (ulukKg > 0 && ulukPieces > 0) {
+        inputs.add(CottonProcessingInput(
+          processingId: 0,
+          cottonType: CottonType.uluk,
+          unitsUsed: ulukPieces,
+          weightUsed: ulukKg,
+          sourcePurchaseItemId: 0,
+        ));
+      }
+      
+      // Add valakno input if specified
+      final valaknoKg = double.tryParse(_valaknoWeightController.text) ?? 0;
+      final valaknoPieces = int.tryParse(_valaknoPiecesController.text) ?? 0;
+      if (valaknoKg > 0 && valaknoPieces > 0) {
+        inputs.add(CottonProcessingInput(
+          processingId: 0,
+          cottonType: CottonType.valakno,
+          unitsUsed: valaknoPieces,
+          weightUsed: valaknoKg,
+          sourcePurchaseItemId: 0,
+        ));
+      }
+      
+      // Deduct raw cotton from warehouse
+      if (lintKg > 0 && lintPieces > 0) {
+        await warehouseProvider.deductFromRawWarehouse(
+          cottonType: RawCottonType.lint,
+          pieces: lintPieces,
+          totalWeight: lintKg,
+        );
+      }
+      
+      if (ulukKg > 0 && ulukPieces > 0) {
+        await warehouseProvider.deductFromRawWarehouse(
+          cottonType: RawCottonType.sliver,
+          pieces: ulukPieces,
+          totalWeight: ulukKg,
+        );
+      }
+      
+      if (valaknoKg > 0 && valaknoPieces > 0) {
+        await warehouseProvider.deductFromRawWarehouse(
+          cottonType: RawCottonType.other,
+          pieces: valaknoPieces,
+          totalWeight: valaknoKg,
+        );
+      }
+      
+      // Add processed cotton to processed warehouse
+      for (final batch in outputBatches) {
+        await warehouseProvider.addToProcessedWarehouse(
+          pieces: batch.numberOfUnits,
+          totalWeight: batch.totalWeight,
+          weightPerPiece: batch.batchWeightPerUnit,
+          notes: 'Натиҷаи коркарди пахта',
+        );
+      }
+      
+      // Save processing with inputs and outputs
       await provider.addCottonProcessing(
         registry: processing,
         inputs: inputs,
@@ -497,7 +773,7 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Коркард бо муваффақият сабт шуд'),
+            content: Text('✅ Коркард сабт шуд ва аз анбор кам карда шуд'),
             backgroundColor: Colors.green,
           ),
         );
