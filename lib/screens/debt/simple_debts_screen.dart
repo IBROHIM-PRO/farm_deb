@@ -117,7 +117,7 @@ class SimpleDebtsScreen extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-Cotton processing is not related to this and it is not necessary to include it here. Only cotton information should be entered. This entire section is not necessary.      child: InkWell(
+      child: InkWell(
         onTap: () => Navigator.push(
           context, 
           MaterialPageRoute(builder: (_) => DebtTransactionHistoryScreen(debt: debt))
