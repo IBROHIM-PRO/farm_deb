@@ -248,15 +248,7 @@ class _DebtTransactionHistoryScreenState
                   child: Text(
                     'Боқимонда: ${widget.debt.remainingAmount.toStringAsFixed(2)} ${widget.debt.currency}',
                   ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    // Боқимондаро ба TextField ворид мекунад
-                    amountController.text =
-                        widget.debt.remainingAmount.toStringAsFixed(2);
-                  },
-                  child: const Text('Ворид кардан'),
-                ),
+                ),                
               ],
             ),
             const SizedBox(height: 12),
@@ -265,6 +257,14 @@ class _DebtTransactionHistoryScreenState
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: 'Маблағ'),
             ),
+            TextButton(
+                  onPressed: () {
+                    // Боқимондаро ба TextField ворид мекунад
+                    amountController.text =
+                        widget.debt.remainingAmount.toStringAsFixed(2);
+                  },
+                  child: const Text('Ворид кардан'),
+                ),
           ],
         ),
         actions: [
