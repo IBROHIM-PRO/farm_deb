@@ -75,7 +75,7 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Реестри фуруши пахта'),
+        title: const Text('Фуруши пахта'),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         bottom: TabBar(

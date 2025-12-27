@@ -71,7 +71,7 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildSummaryItem(
-                  'Қисматҳо',
+                  'Миқдори умумӣ',
                   '${totalInventory.pieces} дона',
                   Colors.white,
                 ),
@@ -81,13 +81,7 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
                   Colors.white,
                 ),
               ],
-            ),
-            const SizedBox(height: 12),
-            _buildSummaryItem(
-              'Вазни миёна (ҳар қисмат)',
-              '${totalInventory.weightPerPiece.toStringAsFixed(1)} кг',
-              Colors.white,
-            ),
+            ),           
           ] else ...[
             Text(
               'Анбор холӣ аст',
@@ -152,7 +146,7 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '${inventory.length} партия',
+                  '${inventory.length} Намуд',
                   style: TextStyle(
                     color: Colors.blue[800],
                     fontSize: 12,
@@ -260,9 +254,7 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        batch.batchNumber != null 
-                          ? 'Партия ${batch.batchNumber}'
-                          : 'Партия $batchNumber',
+                       '${batch.totalWeight.toStringAsFixed(1)} кг',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -305,7 +297,7 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
               Expanded(
                 child: _buildDetailItem(
                   Icons.apps,
-                  'Қисматҳо',
+                  'Дона',
                   '${batch.pieces} дона',
                   Colors.blue,
                 ),
@@ -319,63 +311,7 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-          
-          const SizedBox(height: 12),
-          
-          Row(
-            children: [
-              Expanded(
-                child: _buildDetailItem(
-                  Icons.fitness_center,
-                  'Вазни ҳар қисмат',
-                  '${batch.weightPerPiece.toStringAsFixed(1)} кг',
-                  Colors.orange,
-                ),
-              ),
-              Expanded(
-                child: _buildDetailItem(
-                  Icons.timeline,
-                  'Диапазон',
-                  _getWeightRange(batch.weightPerPiece),
-                  Colors.purple,
-                ),
-              ),
-            ],
-          ),
-          
-          if (batch.notes.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Тавзеҳот:',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    batch.notes,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),                                        
         ],
       ),
     );
