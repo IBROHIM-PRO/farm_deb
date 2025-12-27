@@ -181,7 +181,7 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
               ...items.map((item) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     child: Text(
-                        '${item.cottonTypeDisplay}: ${item.weight.toStringAsFixed(1)} кг, ${item.units} дона, ${item.price.toStringAsFixed(0)} сомонӣ'),
+                        '${item.cottonTypeDisplay}: ${item.weight.toStringAsFixed(1)} кг, ${item.units} дона, ${item.totalPrice.toStringAsFixed(0)} сомонӣ'),
                   )),
               const SizedBox(height: 8),
               Text('Ҳамагӣ вазн: ${(summary['totalWeight'] as num?)?.toDouble()?.toStringAsFixed(1) ?? '0.0'} кг'),

@@ -319,7 +319,8 @@ class CottonWarehouseProvider extends ChangeNotifier {
       await db.insert('raw_cotton_warehouse', newInventory.toMap());
     }
     
-    await loadRawCottonInventory();
+    await loadAllData();
+    debugPrint('✅ Database refreshed after raw cotton warehouse addition');
   }
 
   /// Deduct inventory from raw cotton warehouse (for processing)

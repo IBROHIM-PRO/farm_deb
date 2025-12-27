@@ -64,6 +64,7 @@ class CattleRegistryProvider with ChangeNotifier {
     final db = await _dbHelper.database;
     final id = await db.insert('cattle_registry', cattle.toMap());
     await loadCattleRegistry();
+    debugPrint('✅ Database automatically refreshed after cattle registry addition');
     return id;
   }
 
@@ -109,6 +110,7 @@ class CattleRegistryProvider with ChangeNotifier {
     final db = await _dbHelper.database;
     final id = await db.insert('cattle_purchases', purchase.toMap());
     await loadCattlePurchases();
+    debugPrint('✅ Database automatically refreshed after cattle purchase');
     return id;
   }
 
@@ -132,6 +134,7 @@ class CattleRegistryProvider with ChangeNotifier {
     final db = await _dbHelper.database;
     final id = await db.insert('cattle_expenses', expense.toMap());
     await loadCattleExpenses();
+    debugPrint('✅ Database automatically refreshed after cattle expense');
     return id;
   }
 
@@ -165,6 +168,7 @@ class CattleRegistryProvider with ChangeNotifier {
     final db = await _dbHelper.database;
     final id = await db.insert('cattle_weights', weight.toMap());
     await loadCattleWeights();
+    debugPrint('✅ Database automatically refreshed after cattle weight measurement');
     return id;
   }
 

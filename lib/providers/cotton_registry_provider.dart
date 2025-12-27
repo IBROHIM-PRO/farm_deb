@@ -87,7 +87,7 @@ class CottonRegistryProvider with ChangeNotifier {
   }) async {
     final db = await _dbHelper.database;
     
-    return await db.transaction((txn) async {
+    final purchaseId = await db.transaction((txn) async {
       // Add master purchase record
       final purchaseId = await txn.insert('cotton_purchase_registry', registry.toMap());
       
@@ -117,6 +117,12 @@ class CottonRegistryProvider with ChangeNotifier {
       
       return purchaseId;
     });
+    
+    // Refresh data after transaction completes
+    await loadAllData();
+    debugPrint('✅ Database automatically refreshed after cotton purchase');
+    
+    return purchaseId;
   }
 
   /// Get purchase items for specific purchase
@@ -177,7 +183,7 @@ class CottonRegistryProvider with ChangeNotifier {
   }) async {
     final db = await _dbHelper.database;
     
-    return await db.transaction((txn) async {
+    final processingId = await db.transaction((txn) async {
       // Add master processing record
       final processingId = await txn.insert('cotton_processing_registry', registry.toMap());
       
@@ -206,6 +212,12 @@ class CottonRegistryProvider with ChangeNotifier {
       
       return processingId;
     });
+    
+    // Refresh data after transaction completes
+    await loadAllData();
+    debugPrint('✅ Database automatically refreshed after cotton processing');
+    
+    return processingId;
   }
 
   /// Deduct units from purchase item (internal method)

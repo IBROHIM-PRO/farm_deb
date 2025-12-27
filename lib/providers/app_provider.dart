@@ -173,6 +173,7 @@ class AppProvider with ChangeNotifier {
         debugPrint('✅ New debt created successfully with ID: ${debtId}');
       }
       await loadAllData();
+      debugPrint('✅ Database automatically refreshed after debt operation');
     } catch (e) {
       debugPrint('❌ Error adding debt: $e');
       rethrow;
@@ -211,6 +212,7 @@ class AppProvider with ChangeNotifier {
       
       await loadAllData();
       debugPrint('✅ Payment recorded successfully: ${amount} for debt ${debt.id}');
+      debugPrint('✅ Database automatically refreshed after payment');
     } catch (e) {
       debugPrint('❌ Error recording payment: $e');
       rethrow;
