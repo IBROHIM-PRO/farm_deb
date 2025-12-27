@@ -315,22 +315,25 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
               
               try {
                 await provider.transferAllExistingPurchasesToWarehouse();
-                Navigator.pop(context); // Close loading dialog
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('✅ Ҳамаи харидҳо бо муваффақият ба анбор гузошта шуданд'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+                if (mounted) {
+                  Navigator.pop(context); // Close loading dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✅ Ҳамаи харидҳо бо муваффақият ба анбор гузошта шуданд'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
               } catch (e) {
-                Navigator.pop(context); // Close loading dialog
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('❌ Хатогӣ: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                if (mounted) {
+                  Navigator.pop(context); // Close loading dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('⚠️ ${e.toString().replaceAll('Exception: ', '')}'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                }
               }
             },
             child: const Text('Гузоштан'),

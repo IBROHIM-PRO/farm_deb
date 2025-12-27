@@ -11,6 +11,7 @@ class CottonPurchaseItem {
   final double pricePerKg;        // Price per kg
   final double totalPrice;        // Auto-calculated: weight × pricePerKg
   final String? notes;            // Optional item notes
+  final bool transferredToWarehouse; // Track if already transferred to warehouse
 
   CottonPurchaseItem({
     this.id,
@@ -21,6 +22,7 @@ class CottonPurchaseItem {
     required this.pricePerKg,
     required this.totalPrice,
     this.notes,
+    this.transferredToWarehouse = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -33,6 +35,7 @@ class CottonPurchaseItem {
       'pricePerKg': pricePerKg,
       'totalPrice': totalPrice,
       'notes': notes,
+      'transferredToWarehouse': transferredToWarehouse ? 1 : 0,
     };
   }
 

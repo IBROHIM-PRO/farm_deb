@@ -176,6 +176,17 @@ class CottonRegistryProvider with ChangeNotifier {
         return;
       }
       
+      // Check if warehouse already has inventory to prevent duplicates
+      await _warehouseProvider.loadAllData();
+      final hasExistingInventory = _warehouseProvider.rawCottonInventory.any(
+        (item) => item.pieces > 0 || item.totalWeight > 0
+      );
+      
+      if (hasExistingInventory) {
+        debugPrint('⚠️ Warehouse already contains inventory. Skipping transfer to prevent duplicates.');
+        throw Exception('Анбор аллакай пур аст. Барои пешгирии такрор, гузориш беkor карда шуд.');
+      }
+      
       // Transfer all items to warehouse
       await _transferPurchaseToWarehouse(_purchaseItems);
       
