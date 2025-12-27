@@ -27,6 +27,11 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
             icon: const Icon(Icons.analytics),
           ),
           IconButton(
+            onPressed: _transferToWarehouse,
+            icon: const Icon(Icons.warehouse),
+            tooltip: 'Гузоштан ба анбор',
+          ),
+          IconButton(
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const AddCottonPurchaseScreen()),
@@ -269,6 +274,67 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
         children: [
           Text(label),
           Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+        ],
+      ),
+    );
+  }
+
+  /// Transfer all existing purchases to warehouse
+  void _transferToWarehouse() async {
+    final provider = Provider.of<CottonRegistryProvider>(context, listen: false);
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Гузоштан ба анбор'),
+        content: const Text('Ҳамаи харидҳои мавҷударо ба анбор гузошт? Ин амал ҳамаи пахтаи харидшударо ба инвентари анбор илова мекунад.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Бекор кардан'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              
+              // Show loading dialog
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const AlertDialog(
+                  content: Row(
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(width: 20),
+                      Text('Гузориш ба анбор...'),
+                    ],
+                  ),
+                ),
+              );
+              
+              try {
+                await provider.transferAllExistingPurchasesToWarehouse();
+                Navigator.pop(context); // Close loading dialog
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✅ Ҳамаи харидҳо бо муваффақият ба анбор гузошта шуданд'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                Navigator.pop(context); // Close loading dialog
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('❌ Хатогӣ: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Гузоштан'),
+          ),
         ],
       ),
     );

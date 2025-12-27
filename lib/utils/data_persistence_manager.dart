@@ -21,6 +21,9 @@ class DataPersistenceManager {
       // Initialize cotton warehouse provider first (sequential to avoid database conflicts)
       await _initializeProvider(() => context.read<CottonWarehouseProvider>().loadAllData(), 'CottonWarehouseProvider');
       
+      // Connect cotton registry provider to warehouse provider
+      context.read<CottonRegistryProvider>().initializeWarehouseProvider(context.read<CottonWarehouseProvider>());
+      
       // Load other providers in parallel for better performance
       await Future.wait([
         _initializeProvider(() => context.read<AppProvider>().loadAllData(), 'AppProvider'),

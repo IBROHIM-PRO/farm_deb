@@ -10,11 +10,14 @@ import '../models/cotton_processing_calculator.dart';
 import '../models/cotton_inventory.dart';
 import '../models/cotton_sale_registry.dart';
 import '../models/cotton_traceability.dart';
+import '../models/raw_cotton_warehouse.dart';
+import 'cotton_warehouse_provider.dart';
 
 /// Cotton Registry Provider - Registry-based cotton management
 /// Handles the complete cotton workflow: Purchase → Processing → Inventory → Sales
 class CottonRegistryProvider with ChangeNotifier {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  late final CottonWarehouseProvider _warehouseProvider;
   
   List<CottonPurchaseRegistry> _purchaseRegistry = [];
   List<CottonPurchaseItem> _purchaseItems = [];
@@ -26,6 +29,20 @@ class CottonRegistryProvider with ChangeNotifier {
   List<CottonTraceability> _traceability = [];
   
   bool _isLoading = false;
+
+  /// Initialize warehouse provider for integration
+  void initializeWarehouseProvider(CottonWarehouseProvider warehouseProvider) {
+    _warehouseProvider = warehouseProvider;
+  }
+
+  /// Map cotton purchase types to warehouse types
+  RawCottonType _mapToWarehouseType(CottonType purchaseType) {
+    switch (purchaseType) {
+      case CottonType.lint: return RawCottonType.lint;
+      case CottonType.uluk: return RawCottonType.sliver; // Map uluk to sliver
+      case CottonType.valakno: return RawCottonType.other; // Map valakno to other
+    }
+  }
 
   // Getters
   List<CottonPurchaseRegistry> get purchaseRegistry => _purchaseRegistry;
@@ -118,11 +135,59 @@ class CottonRegistryProvider with ChangeNotifier {
       return purchaseId;
     });
     
+    // Transfer purchased cotton to warehouse inventory
+    await _transferPurchaseToWarehouse(items);
+    
     // Refresh data after transaction completes
     await loadAllData();
     debugPrint('✅ Database automatically refreshed after cotton purchase');
+    debugPrint('✅ Cotton transferred to warehouse inventory');
     
     return purchaseId;
+  }
+
+  /// Transfer purchased cotton items to warehouse inventory
+  Future<void> _transferPurchaseToWarehouse(List<CottonPurchaseItem> items) async {
+    for (final item in items) {
+      final warehouseType = _mapToWarehouseType(item.cottonType);
+      
+      // Add to warehouse inventory
+      await _warehouseProvider.addToRawWarehouse(
+        cottonType: warehouseType,
+        pieces: item.units,
+        totalWeight: item.weight,
+        notes: 'Transferred from purchase',
+      );
+      
+      debugPrint('✅ Transferred to warehouse: ${item.cottonTypeDisplay} - ${item.units} pieces, ${item.weight}kg');
+    }
+  }
+
+  /// Transfer all existing purchases to warehouse (one-time migration)
+  Future<void> transferAllExistingPurchasesToWarehouse() async {
+    try {
+      debugPrint('🔄 Starting transfer of existing purchases to warehouse...');
+      
+      // Get all existing purchase items
+      await loadPurchaseItems();
+      
+      if (_purchaseItems.isEmpty) {
+        debugPrint('ℹ️ No existing purchases to transfer');
+        return;
+      }
+      
+      // Transfer all items to warehouse
+      await _transferPurchaseToWarehouse(_purchaseItems);
+      
+      debugPrint('✅ Successfully transferred ${_purchaseItems.length} existing purchase items to warehouse');
+      
+      // Refresh warehouse data
+      await _warehouseProvider.loadAllData();
+      
+    } catch (e) {
+      debugPrint('❌ Error transferring existing purchases: $e');
+      rethrow;
+    }
   }
 
   /// Get purchase items for specific purchase
