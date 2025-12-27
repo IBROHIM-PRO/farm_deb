@@ -164,42 +164,46 @@ class CottonRegistryProvider with ChangeNotifier {
   }
 
   /// Transfer all existing purchases to warehouse (one-time migration)
-  Future<void> transferAllExistingPurchasesToWarehouse() async {
-    try {
-      debugPrint('🔄 Starting transfer of existing purchases to warehouse...');
-      
-      // Get all existing purchase items
-      await loadPurchaseItems();
-      
-      if (_purchaseItems.isEmpty) {
-        debugPrint('ℹ️ No existing purchases to transfer');
-        return;
-      }
-      
-      // Check if warehouse already has inventory to prevent duplicates
-      await _warehouseProvider.loadAllData();
-      final hasExistingInventory = _warehouseProvider.rawCottonInventory.any(
-        (item) => item.pieces > 0 || item.totalWeight > 0
-      );
-      
-      if (hasExistingInventory) {
-        debugPrint('⚠️ Warehouse already contains inventory. Skipping transfer to prevent duplicates.');
-        throw Exception('Анбор аллакай пур аст. Барои пешгирии такрор, гузориш беkor карда шуд.');
-      }
-      
-      // Transfer all items to warehouse
-      await _transferPurchaseToWarehouse(_purchaseItems);
-      
-      debugPrint('✅ Successfully transferred ${_purchaseItems.length} existing purchase items to warehouse');
-      
-      // Refresh warehouse data
-      await _warehouseProvider.loadAllData();
-      
-    } catch (e) {
-      debugPrint('❌ Error transferring existing purchases: $e');
-      rethrow;
+  /// Transfer all existing purchases to warehouse (one-time migration)
+/// Returns null if success, or error message if failed
+Future<String?> transferAllExistingPurchasesToWarehouse() async {
+  try {
+    debugPrint('🔄 Starting transfer of existing purchases to warehouse...');
+    
+    // Get all existing purchase items
+    await loadPurchaseItems();
+    
+    if (_purchaseItems.isEmpty) {
+      debugPrint('ℹ️ No existing purchases to transfer');
+      return 'Ҳеҷ харид барои интиқол нест';
     }
+    
+    // Check if warehouse already has inventory to prevent duplicates
+    await _warehouseProvider.loadAllData();
+    final hasExistingInventory = _warehouseProvider.rawCottonInventory.any(
+      (item) => item.pieces > 0 || item.totalWeight > 0
+    );
+    
+    if (hasExistingInventory) {
+      debugPrint('⚠️ Warehouse already contains inventory. Skipping transfer to prevent duplicates.');
+      return 'Ин маҳсулот аллакай ба анбор ворид шудаанд';
+    }
+    
+    // Transfer all items to warehouse
+    await _transferPurchaseToWarehouse(_purchaseItems);
+    
+    debugPrint('✅ Successfully transferred ${_purchaseItems.length} existing purchase items to warehouse');
+    
+    // Refresh warehouse data
+    await _warehouseProvider.loadAllData();
+
+    return null; // Success
+  } catch (e) {
+    debugPrint('❌ Error transferring existing purchases: $e');
+    return 'Хато дар интиқоли харидҳо: $e';
   }
+}
+
 
   /// Get purchase items for specific purchase
   List<CottonPurchaseItem> getItemsForPurchase(int purchaseId) {

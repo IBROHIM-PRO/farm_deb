@@ -277,8 +277,8 @@ class RawCottonWarehouseScreen extends StatelessWidget {
   String _getTypeDisplayName(RawCottonType type) {
     switch (type) {
       case RawCottonType.lint: return 'Линт';
-      case RawCottonType.sliver: return 'Слайвер';
-      case RawCottonType.other: return 'Дигар';
+      case RawCottonType.sliver: return 'Улук';
+      case RawCottonType.other: return 'Валакно';
     }
   }
 }
