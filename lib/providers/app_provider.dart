@@ -185,7 +185,7 @@ class AppProvider with ChangeNotifier {
   /// If remainingAmount == 0, update status to "Repaid"
   /// 
   /// Throws [ArgumentError] if validation fails
-  Future<void> makePayment({required Debt debt, required double amount}) async {
+  Future<void> makePayment({required Debt debt, required double amount, String? note}) async {
     try {
       // Process payment using core debt logic
       final updatedDebt = debt.processPayment(amount);
@@ -195,6 +195,7 @@ class AppProvider with ChangeNotifier {
         debtId: debt.id!,
         amount: amount,
         date: DateTime.now(),
+        note: note,
       );
       
       final paymentId = await _db.insertPayment(payment);

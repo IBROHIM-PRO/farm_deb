@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+
 import '../../providers/app_provider.dart';
 import '../../models/debt.dart';
 import '../../models/person.dart';
 import '../../models/payment.dart';
 
-/// Comprehensive transaction history showing all debt and payment entries
 class DebtTransactionHistoryScreen extends StatefulWidget {
   final Debt debt;
 
   const DebtTransactionHistoryScreen({super.key, required this.debt});
 
   @override
-  State<DebtTransactionHistoryScreen> createState() => _DebtTransactionHistoryScreenState();
+  State<DebtTransactionHistoryScreen> createState() =>
+      _DebtTransactionHistoryScreenState();
 }
 
-class _DebtTransactionHistoryScreenState extends State<DebtTransactionHistoryScreen> {
+class _DebtTransactionHistoryScreenState
+    extends State<DebtTransactionHistoryScreen> {
   late Person _person;
   List<Payment> _payments = [];
   List<_TransactionEntry> _timeline = [];
@@ -28,70 +30,66 @@ class _DebtTransactionHistoryScreenState extends State<DebtTransactionHistoryScr
   }
 
   Future<void> _loadData() async {
-    final provider = Provider.of<AppProvider>(context, listen: false);
-    
-    // Get person details
+    final provider = context.read<AppProvider>();
+
     _person = provider.getPersonById(widget.debt.personId)!;
-    
-    // Load all payments for this debt
     _payments = await provider.getPaymentsByDebtId(widget.debt.id!);
-    
-    // Build comprehensive timeline
+
     _buildTimeline();
-    
     setState(() {});
   }
 
   void _buildTimeline() {
     _timeline.clear();
-    
-    // Add initial debt creation
-    _timeline.add(_TransactionEntry(
-      type: _TransactionType.debtCreated,
-      date: widget.debt.date,
-      amount: widget.debt.totalAmount,
-      currency: widget.debt.currency,
-      description: widget.debt.type == DebtType.given 
-          ? 'Қарз дода шуд ба ${_person.fullName}'
-          : 'Қарз гирифта шуд аз ${_person.fullName}',
-      runningBalance: widget.debt.totalAmount,
-      debtType: widget.debt.type,
-    ));
-    
-    // Add all payments
-    double runningBalance = widget.debt.totalAmount;
-    for (final payment in _payments.reversed) { // Oldest first
-      runningBalance -= payment.amount;
-      
-      _timeline.add(_TransactionEntry(
-        type: _TransactionType.payment,
-        date: payment.date,
-        amount: payment.amount,
+
+    // Сабти аввали қарз
+    _timeline.add(
+      _TransactionEntry(
+        type: _TransactionType.debtCreated,
+        date: widget.debt.date,
+        amount: widget.debt.totalAmount,
         currency: widget.debt.currency,
-        description: widget.debt.type == DebtType.given
-            ? 'Пардохт дарёфт шуд аз ${_person.fullName}'
-            : 'Пардохт ба ${_person.fullName}',
-        runningBalance: runningBalance,
+        runningBalance: widget.debt.totalAmount,
         debtType: widget.debt.type,
-        note: payment.note,
-        isPayment: true,
-      ));
+        description: 'Қарз сабт шуд',
+      ),
+    );
+
+    double runningBalance = widget.debt.totalAmount;
+
+    for (final payment in _payments.reversed) {
+      runningBalance -= payment.amount;
+
+      _timeline.add(
+        _TransactionEntry(
+          type: _TransactionType.payment,
+          date: payment.date,
+          amount: payment.amount,
+          currency: widget.debt.currency,
+          runningBalance: runningBalance,
+          debtType: widget.debt.type,
+          description: 'Пардохт',
+          isPayment: true,
+        ),
+      );
     }
-    
-    // Sort by date (newest first for display)
+
     _timeline.sort((a, b) => b.date.compareTo(a.date));
   }
 
   @override
   Widget build(BuildContext context) {
+    final color =
+        widget.debt.type == DebtType.given ? Colors.green : Colors.blue;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Таърихи муомилот'),
-        centerTitle: true,
-        backgroundColor: widget.debt.type == DebtType.given ? Colors.green : Colors.blue,
+        backgroundColor: color,
         foregroundColor: Colors.white,
+        centerTitle: true,
       ),
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[100],
       body: Column(
         children: [
           _buildPersonCard(),
@@ -103,70 +101,58 @@ class _DebtTransactionHistoryScreenState extends State<DebtTransactionHistoryScr
   }
 
   Widget _buildPersonCard() {
-    return Container(
+    return Card(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: widget.debt.type == DebtType.given
+              ? Colors.green[100]
+              : Colors.blue[100],
+          child: Icon(
+            Icons.person,
+            color: widget.debt.type == DebtType.given
+                ? Colors.green
+                : Colors.blue,
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: widget.debt.type == DebtType.given ? Colors.green[100] : Colors.blue[100],
-            child: Icon(
-              Icons.person,
-              color: widget.debt.type == DebtType.given ? Colors.green : Colors.blue,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _person.fullName,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+        ),
+        title: Text(_person.fullName),
+        subtitle: _person.phone != null && _person.phone!.isNotEmpty
+            ? Text(_person.phone!)
+            : null,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Намуди қарз
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: (widget.debt.type == DebtType.given
+                        ? Colors.green
+                        : Colors.blue)[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                widget.debt.type == DebtType.given ? 'Додашуда' : 'Гирифташуда',
+                style: TextStyle(
+                  color: widget.debt.type == DebtType.given
+                      ? Colors.green[800]
+                      : Colors.blue[800],
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
-                if (_person.phone != null && _person.phone!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    _person.phone!,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: (widget.debt.type == DebtType.given ? Colors.green : Colors.blue)[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              widget.debt.type == DebtType.given ? 'Додашуда' : 'Гирифташуда',
-              style: TextStyle(
-                color: widget.debt.type == DebtType.given ? Colors.green[800] : Colors.blue[800],
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            // Тугмаи пардохт (+)
+            if (widget.debt.remainingAmount > 0)
+              FloatingActionButton(
+                mini: true,
+                backgroundColor: Colors.green,
+                child: const Icon(Icons.add),
+                onPressed: () => _showPaymentDialog(context),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -176,266 +162,142 @@ class _DebtTransactionHistoryScreenState extends State<DebtTransactionHistoryScr
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: widget.debt.type == DebtType.given 
-              ? [Colors.green[600]!, Colors.green[400]!]
-              : [Colors.blue[600]!, Colors.blue[400]!],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: widget.debt.type == DebtType.given ? Colors.green : Colors.blue,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: _buildSummaryItem(
-              'Маблағи умумӣ',
-              '${widget.debt.totalAmount.toStringAsFixed(2)} ${widget.debt.currency}',
-            ),
+          _summaryItem(
+            'Умумӣ',
+            '${widget.debt.totalAmount.toStringAsFixed(2)} ${widget.debt.currency}',
           ),
-          Container(width: 1, height: 40, color: Colors.white.withOpacity(0.3)),
-          Expanded(
-            child: _buildSummaryItem(
-              'Боқимонда',
-              '${widget.debt.remainingAmount.toStringAsFixed(2)} ${widget.debt.currency}',
-            ),
+          _summaryItem(
+            'Боқимонда',
+            '${widget.debt.remainingAmount.toStringAsFixed(2)} ${widget.debt.currency}',
           ),
-          Container(width: 1, height: 40, color: Colors.white.withOpacity(0.3)),
-          Expanded(
-            child: _buildSummaryItem(
-              'Пардохт шуда',
-              '${(widget.debt.totalAmount - widget.debt.remainingAmount).toStringAsFixed(2)} ${widget.debt.currency}',
-            ),
+          _summaryItem(
+            'Пардохт',
+            '${(widget.debt.totalAmount - widget.debt.remainingAmount).toStringAsFixed(2)} ${widget.debt.currency}',
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryItem(String label, String value) {
+  Widget _summaryItem(String title, String value) {
     return Column(
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.8),
-            fontSize: 12,
-          ),
-          textAlign: TextAlign.center,
-        ),
+        Text(title, style: const TextStyle(color: Colors.white70)),
         const SizedBox(height: 4),
         Text(
           value,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
   }
 
   Widget _buildTimelineView() {
-    if (_timeline.isEmpty) {
-      return const Center(
-        child: Text('Таърих мавҷуд нест'),
-      );
-    }
+    if (_timeline.isEmpty) return const Center(child: Text('Маълумот нест'));
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _timeline.length,
       itemBuilder: (context, index) {
         final entry = _timeline[index];
-        final isLast = index == _timeline.length - 1;
-        
-        return _buildTimelineEntry(entry, isLast);
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ListTile(
+            leading: Icon(
+              entry.isPayment ? Icons.payment : Icons.assignment,
+              color: entry.isPayment ? Colors.red : Colors.green,
+            ),
+            title: Text(entry.description),
+            subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(entry.date)),
+            trailing: Text(
+              '${entry.isPayment ? '-' : '+'}${entry.amount.toStringAsFixed(2)} ${entry.currency}',
+              style: TextStyle(
+                color: entry.isPayment ? Colors.red : Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
       },
     );
   }
 
-  Widget _buildTimelineEntry(_TransactionEntry entry, bool isLast) {
-    final isDebtCreated = entry.type == _TransactionType.debtCreated;
-    final color = isDebtCreated 
-        ? (entry.debtType == DebtType.given ? Colors.green : Colors.blue)
-        : Colors.orange;
-    
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Timeline line and dot
-        Column(
+  Future<void> _showPaymentDialog(BuildContext context) async {
+    final amountController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Пардохт'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Боқимонда: ${widget.debt.remainingAmount.toStringAsFixed(2)} ${widget.debt.currency}',
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // Боқимондаро ба TextField ворид мекунад
+                    amountController.text =
+                        widget.debt.remainingAmount.toStringAsFixed(2);
+                  },
+                  child: const Text('Ворид кардан'),
+                ),
+              ],
             ),
-            if (!isLast)
-              Container(
-                width: 2,
-                height: 60,
-                color: Colors.grey[300],
-              ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: amountController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Маблағ'),
+            ),
           ],
         ),
-        
-        const SizedBox(width: 16),
-        
-        // Transaction details
-        Expanded(
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: color.withOpacity(0.2)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          isDebtCreated 
-                              ? (entry.debtType == DebtType.given ? Icons.call_made : Icons.call_received)
-                              : Icons.payment,
-                          size: 16,
-                          color: color,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          isDebtCreated ? 'Қарз сабт шуд' : 'Пардохт',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: color,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      DateFormat('dd/MM/yyyy HH:mm', 'en_US').format(entry.date),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 8),
-                
-                Text(
-                  entry.description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                  ),
-                ),
-                
-                const SizedBox(height: 12),
-                
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Маблаҳ',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        Text(
-                          '${entry.isPayment ? "-" : "+"}${entry.amount.toStringAsFixed(2)} ${entry.currency}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: entry.isPayment ? Colors.red : color,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'Боқимонда',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        Text(
-                          '${entry.runningBalance.toStringAsFixed(2)} ${entry.currency}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: entry.runningBalance <= 0 ? Colors.green : Colors.grey[800],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                
-                if (entry.note != null && entry.note!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.note, size: 14, color: Colors.grey[600]),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            entry.note!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[700],
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Бекор'),
           ),
-        ),
-      ],
+          ElevatedButton(
+            onPressed: () async {
+              final amount = double.tryParse(amountController.text);
+              if (amount == null ||
+                  amount <= 0 ||
+                  amount > widget.debt.remainingAmount) return;
+
+              await ctx.read<AppProvider>().makePayment(
+                    debt: widget.debt,
+                    amount: amount,
+                  );
+
+              Navigator.pop(ctx, true);
+            },
+            child: const Text('Сабт'),
+          ),
+        ],
+      ),
     );
+
+    if (result == true) {
+      await _loadData();
+    }
   }
 }
 
-// Helper classes
 enum _TransactionType { debtCreated, payment }
 
 class _TransactionEntry {
@@ -446,7 +308,6 @@ class _TransactionEntry {
   final String description;
   final double runningBalance;
   final DebtType debtType;
-  final String? note;
   final bool isPayment;
 
   _TransactionEntry({
@@ -457,7 +318,6 @@ class _TransactionEntry {
     required this.description,
     required this.runningBalance,
     required this.debtType,
-    this.note,
     this.isPayment = false,
   });
 }
