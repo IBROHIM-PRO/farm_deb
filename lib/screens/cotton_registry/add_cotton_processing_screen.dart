@@ -661,11 +661,119 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
     });
   }
 
+  Future<String?> _validateWarehouseAvailability() async {
+    final warehouseProvider = context.read<CottonWarehouseProvider>();
+    
+    // Ensure warehouse data is loaded
+    await warehouseProvider.loadAllData();
+    
+    final lintKg = double.tryParse(_lintWeightController.text) ?? 0;
+    final lintPieces = int.tryParse(_lintPiecesController.text) ?? 0;
+    final ulukKg = double.tryParse(_ulukWeightController.text) ?? 0;
+    final ulukPieces = int.tryParse(_ulukPiecesController.text) ?? 0;
+    final valaknoKg = double.tryParse(_valaknoWeightController.text) ?? 0;
+    final valaknoPieces = int.tryParse(_valaknoPiecesController.text) ?? 0;
+
+    // Check if any raw cotton is specified for processing
+    if (lintKg == 0 && ulukKg == 0 && valaknoKg == 0) {
+      return 'Пахтаи хом барои коркард ворид кунед';
+    }
+
+    // Get current warehouse inventory
+    final inventory = warehouseProvider.rawCottonInventory;
+    
+    // Check lint availability
+    if (lintKg > 0 || lintPieces > 0) {
+      final lintInventory = inventory.firstWhere(
+        (item) => item.cottonType == RawCottonType.lint,
+        orElse: () => RawCottonWarehouse(
+          cottonType: RawCottonType.lint,
+          pieces: 0,
+          totalWeight: 0,
+          lastUpdated: DateTime.now(),
+        ),
+      );
+      
+      if (lintKg > lintInventory.totalWeight) {
+        return 'Линт кофӣ нест. Мавҷуд: ${lintInventory.totalWeight.toStringAsFixed(1)} кг, дархост: ${lintKg.toStringAsFixed(1)} кг';
+      }
+      
+      if (lintPieces > lintInventory.pieces) {
+        return 'Линт кофӣ нест. Мавҷуд: ${lintInventory.pieces} дона, дархост: $lintPieces дона';
+      }
+    }
+
+    // Check uluk availability
+    if (ulukKg > 0 || ulukPieces > 0) {
+      final ulukInventory = inventory.firstWhere(
+        (item) => item.cottonType == RawCottonType.sliver,
+        orElse: () => RawCottonWarehouse(
+          cottonType: RawCottonType.sliver,
+          pieces: 0,
+          totalWeight: 0,
+          lastUpdated: DateTime.now(),
+        ),
+      );
+      
+      if (ulukKg > ulukInventory.totalWeight) {
+        return 'Улук кофӣ нест. Мавҷуд: ${ulukInventory.totalWeight.toStringAsFixed(1)} кг, дархост: ${ulukKg.toStringAsFixed(1)} кг';
+      }
+      
+      if (ulukPieces > ulukInventory.pieces) {
+        return 'Улук кофӣ нест. Мавҷуд: ${ulukInventory.pieces} дона, дархост: $ulukPieces дона';
+      }
+    }
+
+    // Check valakno availability
+    if (valaknoKg > 0 || valaknoPieces > 0) {
+      final valaknoInventory = inventory.firstWhere(
+        (item) => item.cottonType == RawCottonType.other,
+        orElse: () => RawCottonWarehouse(
+          cottonType: RawCottonType.other,
+          pieces: 0,
+          totalWeight: 0,
+          lastUpdated: DateTime.now(),
+        ),
+      );
+      
+      if (valaknoKg > valaknoInventory.totalWeight) {
+        return 'Валакно кофӣ нест. Мавҷуд: ${valaknoInventory.totalWeight.toStringAsFixed(1)} кг, дархост: ${valaknoKg.toStringAsFixed(1)} кг';
+      }
+      
+      if (valaknoPieces > valaknoInventory.pieces) {
+        return 'Валакно кофӣ нест. Мавҷуд: ${valaknoInventory.pieces} дона, дархост: $valaknoPieces дона';
+      }
+    }
+
+    // Check if processed cotton exceeds total raw cotton being used
+    final totalRawCottonWeight = lintKg + ulukKg + valaknoKg;
+    final totalProcessedWeight = _totalProcessedCottonWeight;
+    
+    if (totalProcessedWeight > totalRawCottonWeight) {
+      return 'Пахтаи коркардшуда аз пахтаи хом зиёд аст. Хом: ${totalRawCottonWeight.toStringAsFixed(1)} кг, Коркардшуда: ${totalProcessedWeight.toStringAsFixed(1)} кг';
+    }
+
+    return null; // No validation errors
+  }
+
   Future<void> _saveProcessing() async {
     if (!_formKey.currentState!.validate()) return;
     if (outputBatches.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ягон баста илова накардаед')),
+      );
+      return;
+    }
+
+    // Validate warehouse availability before processing
+    final validationResult = await _validateWarehouseAvailability();
+    if (validationResult != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ $validationResult'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
       );
       return;
     }

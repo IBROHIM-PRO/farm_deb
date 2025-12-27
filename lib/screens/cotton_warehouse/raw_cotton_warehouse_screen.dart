@@ -82,7 +82,7 @@ class RawCottonWarehouseScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildSummaryItem(
-                'Қисматҳо',
+                'Миқдори умумӣ',
                 '${rawSummary['totalPieces']} дона',
                 Colors.white,
               ),
@@ -209,22 +209,12 @@ class RawCottonWarehouseScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 if (hasInventory) ...[
                   Text(
-                    '${inventory!.pieces} қисмат • ${inventory.totalWeight.toStringAsFixed(1)} кг',
+                    '${inventory!.pieces} дона • ${inventory.totalWeight.toStringAsFixed(1)} кг',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[700],
                     ),
-                  ),
-                  if (inventory.averageWeightPerPiece > 0) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      'Миёна: ${inventory.averageWeightPerPiece.toStringAsFixed(1)} кг/қисмат',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                  ],
+                  ),                
                 ] else ...[
                   Text(
                     'Холӣ',
