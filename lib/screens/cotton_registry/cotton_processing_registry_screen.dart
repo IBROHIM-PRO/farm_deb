@@ -257,27 +257,7 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
                     ),
                   ),
                 ],
-              ),
-              
-              const SizedBox(height: 12),
-              
-              // Linked Purchase Info
-              if (linkedPurchase != null)
-                Row(
-                  children: [
-                    const Icon(Icons.link, size: 16, color: Colors.blue),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        'Аз хариди ${linkedPurchase.supplierName}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              ),                            
               
               const SizedBox(height: 8),
               
@@ -386,26 +366,7 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
                     ],
                   ),
                 ],
-              ),
-              
-              // Output Batches Count
-              if (outputs.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.inventory, size: 12, color: Colors.green),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${outputs.length} донаи баста тайёр шуд',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              ),                            
             ],
           ),
         ),
@@ -538,7 +499,7 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
               const SizedBox(height: 4),
               ...outputs.map((output) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Text('• ${output.cottonTypeDisplay}: ${output.unitsDisplay} × ${output.batchWeightDisplay}'),
+                child: Text('• Коркард: ${output.unitsDisplay} × ${output.batchWeightDisplay}'),
               )),
               
               if (processing.notes != null) ...[

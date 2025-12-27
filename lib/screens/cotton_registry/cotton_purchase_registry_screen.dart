@@ -102,7 +102,7 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
           Expanded(
             child: _buildSummaryCard(
               'Ҳамагӣ харч',
-              '${(stats['totalPurchaseCost'] as num?)?.toDouble()?.toStringAsFixed(0) ?? '0'} сомонӣ',
+              '${(stats['totalPurchaseCost'] as num?)?.toDouble()?.toStringAsFixed(0) ?? '0'} с',
               Colors.green,
             ),
           ),

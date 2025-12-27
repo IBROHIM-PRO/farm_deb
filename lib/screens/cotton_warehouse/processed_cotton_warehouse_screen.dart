@@ -64,21 +64,7 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.inventory_2, color: Colors.white, size: 32),
-              const SizedBox(width: 12),
-              Text(
-                'Пахтаи коркардшуда',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
+        children: [          
           const SizedBox(height: 16),
           if (hasCotton) ...[
             Row(
