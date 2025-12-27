@@ -124,6 +124,11 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
   Widget _buildInventoryDetails(BuildContext context, CottonWarehouseProvider provider) {
     final inventory = provider.processedCottonInventory;
     
+    // Categorize inventory by weight ranges
+    final standardCargo = inventory.where((batch) => batch.totalWeight >= 10 && batch.totalWeight <= 50).toList();
+    final heavyCargo = inventory.where((batch) => batch.totalWeight > 50).toList();
+    final otherCargo = inventory.where((batch) => batch.totalWeight < 10).toList();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -160,10 +165,36 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
         
         if (inventory.isEmpty) 
           _buildEmptyState()
-        else
-          ...inventory.asMap().entries.map((entry) => 
-            _buildInventoryBatch(context, entry.value, entry.key + 1)
-          ),
+        else ...[
+          // Standard cargo section (10-50kg)
+          if (standardCargo.isNotEmpty) ...[
+            _buildWeightCategoryHeader('Боргирии стандартӣ (10-50 кг)', standardCargo.length, Colors.green),
+            const SizedBox(height: 12),
+            ...standardCargo.asMap().entries.map((entry) => 
+              _buildStandardInventoryBatch(context, entry.value, entry.key + 1)
+            ),
+            const SizedBox(height: 20),
+          ],
+          
+          // Heavy cargo section (>50kg)
+          if (heavyCargo.isNotEmpty) ...[
+            _buildWeightCategoryHeader('Боргирии вазнин (>50 кг)', heavyCargo.length, Colors.orange),
+            const SizedBox(height: 12),
+            ...heavyCargo.asMap().entries.map((entry) => 
+              _buildHeavyInventoryBatch(context, entry.value, entry.key + 1)
+            ),
+            const SizedBox(height: 20),
+          ],
+          
+          // Other cargo section (<10kg)
+          if (otherCargo.isNotEmpty) ...[
+            _buildWeightCategoryHeader('Боргирии хурд (<10 кг)', otherCargo.length, Colors.grey),
+            const SizedBox(height: 12),
+            ...otherCargo.asMap().entries.map((entry) => 
+              _buildStandardInventoryBatch(context, entry.value, entry.key + 1)
+            ),
+          ],
+        ],
       ],
     );
   }
@@ -207,7 +238,46 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInventoryBatch(BuildContext context, dynamic batch, int batchNumber) {
+  Widget _buildWeightCategoryHeader(String title, int count, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color.shade800,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '$count дона',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStandardInventoryBatch(BuildContext context, dynamic batch, int batchNumber) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -278,7 +348,7 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'Мавҷуд',
+                  'Стандартӣ',
                   style: TextStyle(
                     color: Colors.green[800],
                     fontSize: 12,
@@ -312,6 +382,144 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
               ),
             ],
           ),                                        
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeavyInventoryBatch(BuildContext context, dynamic batch, int batchNumber) {
+    // Calculate increased quantity for heavy cargo (over 50kg)
+    final baseQuantity = batch.pieces;
+    final weightFactor = (batch.totalWeight / 50).ceil(); // Increase factor based on weight
+    final increasedQuantity = baseQuantity * weightFactor;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.orange[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '#$batchNumber',
+                        style: TextStyle(
+                          color: Colors.orange[800],
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                       '${batch.totalWeight.toStringAsFixed(1)} кг',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        _formatDate(batch.lastUpdated),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.orange[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Вазнин',
+                  style: TextStyle(
+                    color: Colors.orange[800],
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Heavy batch details with increased quantity
+          Row(
+            children: [
+              Expanded(
+                child: _buildDetailItem(
+                  Icons.apps,
+                  'Дона (Аслӣ)',
+                  '${batch.pieces} дона',
+                  Colors.blue,
+                ),
+              ),
+              Expanded(
+                child: _buildDetailItem(
+                  Icons.trending_up,
+                  'Дона (Афзуд)',
+                  '$increasedQuantity дона',
+                  Colors.orange,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 12),
+          
+          Row(
+            children: [
+              Expanded(
+                child: _buildDetailItem(
+                  Icons.scale,
+                  'Вазни умумӣ',
+                  '${batch.totalWeight.toStringAsFixed(1)} кг',
+                  Colors.green,
+                ),
+              ),
+              Expanded(
+                child: _buildDetailItem(
+                  Icons.assessment,
+                  'Коэффитсиент',
+                  'x${weightFactor}',
+                  Colors.purple,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
