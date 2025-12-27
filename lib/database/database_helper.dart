@@ -49,7 +49,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path, 
-      version: 7,  // Incremented for Registry-based design
+      version: 8,  // Incremented for Cotton Warehouse tables
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -391,6 +391,43 @@ class DatabaseHelper {
       await db.execute('CREATE INDEX idx_cotton_inventory_type_batch ON cotton_inventory (cottonType, batchSize)');
       await db.execute('CREATE INDEX idx_cotton_traceability_code ON cotton_traceability (traceabilityCode)');
       await db.execute('CREATE INDEX idx_cotton_traceability_status ON cotton_traceability (status)');
+    }
+    
+    if (oldVersion < 8) {
+      // Create Cotton Warehouse Tables
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS raw_cotton_warehouse (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          cottonType TEXT NOT NULL,
+          pieces INTEGER NOT NULL DEFAULT 0,
+          totalWeight REAL NOT NULL DEFAULT 0.0,
+          lastUpdated TEXT NOT NULL,
+          notes TEXT DEFAULT ''
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS processed_cotton_warehouse (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          pieces INTEGER NOT NULL DEFAULT 0,
+          totalWeight REAL NOT NULL DEFAULT 0.0,
+          weightPerPiece REAL NOT NULL DEFAULT 25.0,
+          lastUpdated TEXT NOT NULL,
+          notes TEXT DEFAULT '',
+          batchNumber TEXT
+        )
+      ''');
+
+      // Create indexes for warehouse tables
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_raw_cotton_type 
+        ON raw_cotton_warehouse (cottonType)
+      ''');
+
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_processed_cotton_date 
+        ON processed_cotton_warehouse (lastUpdated DESC)
+      ''');
     }
   }
 

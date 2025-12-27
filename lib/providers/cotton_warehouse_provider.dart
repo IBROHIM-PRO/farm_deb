@@ -14,6 +14,57 @@ class CottonWarehouseProvider extends ChangeNotifier {
   List<ProcessedCottonWarehouse> _processedCottonInventory = [];
   
   bool _isLoading = false;
+  bool _tablesInitialized = false;
+
+  /// Constructor - ensure tables exist on provider creation
+  CottonWarehouseProvider() {
+    _initializeTables();
+  }
+
+  /// Initialize tables when provider is created
+  void _initializeTables() async {
+    if (_tablesInitialized) return;
+    
+    try {
+      await _createTablesSync();
+      _tablesInitialized = true;
+      debugPrint('✅ Cotton warehouse tables initialized in constructor');
+    } catch (e) {
+      debugPrint('❌ Error initializing cotton warehouse tables in constructor: $e');
+    }
+  }
+
+  /// Create tables synchronously  
+  Future<void> _createTablesSync() async {
+    final db = await _dbHelper.database;
+    
+    debugPrint('🔄 Creating cotton warehouse tables synchronously...');
+    
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS raw_cotton_warehouse (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cottonType TEXT NOT NULL,
+        pieces INTEGER NOT NULL DEFAULT 0,
+        totalWeight REAL NOT NULL DEFAULT 0.0,
+        lastUpdated TEXT NOT NULL,
+        notes TEXT DEFAULT ''
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS processed_cotton_warehouse (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pieces INTEGER NOT NULL DEFAULT 0,
+        totalWeight REAL NOT NULL DEFAULT 0.0,
+        weightPerPiece REAL NOT NULL DEFAULT 25.0,
+        lastUpdated TEXT NOT NULL,
+        notes TEXT DEFAULT '',
+        batchNumber TEXT
+      )
+    ''');
+
+    debugPrint('✅ Cotton warehouse tables created synchronously');
+  }
 
   // Getters
   List<RawCottonWarehouse> get rawCottonInventory => _rawCottonInventory;
@@ -66,32 +117,168 @@ class CottonWarehouseProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Ensure cotton warehouse tables exist in database
+  Future<void> ensureCottonWarehouseTables() async {
+    debugPrint('🔄 Starting cotton warehouse table creation...');
+    try {
+      final db = await _dbHelper.database;
+      debugPrint('🔄 Database connection obtained');
+      
+      // Create raw cotton warehouse table
+      debugPrint('🔄 Creating raw_cotton_warehouse table...');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS raw_cotton_warehouse (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          cottonType TEXT NOT NULL,
+          pieces INTEGER NOT NULL DEFAULT 0,
+          totalWeight REAL NOT NULL DEFAULT 0.0,
+          lastUpdated TEXT NOT NULL,
+          notes TEXT DEFAULT ''
+        )
+      ''');
+      debugPrint('✅ Raw cotton warehouse table created');
+
+      // Create processed cotton warehouse table
+      debugPrint('🔄 Creating processed_cotton_warehouse table...');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS processed_cotton_warehouse (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          pieces INTEGER NOT NULL DEFAULT 0,
+          totalWeight REAL NOT NULL DEFAULT 0.0,
+          weightPerPiece REAL NOT NULL DEFAULT 25.0,
+          lastUpdated TEXT NOT NULL,
+          notes TEXT DEFAULT '',
+          batchNumber TEXT
+        )
+      ''');
+      debugPrint('✅ Processed cotton warehouse table created');
+
+      // Create indexes
+      debugPrint('🔄 Creating indexes...');
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_raw_cotton_type 
+        ON raw_cotton_warehouse (cottonType)
+      ''');
+
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_processed_cotton_date 
+        ON processed_cotton_warehouse (lastUpdated DESC)
+      ''');
+      
+      debugPrint('✅ Cotton warehouse tables and indexes created successfully');
+    } catch (e) {
+      debugPrint('❌ Error creating cotton warehouse tables: $e');
+      debugPrint('❌ Stack trace: ${StackTrace.current}');
+      rethrow;
+    }
+  }
+
   /// Load all warehouse data
   Future<void> loadAllData() async {
+    debugPrint('🔄 CottonWarehouseProvider.loadAllData() started');
     _setLoading(true);
     try {
-      await Future.wait([
-        loadRawCottonInventory(),
-        loadProcessedCottonInventory(),
-      ]);
+      // Create tables synchronously BEFORE any other operations
+      final db = await _dbHelper.database;
+      
+      debugPrint('🔄 Creating raw cotton warehouse table...');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS raw_cotton_warehouse (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          cottonType TEXT NOT NULL,
+          pieces INTEGER NOT NULL DEFAULT 0,
+          totalWeight REAL NOT NULL DEFAULT 0.0,
+          lastUpdated TEXT NOT NULL,
+          notes TEXT DEFAULT ''
+        )
+      ''');
+      
+      debugPrint('🔄 Creating processed cotton warehouse table...');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS processed_cotton_warehouse (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          pieces INTEGER NOT NULL DEFAULT 0,
+          totalWeight REAL NOT NULL DEFAULT 0.0,
+          weightPerPiece REAL NOT NULL DEFAULT 25.0,
+          lastUpdated TEXT NOT NULL,
+          notes TEXT DEFAULT '',
+          batchNumber TEXT
+        )
+      ''');
+      
+      debugPrint('✅ Cotton warehouse tables created, now loading data...');
+      
+      // Load raw cotton data
+      final rawMaps = await db.query('raw_cotton_warehouse', orderBy: 'cottonType ASC');
+      _rawCottonInventory = rawMaps.map((map) => RawCottonWarehouse.fromMap(map)).toList();
+      
+      // Load processed cotton data
+      final processedMaps = await db.query('processed_cotton_warehouse', orderBy: 'lastUpdated DESC');
+      _processedCottonInventory = processedMaps.map((map) => ProcessedCottonWarehouse.fromMap(map)).toList();
+      
+      debugPrint('✅ Cotton warehouse loaded: ${_rawCottonInventory.length} raw, ${_processedCottonInventory.length} processed');
+    } catch (e) {
+      debugPrint('❌ Error in CottonWarehouseProvider.loadAllData(): $e');
+      _rawCottonInventory = [];
+      _processedCottonInventory = [];
     } finally {
       _setLoading(false);
+      notifyListeners();
     }
   }
 
   /// Load raw cotton warehouse inventory
   Future<void> loadRawCottonInventory() async {
-    final db = await _dbHelper.database;
-    final maps = await db.query('raw_cotton_warehouse', orderBy: 'cottonType ASC');
-    _rawCottonInventory = maps.map((map) => RawCottonWarehouse.fromMap(map)).toList();
+    try {
+      final db = await _dbHelper.database;
+      
+      // Ensure table exists before querying
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS raw_cotton_warehouse (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          cottonType TEXT NOT NULL,
+          pieces INTEGER NOT NULL DEFAULT 0,
+          totalWeight REAL NOT NULL DEFAULT 0.0,
+          lastUpdated TEXT NOT NULL,
+          notes TEXT DEFAULT ''
+        )
+      ''');
+      
+      final maps = await db.query('raw_cotton_warehouse', orderBy: 'cottonType ASC');
+      _rawCottonInventory = maps.map((map) => RawCottonWarehouse.fromMap(map)).toList();
+      debugPrint('✅ Raw cotton warehouse loaded: ${_rawCottonInventory.length} items');
+    } catch (e) {
+      debugPrint('❌ Error loading raw cotton warehouse: $e');
+      _rawCottonInventory = []; // Ensure we have an empty list on error
+    }
     notifyListeners();
   }
 
   /// Load processed cotton warehouse inventory
   Future<void> loadProcessedCottonInventory() async {
-    final db = await _dbHelper.database;
-    final maps = await db.query('processed_cotton_warehouse', orderBy: 'lastUpdated DESC');
-    _processedCottonInventory = maps.map((map) => ProcessedCottonWarehouse.fromMap(map)).toList();
+    try {
+      final db = await _dbHelper.database;
+      
+      // Ensure table exists before querying
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS processed_cotton_warehouse (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          pieces INTEGER NOT NULL DEFAULT 0,
+          totalWeight REAL NOT NULL DEFAULT 0.0,
+          weightPerPiece REAL NOT NULL DEFAULT 25.0,
+          lastUpdated TEXT NOT NULL,
+          notes TEXT DEFAULT '',
+          batchNumber TEXT
+        )
+      ''');
+      
+      final maps = await db.query('processed_cotton_warehouse', orderBy: 'lastUpdated DESC');
+      _processedCottonInventory = maps.map((map) => ProcessedCottonWarehouse.fromMap(map)).toList();
+      debugPrint('✅ Processed cotton warehouse loaded: ${_processedCottonInventory.length} items');
+    } catch (e) {
+      debugPrint('❌ Error loading processed cotton warehouse: $e');
+      _processedCottonInventory = []; // Ensure we have an empty list on error
+    }
     notifyListeners();
   }
 

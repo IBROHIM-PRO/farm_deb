@@ -18,13 +18,15 @@ class DataPersistenceManager {
     _isLoading = true;
     
     try {
-      // Load all providers in parallel for better performance
+      // Initialize cotton warehouse provider first (sequential to avoid database conflicts)
+      await _initializeProvider(() => context.read<CottonWarehouseProvider>().loadAllData(), 'CottonWarehouseProvider');
+      
+      // Load other providers in parallel for better performance
       await Future.wait([
         _initializeProvider(() => context.read<AppProvider>().loadAllData(), 'AppProvider'),
         _initializeProvider(() => context.read<HistoryProvider>().loadAllHistory(), 'HistoryProvider'),
         _initializeProvider(() => context.read<CattleRegistryProvider>().loadAllData(), 'CattleRegistryProvider'),
         _initializeProvider(() => context.read<CottonRegistryProvider>().loadAllData(), 'CottonRegistryProvider'),
-        _initializeProvider(() => context.read<CottonWarehouseProvider>().loadAllData(), 'CottonWarehouseProvider'),
       ]);
       
       _isInitialized = true;
