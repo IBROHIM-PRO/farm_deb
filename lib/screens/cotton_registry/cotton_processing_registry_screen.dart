@@ -23,7 +23,7 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Реестри коркарди пахта'),
+        title: const Text('Коркарди пахта'),
         elevation: 0,
         backgroundColor: Colors.purple,
         foregroundColor: Colors.white,
@@ -578,18 +578,13 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
               const Text('1. Се навъи пахта (Линт + Улук + Валакно):', style: TextStyle(fontWeight: FontWeight.bold)),
               const Text('• Линт ва Улук якҷоя ҳисоб мешаванд'),
               const Text('• Валакно автоматӣ ҳисоб карда мешавад'),
-              const Text('• Нисбат: (Линт + Улук) ≈ 2, Валакно ≈ 0.5'),
+              const Text('• Нисбат: (Линт + Улук) ≈ 1тона, Валакно ≈ 250 кило'),
               const SizedBox(height: 8),
               
               const Text('2. Ду навъи пахта:', style: TextStyle(fontWeight: FontWeight.bold)),
               const Text('• (Линт ё Улук) + Валакно'),
-              const Text('• Нисбат: Асосӣ ≈ 2, Валакно ≈ 1'),
-              const SizedBox(height: 8),
-              
-              const Text('3. Як навъи пахта:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const Text('• Танҳо Линт ё Улук'),
-              const Text('• Нисбати асосӣ: 1 → 0.5'),
-              const SizedBox(height: 12),
+              const Text('• Нисбат: Асосӣ ≈ 1 тона, Валакно ≈ 500 кило'),
+              const SizedBox(height: 8),                           
               
               const Text(
                 'Эзоҳ: Системаи автоматӣ нисбатҳоро ҳисоб мекунад, аммо шумо метавонед дастӣ тағйир диҳед.',
