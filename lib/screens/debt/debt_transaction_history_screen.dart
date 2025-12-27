@@ -220,7 +220,7 @@ class _DebtTransactionHistoryScreenState
             title: Text(entry.description),
             subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(entry.date)),
             trailing: Text(
-              '${entry.isPayment ? '-' : '+'}${entry.amount.toStringAsFixed(2)} ${entry.currency}',
+              '${entry.isPayment ? '-' : '+'}${entry.amount.toStringAsFixed(3)} ${entry.currency}',
               style: TextStyle(
                 color: entry.isPayment ? Colors.red : Colors.green,
                 fontWeight: FontWeight.bold,

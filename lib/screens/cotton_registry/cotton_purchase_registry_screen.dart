@@ -24,7 +24,7 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Реестри харидании пахта'),
+        title: const Text('Харидани пахта'),
         elevation: 0,
         actions: [
           IconButton(
@@ -214,35 +214,6 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
                         color: Colors.green,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  
-                  const Spacer(),
-                  
-                  Text(
-                    '${items.length} навъи пахта',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 12),
-              
-              // Supplier Name
-              Row(
-                children: [
-                  const Icon(Icons.person, size: 16, color: Colors.blue),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      purchase.supplierName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
