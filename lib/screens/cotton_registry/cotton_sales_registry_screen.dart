@@ -382,7 +382,7 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
           children: [
             Row(
               children: [
-                const Icon(Icons.calculator, color: Colors.teal),
+                const Icon(Icons.calculate, color: Colors.teal),
                 const SizedBox(width: 8),
                 const Text(
                   'Ҳисобот',

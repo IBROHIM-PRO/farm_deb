@@ -13,7 +13,7 @@ class CottonStockMainScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cotton Stock Management'),
+        title: const Text('Идоракунии захираи пахта'),
         centerTitle: true,
       ),
       body: Padding(
@@ -25,8 +25,8 @@ class CottonStockMainScreen extends StatelessWidget {
           children: [
             _buildModuleCard(
               context,
-              'Stock Overview',
-              'View current cotton stock levels by type',
+              'Мурорҷоии захира',
+              'Нишон додани миқдори пахта аз рӯи навъ',
               Icons.inventory,
               Colors.blue,
               () => Navigator.push(
@@ -36,8 +36,8 @@ class CottonStockMainScreen extends StatelessWidget {
             ),
             _buildModuleCard(
               context,
-              'Purchase Registry',
-              'Record cotton purchases from suppliers',
+              'Реестри харид',
+              'Сабти харидани пахта аз таъминкунандагон',
               Icons.add_box,
               Colors.green,
               () => Navigator.push(
@@ -47,8 +47,8 @@ class CottonStockMainScreen extends StatelessWidget {
             ),
             _buildModuleCard(
               context,
-              'Inventory Status',
-              'View processed cotton inventory levels',
+              'Вазъияти захира',
+              'Дидани миқдори пахтаи коркардшуда',
               Icons.warehouse,
               Colors.orange,
               () => Navigator.push(
@@ -58,8 +58,8 @@ class CottonStockMainScreen extends StatelessWidget {
             ),
             _buildModuleCard(
               context,
-              'Processing',
-              'Cotton processing registry with auto calculations',
+              'Коркард',
+              'Реестри коркарди пахта бо ҳисоботи автоматӣ',
               Icons.settings,
               Colors.purple,
               () => Navigator.push(
@@ -69,8 +69,8 @@ class CottonStockMainScreen extends StatelessWidget {
             ),
             _buildModuleCard(
               context,
-              'Sales Registry',
-              'Sell processed cotton with inventory tracking',
+              'Реестри фурӯш',
+              'Фурӯши пахтаи коркардшуда бо пайгирии захира',
               Icons.shopping_cart,
               Colors.teal,
               () => Navigator.push(

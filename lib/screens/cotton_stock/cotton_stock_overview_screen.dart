@@ -34,7 +34,7 @@ class _CottonStockOverviewScreenState extends State<CottonStockOverviewScreen> {
       setState(() => isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading data: $e')),
+          SnackBar(content: Text('Хатогӣ дар боркунии маълумот: $e')),
         );
       }
     }
@@ -44,7 +44,7 @@ class _CottonStockOverviewScreenState extends State<CottonStockOverviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cotton Stock Overview'),
+        title: const Text('Мурорҷоии захираи пахта'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -63,7 +63,7 @@ class _CottonStockOverviewScreenState extends State<CottonStockOverviewScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Current Stock Levels',
+                      'Сатҳи ҳозираи захира',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -138,13 +138,13 @@ class _CottonStockOverviewScreenState extends State<CottonStockOverviewScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${totalWeight.toStringAsFixed(1)} kg • $totalUnits units',
+                      '${totalWeight.toStringAsFixed(1)} кг • $totalUnits дона',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.grey[600],
                       ),
                     ),
                     Text(
-                      '$batchCount batch${batchCount != 1 ? 'es' : ''} available',
+                      '$batchCount баста мавҷуд аст',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.grey[500],
                       ),
@@ -172,14 +172,14 @@ class _CottonStockOverviewScreenState extends State<CottonStockOverviewScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No Cotton Stock Available',
+              'Захираи пахта мавҷуд нест',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Colors.grey[600],
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Add cotton batches to see stock levels here',
+              'Бастаҳои пахта илова кунед то сатҳи захираро дар ин ҷо бинед',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Colors.grey[500],
               ),
@@ -196,7 +196,7 @@ class _CottonStockOverviewScreenState extends State<CottonStockOverviewScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Cotton Types & Base Prices',
+          'Навъҳои пахта ва нархҳои асосӣ',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -213,7 +213,7 @@ class _CottonStockOverviewScreenState extends State<CottonStockOverviewScreen> {
               ),
             ),
             title: Text(type.name),
-            subtitle: Text('Base price: ${type.pricePerKg.toStringAsFixed(2)} TJS/kg'),
+            subtitle: Text('Нархи асосӣ: ${type.pricePerKg.toStringAsFixed(2)} сомонӣ/кг'),
             trailing: IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () => _editCottonType(type),
@@ -226,7 +226,7 @@ class _CottonStockOverviewScreenState extends State<CottonStockOverviewScreen> {
           child: ElevatedButton.icon(
             onPressed: _addCottonType,
             icon: const Icon(Icons.add),
-            label: const Text('Add Cotton Type'),
+            label: const Text('Илова кардани навъи пахта'),
           ),
         ),
       ],
@@ -263,22 +263,22 @@ class _CottonStockOverviewScreenState extends State<CottonStockOverviewScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(type == null ? 'Add Cotton Type' : 'Edit Cotton Type'),
+        title: Text(type == null ? 'Илова кардани навъи пахта' : 'Тағйири навъи пахта'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
               decoration: const InputDecoration(
-                labelText: 'Cotton Type Name',
-                hintText: 'e.g., Lint, Uluk, Valakno',
+                labelText: 'Номи навъи пахта',
+                hintText: 'мисол: Линт, Улук, Валакно',
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: priceController,
               decoration: const InputDecoration(
-                labelText: 'Base Price per Kg (TJS)',
+                labelText: 'Нархи асосӣ барои як кг (сомонӣ)',
               ),
               keyboardType: TextInputType.number,
             ),
@@ -287,11 +287,11 @@ class _CottonStockOverviewScreenState extends State<CottonStockOverviewScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Бекор кардан'),
           ),
           ElevatedButton(
             onPressed: () => _saveCottonType(type, nameController.text, priceController.text),
-            child: Text(type == null ? 'Add' : 'Update'),
+            child: Text(type == null ? 'Илова кардан' : 'Навсозӣ'),
           ),
         ],
       ),
@@ -301,7 +301,7 @@ class _CottonStockOverviewScreenState extends State<CottonStockOverviewScreen> {
   Future<void> _saveCottonType(CottonType? existingType, String name, String priceText) async {
     if (name.trim().isEmpty || priceText.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
+        const SnackBar(content: Text('Лутфан ҳамаи майдонҳоро пур кунед')),
       );
       return;
     }
@@ -309,7 +309,7 @@ class _CottonStockOverviewScreenState extends State<CottonStockOverviewScreen> {
     final price = double.tryParse(priceText);
     if (price == null || price <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid price')),
+        const SnackBar(content: Text('Лутфан нархи дурустро ворид кунед')),
       );
       return;
     }
@@ -332,12 +332,12 @@ class _CottonStockOverviewScreenState extends State<CottonStockOverviewScreen> {
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(existingType == null ? 'Cotton type added' : 'Cotton type updated'),
+          content: Text(existingType == null ? 'Навъи пахта илова карда шуд' : 'Навъи пахта навсозӣ карда шуд'),
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text('Хатогӣ: $e')),
       );
     }
   }
