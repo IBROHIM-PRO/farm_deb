@@ -128,26 +128,107 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Supplier Name
-        TextFormField(
-          controller: _supplierController,
-          decoration: InputDecoration(
-            labelText: 'Номи таъминкунанда',
-            prefixIcon: const Icon(Icons.person, color: Colors.green),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            filled: true,
-            fillColor: Colors.grey[50],
-            hintText: 'Номи таъминкунандаро дарҷ кунед',
-          ),
-          keyboardType: TextInputType.text,
-          textCapitalization: TextCapitalization.words,
-          validator: (value) {
-            if (value?.trim().isEmpty == true) {
-              return 'Номи таъминкунанда зарур аст';
+        // Supplier Name with Autocomplete
+        Autocomplete<String>(
+          initialValue: TextEditingValue(text: _supplierController.text),
+          optionsBuilder: (TextEditingValue textEditingValue) async {
+            if (textEditingValue.text.isEmpty) {
+              return await context.read<CottonRegistryProvider>().getSupplierNames();
             }
-            return null;
+            return await context.read<CottonRegistryProvider>().getSupplierNames(
+              searchQuery: textEditingValue.text,
+            );
+          },
+          onSelected: (String selection) {
+            _supplierController.text = selection;
+          },
+          fieldViewBuilder: (
+            BuildContext context,
+            TextEditingController fieldTextEditingController,
+            FocusNode fieldFocusNode,
+            VoidCallback onFieldSubmitted,
+          ) {
+            // Sync with our main controller
+            fieldTextEditingController.addListener(() {
+              _supplierController.text = fieldTextEditingController.text;
+            });
+            
+            return TextFormField(
+              controller: fieldTextEditingController,
+              focusNode: fieldFocusNode,
+              decoration: InputDecoration(
+                labelText: 'Номи таъминкунанда',
+                prefixIcon: const Icon(Icons.person, color: Colors.green),
+                suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.green),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: Colors.grey[50],
+                hintText: 'Номи таъминкунандаро дарҷ кунед ё интихоб кунед',
+              ),
+              keyboardType: TextInputType.text,
+              textCapitalization: TextCapitalization.words,
+              validator: (value) {
+                if (value?.trim().isEmpty == true) {
+                  return 'Номи таъминкунанда зарур аст';
+                }
+                return null;
+              },
+              onFieldSubmitted: (value) => onFieldSubmitted(),
+            );
+          },
+          optionsViewBuilder: (
+            BuildContext context,
+            AutocompleteOnSelected<String> onSelected,
+            Iterable<String> options,
+          ) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4.0,
+                child: Container(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final String option = options.elementAt(index);
+                      return InkWell(
+                        onTap: () => onSelected(option),
+                        child: Container(
+                          padding: const EdgeInsets.all(16.0),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: Colors.grey.withOpacity(0.2),
+                                width: 1,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.person, 
+                                color: Colors.green, 
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  option,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
           },
         ),
       ],

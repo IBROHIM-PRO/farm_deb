@@ -102,18 +102,13 @@ class CottonRegistryProvider with ChangeNotifier {
     required CottonPurchaseRegistry registry,
     required List<CottonPurchaseItem> items,
   }) async {
-    final db = await _dbHelper.database;
+    // Use the new database helper method
+    final purchaseId = await _dbHelper.addCottonPurchaseRegistry(registry, items);
     
-    final purchaseId = await db.transaction((txn) async {
-      // Add master purchase record
-      final purchaseId = await txn.insert('cotton_purchase_registry', registry.toMap());
-      
-      // Add all cotton type items
+    // Create traceability records for each cotton type
+    final db = await _dbHelper.database;
+    await db.transaction((txn) async {
       for (final item in items) {
-        final itemWithPurchaseId = item.copyWith(purchaseId: purchaseId);
-        await txn.insert('cotton_purchase_items', itemWithPurchaseId.toMap());
-        
-        // Create traceability record for each cotton type
         final traceabilityCode = CottonTraceability.generateTraceabilityCode(
           item.cottonType, 
           registry.purchaseDate
@@ -131,8 +126,6 @@ class CottonRegistryProvider with ChangeNotifier {
         
         await txn.insert('cotton_traceability', traceability.toMap());
       }
-      
-      return purchaseId;
     });
     
     // Transfer purchased cotton to warehouse inventory
@@ -227,6 +220,11 @@ Future<String?> transferAllExistingPurchasesToWarehouse() async {
       'totalCost': totalCost,
       'grandTotal': grandTotal,
     };
+  }
+
+  /// Get supplier names for autocomplete with search functionality
+  Future<List<String>> getSupplierNames({String? searchQuery}) async {
+    return await _dbHelper.getSupplierNames(searchQuery: searchQuery);
   }
 
   // ============ COTTON PROCESSING OPERATIONS ============

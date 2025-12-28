@@ -883,6 +883,49 @@ class DatabaseHelper {
   Future<int> updateCottonStockSale(CottonStockSale s) async => (await database).update('cotton_stock_sales', s.toMap(), where: 'id = ?', whereArgs: [s.id]);
   Future<int> deleteCottonStockSale(int id) async => (await database).delete('cotton_stock_sales', where: 'id = ?', whereArgs: [id]);
 
+  // Cotton Purchase Registry CRUD Operations
+  Future<int> addCottonPurchaseRegistry(CottonPurchaseRegistry registry, List<CottonPurchaseItem> items) async {
+    final db = await database;
+    return await db.transaction((txn) async {
+      // Insert registry
+      final registryId = await txn.insert('cotton_purchase_registry', registry.toMap());
+      
+      // Insert items
+      for (final item in items) {
+        await txn.insert('cotton_purchase_items', item.copyWith(purchaseId: registryId).toMap());
+      }
+      
+      return registryId;
+    });
+  }
+
+  Future<List<CottonPurchaseRegistry>> getAllCottonPurchaseRegistries() async {
+    final maps = await (await database).query('cotton_purchase_registry', orderBy: 'purchaseDate DESC');
+    return maps.map((map) => CottonPurchaseRegistry.fromMap(map)).toList();
+  }
+
+  Future<List<CottonPurchaseItem>> getCottonPurchaseItemsByRegistry(int registryId) async {
+    final maps = await (await database).query('cotton_purchase_items', 
+        where: 'purchaseId = ?', whereArgs: [registryId], orderBy: 'id');
+    return maps.map((map) => CottonPurchaseItem.fromMap(map)).toList();
+  }
+
+  Future<List<String>> getSupplierNames({String? searchQuery}) async {
+    final db = await database;
+    String query = 'SELECT DISTINCT supplierName FROM cotton_purchase_registry';
+    List<dynamic> args = [];
+    
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      query += ' WHERE supplierName LIKE ?';
+      args.add('%$searchQuery%');
+    }
+    
+    query += ' ORDER BY supplierName ASC';
+    
+    final result = await db.rawQuery(query, args);
+    return result.map((row) => row['supplierName'] as String).toList();
+  }
+
   // Cotton Stock Statistics
   Future<Map<String, dynamic>> getCottonStockSummary() async {
     final r = await (await database).rawQuery('''
