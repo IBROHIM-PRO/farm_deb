@@ -49,14 +49,38 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path, 
-      version: 1,  // Reset to version 1 - complete database rebuild
+      version: 2,  // Updated to version 2 to remove UNIQUE constraint from cotton_types.name
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    // No migrations needed - starting fresh from version 1
+    if (oldVersion < 2) {
+      // Remove UNIQUE constraint from cotton_types.name field
+      // SQLite doesn't support ALTER TABLE DROP CONSTRAINT, so we need to recreate the table
+      
+      // Create temporary table without UNIQUE constraint
+      await db.execute('''
+        CREATE TABLE cotton_types_temp (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          pricePerKg REAL NOT NULL
+        )
+      ''');
+      
+      // Copy data from old table to new table
+      await db.execute('''
+        INSERT INTO cotton_types_temp (id, name, pricePerKg)
+        SELECT id, name, pricePerKg FROM cotton_types
+      ''');
+      
+      // Drop old table
+      await db.execute('DROP TABLE cotton_types');
+      
+      // Rename temp table to original name
+      await db.execute('ALTER TABLE cotton_types_temp RENAME TO cotton_types');
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -279,7 +303,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE cotton_types (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
         pricePerKg REAL NOT NULL
       )
     ''');
