@@ -124,10 +124,26 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
   Widget _buildInventoryDetails(BuildContext context, CottonWarehouseProvider provider) {
     final inventory = provider.processedCottonInventory;
     
-    // Categorize inventory by weight ranges
-    final standardCargo = inventory.where((batch) => batch.totalWeight >= 10 && batch.totalWeight <= 50).toList();
-    final heavyCargo = inventory.where((batch) => batch.totalWeight > 50).toList();
-    final otherCargo = inventory.where((batch) => batch.totalWeight < 10).toList();
+    // Define allowed weight categories (10-50kg in 5kg increments)
+    final allowedWeights = [10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0];
+    
+    // Filter and group inventory by exact weight categories
+    final Map<double, List<dynamic>> groupedByWeight = {};
+    
+    for (final batch in inventory) {
+      // Find the closest allowed weight (within 2.5kg tolerance)
+      final double? matchingWeight = allowedWeights.firstWhere(
+        (weight) => (batch.totalWeight - weight).abs() <= 2.5,
+        orElse: () => -1.0,
+      );
+      
+      if (matchingWeight != -1.0) {
+        groupedByWeight.putIfAbsent(matchingWeight, () => []).add(batch);
+      }
+    }
+    
+    // Sort weight categories
+    final sortedWeights = groupedByWeight.keys.toList()..sort();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,7 +159,7 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
                 color: Colors.grey[800],
               ),
             ),
-            if (inventory.isNotEmpty)
+            if (groupedByWeight.isNotEmpty)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -151,7 +167,7 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '${inventory.length} Намуд',
+                  '${sortedWeights.length} Намуд',
                   style: TextStyle(
                     color: Colors.blue[800],
                     fontSize: 12,
@@ -163,39 +179,157 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         
-        if (inventory.isEmpty) 
+        if (groupedByWeight.isEmpty) 
           _buildEmptyState()
         else ...[
-          // Standard cargo section (10-50kg)
-          if (standardCargo.isNotEmpty) ...[
-            _buildWeightCategoryHeader('Боргирии стандартӣ (10-50 кг)', standardCargo.length, Colors.green),
-            const SizedBox(height: 12),
-            ...standardCargo.asMap().entries.map((entry) => 
-              _buildStandardInventoryBatch(context, entry.value, entry.key + 1)
-            ),
-            const SizedBox(height: 20),
-          ],
-          
-          // Heavy cargo section (>50kg)
-          if (heavyCargo.isNotEmpty) ...[
-            _buildWeightCategoryHeader('Боргирии вазнин (>50 кг)', heavyCargo.length, Colors.orange),
-            const SizedBox(height: 12),
-            ...heavyCargo.asMap().entries.map((entry) => 
-              _buildHeavyInventoryBatch(context, entry.value, entry.key + 1)
-            ),
-            const SizedBox(height: 20),
-          ],
-          
-          // Other cargo section (<10kg)
-          if (otherCargo.isNotEmpty) ...[
-            _buildWeightCategoryHeader('Боргирии хурд (<10 кг)', otherCargo.length, Colors.grey),
-            const SizedBox(height: 12),
-            ...otherCargo.asMap().entries.map((entry) => 
-              _buildStandardInventoryBatch(context, entry.value, entry.key + 1)
-            ),
-          ],
+          // Display weight categories (10-50kg only)
+          ...sortedWeights.map((weight) {
+            final batches = groupedByWeight[weight]!;
+            final totalQuantity = batches.fold<int>(0, (sum, batch) => sum + batch.pieces);
+            final totalWeight = batches.fold<double>(0, (sum, batch) => sum + batch.totalWeight);
+            
+            return Column(
+              children: [
+                _buildWeightCategoryCard(weight, totalQuantity, totalWeight, batches.length),
+                const SizedBox(height: 12),
+              ],
+            );
+          }),
         ],
       ],
+    );
+  }
+
+  Widget _buildWeightCategoryCard(double weight, int totalQuantity, double totalWeight, int batchCount) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.green.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.green[100],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '#${weight.toInt()}',
+                        style: TextStyle(
+                          color: Colors.green[800],
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${weight.toStringAsFixed(0)} кг',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '${_formatDate(DateTime.now())}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.green[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Вазнин',
+                  style: TextStyle(
+                    color: Colors.green[800],
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Weight category details
+          Row(
+            children: [
+              Expanded(
+                child: _buildDetailItem(
+                  Icons.apps,
+                  'Дона (Аслӣ)',
+                  '$totalQuantity дона',
+                  Colors.blue,
+                ),
+              ),
+              Expanded(
+                child: _buildDetailItem(
+                  Icons.trending_up,
+                  'Дона (Афзуд)',
+                  '${(totalQuantity * (weight / 10)).toInt()} дона',
+                  Colors.orange,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 12),
+          
+          Row(
+            children: [
+              Expanded(
+                child: _buildDetailItem(
+                  Icons.scale,
+                  'Вазни умумӣ',
+                  '${totalWeight.toStringAsFixed(0)} кг',
+                  Colors.green,
+                ),
+              ),
+              Expanded(
+                child: _buildDetailItem(
+                  Icons.assessment,
+                  'Коэффитсиент',
+                  'x${(weight / 10).toStringAsFixed(0)}',
+                  Colors.purple,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -238,292 +372,6 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWeightCategoryHeader(String title, int count, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color.fromARGB(255, (color.red * 0.8).round(), (color.green * 0.8).round(), (color.blue * 0.8).round()),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '$count дона',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStandardInventoryBatch(BuildContext context, dynamic batch, int batchNumber) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(color: Colors.blue.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.blue[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '#$batchNumber',
-                        style: TextStyle(
-                          color: Colors.blue[800],
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                       '${batch.totalWeight.toStringAsFixed(1)} кг',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        _formatDate(batch.lastUpdated),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.green[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Стандартӣ',
-                  style: TextStyle(
-                    color: Colors.green[800],
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Batch details
-          Row(
-            children: [
-              Expanded(
-                child: _buildDetailItem(
-                  Icons.apps,
-                  'Дона',
-                  '${batch.pieces} дона',
-                  Colors.blue,
-                ),
-              ),
-              Expanded(
-                child: _buildDetailItem(
-                  Icons.scale,
-                  'Вазни умумӣ',
-                  '${batch.totalWeight.toStringAsFixed(1)} кг',
-                  Colors.green,
-                ),
-              ),
-            ],
-          ),                                        
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeavyInventoryBatch(BuildContext context, dynamic batch, int batchNumber) {
-    // Calculate increased quantity for heavy cargo (over 50kg)
-    final baseQuantity = batch.pieces;
-    final weightFactor = (batch.totalWeight / 50).ceil(); // Increase factor based on weight
-    final increasedQuantity = baseQuantity * weightFactor;
-    
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.orange.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(color: Colors.orange.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.orange[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '#$batchNumber',
-                        style: TextStyle(
-                          color: Colors.orange[800],
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                       '${batch.totalWeight.toStringAsFixed(1)} кг',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        _formatDate(batch.lastUpdated),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.orange[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Вазнин',
-                  style: TextStyle(
-                    color: Colors.orange[800],
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Heavy batch details with increased quantity
-          Row(
-            children: [
-              Expanded(
-                child: _buildDetailItem(
-                  Icons.apps,
-                  'Дона (Аслӣ)',
-                  '${batch.pieces} дона',
-                  Colors.blue,
-                ),
-              ),
-              Expanded(
-                child: _buildDetailItem(
-                  Icons.trending_up,
-                  'Дона (Афзуд)',
-                  '$increasedQuantity дона',
-                  Colors.orange,
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 12),
-          
-          Row(
-            children: [
-              Expanded(
-                child: _buildDetailItem(
-                  Icons.scale,
-                  'Вазни умумӣ',
-                  '${batch.totalWeight.toStringAsFixed(1)} кг',
-                  Colors.green,
-                ),
-              ),
-              Expanded(
-                child: _buildDetailItem(
-                  Icons.assessment,
-                  'Коэффитсиент',
-                  'x${weightFactor}',
-                  Colors.purple,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildDetailItem(IconData icon, String label, String value, Color color) {
     return Container(
