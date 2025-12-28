@@ -78,27 +78,7 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
                   hintText: 'Хароҷоти нақлиётро дарҷ кунед',
                 ),
                 keyboardType: TextInputType.number,
-              ),
-
-              const SizedBox(height: 24),
-
-              // Notes
-              TextFormField(
-                controller: _notesController,
-                decoration: InputDecoration(
-                  labelText: 'Эзоҳоти умумӣ',
-                  prefixIcon: const Icon(Icons.note, color: Colors.green),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  hintText: 'Эзоҳоти хариданӣро дарҷ кунед (ихтиёрӣ)',
-                ),
-                keyboardType: TextInputType.text,
-                maxLines: 3,
-              ),
-
+              ),              
               const SizedBox(height: 24),
 
               // Purchase Summary
@@ -164,8 +144,7 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: Colors.grey[50],
-                hintText: 'Номи таъминкунандаро дарҷ кунед ё интихоб кунед',
+                fillColor: Colors.grey[50],                
               ),
               keyboardType: TextInputType.text,
               textCapitalization: TextCapitalization.words,
@@ -232,30 +211,6 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
           },
         ),
       ],
-    );
-  }
-
-  Widget _buildHeaderCard() {
-    return Card(
-      color: Colors.green.withOpacity(0.1),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.shopping_cart, color: Colors.green, size: 28),
-                const SizedBox(width: 12),
-                const Text('Харидании нави пахта', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text('Дар як харидан то 3 навъи пахта (Линт, Улук, Валакно) дохил карда мешавад.',
-                style: TextStyle(fontSize: 14, color: Colors.grey[700], height: 1.4)),
-          ],
-        ),
-      ),
     );
   }
 
@@ -373,8 +328,7 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
                   child: TextFormField(
                     controller: item.pricePerKgController,
                     decoration: InputDecoration(
-                      labelText: 'Нархи як кг',
-                      suffixText: 'сомонӣ',
+                      labelText: 'Нархи як кг',                      
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     keyboardType: TextInputType.number,
@@ -399,25 +353,14 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Ҳамагӣ нарх:', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                        Text('${item.totalPrice.toStringAsFixed(0)} сомонӣ',
+                        Text('${item.totalPrice.toStringAsFixed(0)} с',
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green)),
                       ],
                     ),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: item.notesController,
-              decoration: InputDecoration(
-                labelText: 'Эзоҳот (ихтиёрӣ)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                hintText: 'Қайдҳоро дарҷ кунед (ихтиёрӣ)',
-              ),
-              keyboardType: TextInputType.text,
-              maxLines: 2,
-            ),
+            ),            
           ],
         ),
       ),
@@ -476,24 +419,24 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
             const SizedBox(height: 8),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               const Text('Ҳамагӣ донаҳо:'),
-              Text('$totalUnits дона', style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text('$totalUnits шт', style: const TextStyle(fontWeight: FontWeight.bold)),
             ]),
             const SizedBox(height: 8),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               const Text('Нархи пахта:'),
-              Text('${subtotal.toStringAsFixed(0)} сомонӣ', style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text('${subtotal.toStringAsFixed(0)} с', style: const TextStyle(fontWeight: FontWeight.bold)),
             ]),
             if (transportCost > 0) ...[
               const SizedBox(height: 8),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 const Text('Харҷи интиқол:'),
-                Text('${transportCost.toStringAsFixed(0)} сомонӣ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text('${transportCost.toStringAsFixed(0)} с', style: const TextStyle(fontWeight: FontWeight.bold)),
               ]),
             ],
             const Divider(),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               const Text('Ҳамагӣ харҷ:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              Text('${grandTotal.toStringAsFixed(0)} сомонӣ', 
+              Text('${grandTotal.toStringAsFixed(0)} с', 
                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
             ]),
           ],
