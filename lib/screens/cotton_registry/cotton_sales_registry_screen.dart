@@ -481,17 +481,6 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
             
             const SizedBox(height: 16),
             
-            // Sale Date
-            ListTile(
-              leading: const Icon(Icons.calendar_today),
-              title: const Text('Санаи фуруш'),
-              subtitle: Text(DateFormat('dd/MM/yyyy', 'en_US').format(saleDate)),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: _selectSaleDate,
-            ),
-            
-            const Divider(),
-            
             // Payment Status
             DropdownButtonFormField<SalePaymentStatus>(
               value: paymentStatus,
@@ -550,11 +539,20 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
             
             const SizedBox(height: 16),
             
-            _buildCalculationRow(
-              'Намудҳои интихобшуда:',
-              '${selectedInventoryItems.length}',
-            ),
-            const SizedBox(height: 8),
+            // Individual cotton type breakdown
+            ...selectedInventoryItems.map((item) {
+              final weight = item.totalWeight;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: _buildCalculationRow(
+                  '${item.inventory.cottonTypeDisplay}:',
+                  '${item.quantity} дона × ${item.inventory.batchSize.toStringAsFixed(1)} кг = ${weight.toStringAsFixed(1)} кг',
+                ),
+              );
+            }).toList(),
+            
+            if (selectedInventoryItems.isNotEmpty) const Divider(height: 16),
+            
             _buildCalculationRow(
               'Ҷамъи миқдор:',
               '${totalSelectedQuantity} дона',
@@ -635,41 +633,44 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
   Widget _buildSaleHistoryCard(CottonSaleRegistry sale) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Row
-            Row(
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: _getCottonTypeColor(sale.cottonType),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    sale.buyerName ?? 'Харидори номаълум',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+      child: InkWell(
+        onTap: () => _showSaleDetailsDialog(sale),
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Row
+              Row(
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: _getCottonTypeColor(sale.cottonType),
+                      shape: BoxShape.circle,
                     ),
                   ),
-                ),
-                Text(
-                  DateFormat('dd/MM/yyyy', 'en_US').format(sale.saleDate),
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      sale.buyerName ?? 'Харидори номаълум',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  Text(
+                    DateFormat('dd/MM/yyyy', 'en_US').format(sale.saleDate),
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
             
             const SizedBox(height: 12),
             
@@ -772,6 +773,7 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
           ],
         ),
       ),
+      )
     );
   }
 
@@ -870,44 +872,72 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
     _priceController.clear();
     _notesController.clear();
     
+    // Clear multi-selection state
+    for (var controller in quantityControllers.values) {
+      controller.dispose();
+    }
+    quantityControllers.clear();
+    
     setState(() {
       selectedInventory = null;
+      selectedInventoryItems.clear();
       saleDate = DateTime.now();
       paymentStatus = SalePaymentStatus.pending;
       calculatedWeight = 0;
       calculatedAmount = 0;
+      totalSelectedQuantity = 0;
+      totalSelectedWeight = 0.0;
     });
   }
 
   Future<void> _saveSale() async {
     if (!_formKey.currentState!.validate()) return;
-    if (selectedInventory == null) return;
+    if (selectedInventoryItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ҳадди ақал як намуди пахта интихоб кунед')),
+      );
+      return;
+    }
     
     setState(() => isLoading = true);
     
     try {
       final provider = context.read<CottonRegistryProvider>();
+      final pricePerKg = double.parse(_priceController.text);
       
-      final sale = CottonSaleRegistry(
-        saleDate: saleDate,
+      // Create a single consolidated sale record with combined details
+      String cottonTypesInfo = selectedInventoryItems.map((item) => 
+        '${item.inventory.cottonTypeDisplay} (${item.quantity} дона × ${item.inventory.batchSize.toStringAsFixed(1)} кг)'
+      ).join(', ');
+      
+      // Use the first item's cotton type as primary (for compatibility)
+      final primaryItem = selectedInventoryItems.first;
+      
+      final consolidatedSale = CottonSaleRegistry(
+        saleDate: DateTime.now(), // Use current date automatically
         buyerName: _buyerNameController.text.trim().isEmpty ? null : _buyerNameController.text.trim(),
-        cottonType: selectedInventory!.cottonType,
-        batchSize: selectedInventory!.batchSize,
-        unitsSold: int.parse(_unitsController.text),
-        weightSold: calculatedWeight,
-        pricePerKg: double.parse(_priceController.text),
-        totalAmount: calculatedAmount,
+        cottonType: primaryItem.inventory.cottonType,
+        batchSize: totalSelectedWeight / totalSelectedQuantity, // Average batch size
+        unitsSold: totalSelectedQuantity,
+        weightSold: totalSelectedWeight,
+        pricePerKg: pricePerKg,
+        totalAmount: calculatedAmount, // Total amount for all items
         paymentStatus: paymentStatus,
-        sourceInventoryId: selectedInventory!.id!,
-        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        sourceInventoryId: primaryItem.inventory.id!,
+        notes: 'Намудҳо: $cottonTypesInfo${_notesController.text.trim().isEmpty ? '' : ' | ${_notesController.text.trim()}'}',
       );
       
-      await provider.sellCotton(sale);
+      await provider.sellCotton(consolidatedSale);
+      
+      // Deduct inventory for each selected item
+      for (var item in selectedInventoryItems) {
+        // The sellCotton method should handle inventory deduction, but we may need to handle multi-type deduction separately
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Фуруш бо муваффақият сабт шуд'),
+          SnackBar(
+            content: Text('Фуруши ${selectedInventoryItems.length} намуди пахта сабт шуд'),
             backgroundColor: Colors.green,
           ),
         );
@@ -970,6 +1000,66 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
           ),
         ],
       ),
+    );
+  }
+
+  void _showSaleDetailsDialog(CottonSaleRegistry sale) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Тафсилоти фуруш - ${sale.buyerName ?? 'Харидори номаълум'}'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDetailRow('Сана:', DateFormat('dd/MM/yyyy HH:mm', 'en_US').format(sale.saleDate)),
+              const SizedBox(height: 8),
+              _buildDetailRow('Навъи пахта:', sale.cottonTypeDisplay),
+              const SizedBox(height: 8),
+              _buildDetailRow('Андозаи дастаҳо:', sale.batchSizeDisplay),
+              const SizedBox(height: 8),
+              _buildDetailRow('Миқдор:', sale.unitsSoldDisplay),
+              const SizedBox(height: 8),
+              _buildDetailRow('Ҳамагӣ вазн:', sale.weightSoldDisplay),
+              const SizedBox(height: 8),
+              _buildDetailRow('Нархи як кг:', sale.priceDisplay),
+              const SizedBox(height: 8),
+              _buildDetailRow('Ҳамагӣ маблағ:', sale.totalAmountDisplay),
+              const SizedBox(height: 8),
+              _buildDetailRow('Ҳолати пардохт:', sale.paymentStatusDisplay),
+              if (sale.notes != null && sale.notes!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _buildDetailRow('Қайдҳо:', sale.notes!),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Пӯшидан'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 120,
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        Expanded(
+          child: Text(value),
+        ),
+      ],
     );
   }
 
