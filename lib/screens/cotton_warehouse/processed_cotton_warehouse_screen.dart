@@ -132,7 +132,7 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
     
     for (final batch in inventory) {
       // Find the closest allowed weight (within 2.5kg tolerance)
-      final double? matchingWeight = allowedWeights.firstWhere(
+      final double matchingWeight = allowedWeights.firstWhere(
         (weight) => (batch.totalWeight - weight).abs() <= 2.5,
         orElse: () => -1.0,
       );
@@ -185,7 +185,7 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
           // Display weight categories (10-50kg only)
           ...sortedWeights.map((weight) {
             final batches = groupedByWeight[weight]!;
-            final totalQuantity = batches.fold<int>(0, (sum, batch) => sum + batch.pieces);
+            final totalQuantity = batches.fold<int>(0, (sum, batch) => sum + (batch.pieces as int));
             final totalWeight = batches.fold<double>(0, (sum, batch) => sum + batch.totalWeight);
             
             return Column(

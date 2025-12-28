@@ -142,11 +142,7 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
               _buildProcessingSummary(),
               const SizedBox(height: 24),
               
-              // Add processed cotton button (opens modal)
-              _buildAddProcessedCottonButton(),
-              const SizedBox(height: 24),
-              
-              // Output batches list
+              // Output batches list with inline add button
               _buildOutputBatches(),
               const SizedBox(height: 24),
               
@@ -200,6 +196,11 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                       if (value?.isNotEmpty == true) {
                         final v = double.tryParse(value!);
                         if (v == null || v <= 0) return 'Вазни дуруст ворид кунед';
+                        
+                        // Cross-validate: if weight is entered, pieces must also be entered
+                        if (_lintPiecesController.text.trim().isEmpty) {
+                          return 'Агар вазн ворид шавад, адад низ зарур аст';
+                        }
                       }
                       return null;
                     },
@@ -221,6 +222,11 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                       if (value?.isNotEmpty == true) {
                         final v = int.tryParse(value!);
                         if (v == null || v <= 0) return 'Адади дуруст ворид кунед';
+                        
+                        // Cross-validate: if pieces are entered, weight must also be entered
+                        if (_lintWeightController.text.trim().isEmpty) {
+                          return 'Агар адад ворид шавад, вазн низ зарур аст';
+                        }
                       }
                       return null;
                     },
@@ -248,6 +254,11 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                       if (value?.isNotEmpty == true) {
                         final v = double.tryParse(value!);
                         if (v == null || v <= 0) return 'Вазни дуруст ворид кунед';
+                        
+                        // Cross-validate: if weight is entered, pieces must also be entered
+                        if (_ulukPiecesController.text.trim().isEmpty) {
+                          return 'Агар вазн ворид шавад, адад низ зарур аст';
+                        }
                       }
                       return null;
                     },
@@ -269,6 +280,11 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                       if (value?.isNotEmpty == true) {
                         final v = int.tryParse(value!);
                         if (v == null || v <= 0) return 'Адади дуруст ворид кунед';
+                        
+                        // Cross-validate: if pieces are entered, weight must also be entered
+                        if (_ulukWeightController.text.trim().isEmpty) {
+                          return 'Агар адад ворид шавад, вазн низ зарур аст';
+                        }
                       }
                       return null;
                     },
@@ -303,6 +319,11 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                       if (value?.isNotEmpty == true) {
                         final v = double.tryParse(value!);
                         if (v == null || v <= 0) return 'Вазни дуруст ворид кунед';
+                        
+                        // Cross-validate: if weight is entered, pieces must also be entered
+                        if (_valaknoPiecesController.text.trim().isEmpty) {
+                          return 'Агар вазн ворид шавад, адад низ зарур аст';
+                        }
                       }
                       return null;
                     },
@@ -324,6 +345,11 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                       if (value?.isNotEmpty == true) {
                         final v = int.tryParse(value!);
                         if (v == null || v <= 0) return 'Адади дуруст ворид кунед';
+                        
+                        // Cross-validate: if pieces are entered, weight must also be entered
+                        if (_valaknoWeightController.text.trim().isEmpty) {
+                          return 'Агар адад ворид шавад, вазн низ зарур аст';
+                        }
                       }
                       return null;
                     },
@@ -432,36 +458,6 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
     );
   }
 
-  Widget _buildAddProcessedCottonButton() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Пахтаи коркардшуда',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _showAddProcessedCottonModal,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(16),
-                ),
-                icon: const Icon(Icons.add),
-                label: const Text('Илова кардани пахтаи коркардшуда'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _showAddProcessedCottonModal() {
     showDialog(
@@ -549,21 +545,40 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
   }
 
   Widget _buildOutputBatches() {
-    if (outputBatches.isEmpty) {
-      return const Text(
-        'Ҳеҷ баста илова нашудааст',
-        style: TextStyle(color: Colors.grey, fontSize: 16),
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Дастаҳои илованамуда:',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        // Header row with title and add button
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Дастаҳои илованамуда:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            ElevatedButton(
+              onPressed: _showAddProcessedCottonModal,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              child: const Icon(Icons.add, size: 18),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
+        
+        // Show empty state or batch list
+        if (outputBatches.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              'Ҳеҷ баста илова нашудааст',
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+          )
+        else
         ...outputBatches.asMap().entries.map((entry) {
           final index = entry.key;
           final batch = entry.value;
