@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/app_provider.dart';
 import '../../models/cotton_sale.dart';
+import 'buyer_cotton_history_screen.dart';
 
 class CottonSalesScreen extends StatelessWidget {
   const CottonSalesScreen({super.key});
@@ -20,12 +21,21 @@ class CottonSalesScreen extends StatelessWidget {
           final totalSales = provider.cottonSales.fold(0.0, (s, sale) => s + sale.totalAmount);
           final pendingPayments = provider.cottonSales.where((s) => s.paymentStatus != PaymentStatus.paid).fold(0.0, (s, sale) => s + sale.remainingAmount);
 
+          // Group sales by buyer name
+          final groupedSales = <String, List<CottonSale>>{};
+          for (final sale in provider.cottonSales) {
+            final buyerName = sale.buyerName ?? 'Unknown Buyer';
+            groupedSales.putIfAbsent(buyerName, () => []).add(sale);
+          }
+
+          final buyerNames = groupedSales.keys.toList()..sort();
+
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Summary', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)), const SizedBox(height: 16), Row(children: [Expanded(child: _buildSummaryItem(context, 'Total Sales', '${totalSales.toStringAsFixed(0)} TJS', Icons.attach_money, Colors.green)), const SizedBox(width: 12), Expanded(child: _buildSummaryItem(context, 'Pending', '${pendingPayments.toStringAsFixed(0)} TJS', Icons.pending, Colors.orange))])]))),
               const SizedBox(height: 16),
-              ...provider.cottonSales.map((sale) => _buildSaleCard(context, sale)),
+              ...buyerNames.map((buyerName) => _buildBuyerCard(context, buyerName, groupedSales[buyerName]!)),
             ],
           );
         },
@@ -38,23 +48,202 @@ class CottonSalesScreen extends StatelessWidget {
     return Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, color: color, size: 24), const SizedBox(height: 8), Text(value, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 18)), Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color))]));
   }
 
-  Widget _buildSaleCard(BuildContext context, CottonSale sale) {
-    final statusColor = sale.paymentStatus == PaymentStatus.paid ? Colors.green : sale.paymentStatus == PaymentStatus.partial ? Colors.orange : Colors.red;
+  Widget _buildBuyerCard(BuildContext context, String buyerName, List<CottonSale> sales) {
+    // Calculate totals for this buyer
+    final totalAmount = sales.fold(0.0, (sum, sale) => sum + sale.totalAmount);
+    final totalPaid = sales.fold(0.0, (sum, sale) => sum + sale.paidAmount);
+    final totalRemaining = totalAmount - totalPaid;
+    final latestDate = sales.map((s) => s.date).reduce((a, b) => a.isAfter(b) ? a : b);
+    
+    final totalWeight = sales.fold(0.0, (sum, sale) => sum + (sale.weight ?? 0.0));
+    final totalUnits = sales.fold(0, (sum, sale) => sum + (sale.units ?? 0));
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: () => _showSaleDetails(context, sale),
-        borderRadius: BorderRadius.circular(16),
+        onTap: () => _navigateToBuyerHistory(context, buyerName),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: [CircleAvatar(backgroundColor: Colors.blue.withOpacity(0.1), child: const Icon(Icons.point_of_sale, color: Colors.blue)), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(sale.buyerName ?? 'Unknown Buyer', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)), Text(DateFormat('MMM dd, yyyy').format(sale.date), style: Theme.of(context).textTheme.bodySmall)])), Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Text(sale.paymentStatus.name[0].toUpperCase() + sale.paymentStatus.name.substring(1), style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold)))]),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.person, color: Colors.blue, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            buyerName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Охирин харид: ${DateFormat('dd/MM/yyyy').format(latestDate)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${sales.length} фуруш',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
-              Row(children: [Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(sale.saleType == SaleType.byWeight ? '${sale.weight?.toStringAsFixed(0)} kg' : '${sale.units} units', style: const TextStyle(fontWeight: FontWeight.bold)), Text('@ ${sale.pricePerUnit.toStringAsFixed(0)} ${sale.currency}/${sale.saleType == SaleType.byWeight ? 'kg' : 'unit'}', style: Theme.of(context).textTheme.bodySmall)])), Column(crossAxisAlignment: CrossAxisAlignment.end, children: [Text('${sale.totalAmount.toStringAsFixed(0)} ${sale.currency}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), if (sale.paymentStatus != PaymentStatus.paid) Text('Remaining: ${sale.remainingAmount.toStringAsFixed(0)}', style: const TextStyle(color: Colors.red, fontSize: 12))])]),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    if (totalWeight > 0) ...[
+                      Column(
+                        children: [
+                          Text(
+                            '${totalWeight.toStringAsFixed(1)}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange,
+                            ),
+                          ),
+                          Text(
+                            'кг',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        height: 30,
+                        width: 1,
+                        color: Colors.grey[300],
+                      ),
+                    ],
+                    if (totalUnits > 0) ...[
+                      Column(
+                        children: [
+                          Text(
+                            '$totalUnits',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                          Text(
+                            'шт',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        height: 30,
+                        width: 1,
+                        color: Colors.grey[300],
+                      ),
+                    ],
+                    Column(
+                      children: [
+                        Text(
+                          '${totalAmount.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                        Text(
+                          'TJS',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (totalRemaining > 0) ...[
+                      Container(
+                        height: 30,
+                        width: 1,
+                        color: Colors.grey[300],
+                      ),
+                      Column(
+                        children: [
+                          Text(
+                            '${totalRemaining.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                          Text(
+                            'боқимонда',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToBuyerHistory(BuildContext context, String buyerName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BuyerCottonHistoryScreen(
+          buyerName: buyerName,
         ),
       ),
     );
@@ -92,7 +281,7 @@ class CottonSalesScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Record Payment'),
+        title: const Text('Пардохти сабтшуда'),
         content: Form(key: formKey, child: Column(mainAxisSize: MainAxisSize.min, children: [Text('Remaining: ${sale.remainingAmount.toStringAsFixed(0)} ${sale.currency}'), const SizedBox(height: 16), TextFormField(controller: amountController, decoration: InputDecoration(labelText: 'Amount', suffixText: sale.currency), keyboardType: TextInputType.number, validator: (v) { if (v?.isEmpty == true) return 'Required'; final a = double.tryParse(v!); if (a == null || a <= 0 || a > sale.remainingAmount) return 'Invalid'; return null; }), TextButton(onPressed: () => amountController.text = sale.remainingAmount.toStringAsFixed(0), child: const Text('Pay Full Amount'))])),
         actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')), ElevatedButton(onPressed: () async { if (formKey.currentState!.validate()) { final amount = double.parse(amountController.text); final newPaid = sale.paidAmount + amount; await ctx.read<AppProvider>().updateCottonSale(sale.copyWith(paidAmount: newPaid, paymentStatus: newPaid >= sale.totalAmount ? PaymentStatus.paid : PaymentStatus.partial)); if (ctx.mounted) Navigator.pop(ctx); } }, child: const Text('Record'))],
       ),
@@ -124,7 +313,108 @@ class CottonSalesScreen extends StatelessWidget {
             const SizedBox(height: 16),
             TextFormField(controller: priceController, decoration: InputDecoration(labelText: 'Price per ${saleType == SaleType.byWeight ? 'kg' : 'unit'}', suffixText: 'TJS'), keyboardType: TextInputType.number, validator: (v) => v?.isEmpty == true ? 'Required' : null),
             const SizedBox(height: 16),
-            TextFormField(controller: buyerController, decoration: const InputDecoration(labelText: 'Buyer Name')),
+            // Buyer Name with Autocomplete
+            Autocomplete<String>(
+              initialValue: TextEditingValue(text: buyerController.text),
+              optionsBuilder: (TextEditingValue textEditingValue) async {
+                try {
+                  // Always get all buyer names first
+                  final allBuyers = await context.read<AppProvider>().getBuyerNames();
+                  
+                  // If input is empty, return all buyers
+                  if (textEditingValue.text.isEmpty) {
+                    return allBuyers;
+                  }
+                  
+                  // Filter buyers based on input
+                  final query = textEditingValue.text.toLowerCase();
+                  return allBuyers.where((buyer) => 
+                    buyer.toLowerCase().contains(query)).toList();
+                } catch (e) {
+                  // Return empty list if there's an error
+                  return <String>[];
+                }
+              },
+              onSelected: (String selection) {
+                buyerController.text = selection;
+              },
+              fieldViewBuilder: (
+                BuildContext context,
+                TextEditingController fieldTextEditingController,
+                FocusNode fieldFocusNode,
+                VoidCallback onFieldSubmitted,
+              ) {
+                // Sync with our main controller
+                fieldTextEditingController.addListener(() {
+                  buyerController.text = fieldTextEditingController.text;
+                });
+                
+                return TextFormField(
+                  controller: fieldTextEditingController,
+                  focusNode: fieldFocusNode,
+                  decoration: const InputDecoration(
+                    labelText: 'Buyer Name',
+                    prefixIcon: Icon(Icons.person),
+                    suffixIcon: Icon(Icons.arrow_drop_down),
+                    hintText: 'Enter or select buyer name',
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                  onFieldSubmitted: (value) => onFieldSubmitted(),
+                );
+              },
+              optionsViewBuilder: (
+                BuildContext context,
+                AutocompleteOnSelected<String> onSelected,
+                Iterable<String> options,
+              ) {
+                return Align(
+                  alignment: Alignment.topLeft,
+                  child: Material(
+                    elevation: 4.0,
+                    child: Container(
+                      constraints: const BoxConstraints(maxHeight: 200),
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: options.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final String option = options.elementAt(index);
+                          return InkWell(
+                            onTap: () => onSelected(option),
+                            child: Container(
+                              padding: const EdgeInsets.all(16.0),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Colors.grey.withOpacity(0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.person, 
+                                    color: Colors.blue, 
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      option,
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 16),
             SwitchListTile(
               title: const Text('Pay in installments'),

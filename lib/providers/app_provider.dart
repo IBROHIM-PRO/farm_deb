@@ -123,6 +123,16 @@ class AppProvider with ChangeNotifier {
     return await _db.getDebtsByPersonName(personName);
   }
 
+  /// Get buyer names for autocomplete with search functionality
+  Future<List<String>> getBuyerNames({String? searchQuery}) async {
+    return await _db.getBuyerNames(searchQuery: searchQuery);
+  }
+
+  /// Get all cotton sales by buyer name
+  Future<List<CottonSale>> getCottonSalesByBuyer(String buyerName) async {
+    return await _db.getCottonSalesByBuyer(buyerName);
+  }
+
   Person? getPersonById(int id) {
     try { return _persons.firstWhere((p) => p.id == id); } catch (e) { return null; }
   }
@@ -151,23 +161,23 @@ class AppProvider with ChangeNotifier {
       // Verify person exists
       final person = getPersonById(personId);
       if (person == null) {
-        throw ArgumentError('Person with ID $personId not found');
+        throw ArgumentError('Шахсе бо ID $personId ёфт нашуд');
       }
       
       // Check for existing active debt (exact match: person + type + currency)
-      final typeString = type == DebtType.given ? 'Given' : 'Taken';
+      final typeString = type == DebtType.given ? 'Дода шуд': 'Гирифта шуд';
       final existingDebt = await _db.getActiveDebt(personId, typeString, currency);
       
       if (existingDebt != null) {
         // CONSOLIDATE: Update existing debt instead of creating new one
-        debugPrint('📝 Consolidating with existing debt ${existingDebt.id}');
+        debugPrint('📝 Муттаҳидсозӣ бо қарзи мавҷуда ${existingDebt.id}');
         final consolidatedDebt = Debt.consolidate(existingDebt, amount);
         await _db.updateDebt(consolidatedDebt);
         await _historyProvider.addDebtHistory(consolidatedDebt, person);
-        debugPrint('✅ Debt consolidated successfully');
+        debugPrint('✅ Қарз бомуваффақият муттаҳид карда шуд');
       } else {
         // CREATE: New debt entry
-        debugPrint('📝 Creating new debt entry');
+        debugPrint('📝 Эҷоди вуруди қарзи нав');
         final newDebt = Debt(
           personId: personId,
           totalAmount: amount,
@@ -180,10 +190,10 @@ class AppProvider with ChangeNotifier {
         
         final debtId = await _db.insertDebt(newDebt);
         await _historyProvider.addDebtHistory(newDebt.copyWith(id: debtId), person);
-        debugPrint('✅ New debt created successfully with ID: ${debtId}');
+        debugPrint('✅ Қарзи нав бомуваффақият бо ID эҷод шуд: ${debtId}');
       }
       await loadAllData();
-      debugPrint('✅ Database automatically refreshed after debt operation');
+      debugPrint('✅ Пойгоҳи додаҳо пас аз амалиёти қарз ба таври худкор навсозӣ мешавад');
     } catch (e) {
       debugPrint('❌ Error adding debt: $e');
       rethrow;
@@ -224,7 +234,7 @@ class AppProvider with ChangeNotifier {
       debugPrint('✅ Payment recorded successfully: ${amount} for debt ${debt.id}');
       debugPrint('✅ Database automatically refreshed after payment');
     } catch (e) {
-      debugPrint('❌ Error recording payment: $e');
+      debugPrint('❌ Хатогии илова кардани қарз: $e');
       rethrow;
     }
   }
@@ -238,8 +248,8 @@ class AppProvider with ChangeNotifier {
     final result = <String, Map<String, double>>{};
     for (final c in currencies) {
       result[c] = {
-        'given': activeDebts.where((d) => d.type == DebtType.given && d.currency == c).fold(0.0, (s, d) => s + d.remainingAmount),
-        'taken': activeDebts.where((d) => d.type == DebtType.taken && d.currency == c).fold(0.0, (s, d) => s + d.remainingAmount),
+        'додашуда': activeDebts.where((d) => d.type == DebtType.given && d.currency == c).fold(0.0, (s, d) => s + d.remainingAmount),
+        'гирифташуда': activeDebts.where((d) => d.type == DebtType.taken && d.currency == c).fold(0.0, (s, d) => s + d.remainingAmount),
       };
     }
     return result;
@@ -264,10 +274,10 @@ class AppProvider with ChangeNotifier {
   /// Adds a new cotton field with validation.
   Future<int> addField(Field field) async {
     if (field.name.trim().isEmpty) {
-      throw ArgumentError('Field name cannot be empty');
+      throw ArgumentError('Номи майдон холӣ буда наметавонад');
     }
     if (field.area <= 0) {
-      throw ArgumentError('Field area must be greater than zero');
+      throw ArgumentError('Майдони холӣ буда наметавонад');
     }
     
     final id = await _db.insertField(field);
@@ -277,10 +287,10 @@ class AppProvider with ChangeNotifier {
   
   Future<void> updateField(Field field) async {
     if (field.name.trim().isEmpty) {
-      throw ArgumentError('Field name cannot be empty');
+      throw ArgumentError('Номи майдон холӣ буда наметавонад');
     }
     if (field.area <= 0) {
-      throw ArgumentError('Field area must be greater than zero');
+      throw ArgumentError('Майдони холӣ буда наметавонад');
     }
     
     await _db.updateField(field);
@@ -309,15 +319,15 @@ class AppProvider with ChangeNotifier {
   Future<int> addCottonHarvest(CottonHarvest harvest) async {
     // Validation
     if (!harvest.isValidProcessing) {
-      throw ArgumentError('Invalid processing: Valakno cannot be processed alone. Must include Lint or Uluk.');
+      throw ArgumentError('Коркарди нодуруст: Валакноро танҳо коркард кардан мумкин нест. Бояд Lint ё Uluk-ро дар бар гирад..');
     }
     
     if (harvest.processedWeight != null && harvest.processedWeight! <= 0) {
-      throw ArgumentError('Processed weight must be greater than zero');
+      throw ArgumentError('Вазни коркардшуда бояд аз сифр зиёд бошад');
     }
     
     if (harvest.processedUnits != null && harvest.processedUnits! <= 0) {
-      throw ArgumentError('Processed units must be greater than zero');
+      throw ArgumentError('Воҳидҳои коркардшуда бояд аз сифр калонтар бошанд');
     }
     
     final id = await _db.insertCottonHarvest(harvest);
@@ -328,11 +338,11 @@ class AppProvider with ChangeNotifier {
   Future<void> updateCottonHarvest(CottonHarvest harvest) async {
     // Validation
     if (!harvest.isValidProcessing) {
-      throw ArgumentError('Invalid processing: Valakno cannot be processed alone. Must include Lint or Uluk.');
+      throw ArgumentError('Коркарди нодуруст: Валакноро танҳо коркард кардан мумкин нест. Бояд Lint ё Uluk-ро дар бар гирад..');
     }
     
     if (harvest.processedWeight != null && harvest.processedWeight! <= 0) {
-      throw ArgumentError('Processed weight must be greater than zero');
+      throw ArgumentError('Вазни коркардшуда бояд аз сифр зиёд бошад');
     }
     
     await _db.updateCottonHarvest(harvest);
@@ -423,7 +433,7 @@ class AppProvider with ChangeNotifier {
     final hasValakno = valaknoWeight != null && valaknoWeight > 0;
     
     if (hasValakno && !hasLint && !hasUluk) {
-      validationErrors.add('Valakno cannot be processed alone');
+      validationErrors.add('Валакноро танҳо коркард кардан мумкин нест');
     }
 
     return {
@@ -445,7 +455,7 @@ class AppProvider with ChangeNotifier {
     if (units <= 0 || weightPerUnit <= 0) {
       return {
         'isValid': false,
-        'error': 'Units and weight per unit must be greater than zero',
+        'error': 'Воҳидҳо ва вазн барои як воҳид бояд аз сифр калонтар бошанд',
       };
     }
 
@@ -486,7 +496,7 @@ class AppProvider with ChangeNotifier {
     // Check ear tag uniqueness
     final existing = _cattleList.where((c) => c.earTag.toLowerCase() == cattle.earTag.toLowerCase());
     if (existing.isNotEmpty) {
-      throw ArgumentError('Ear tag "${cattle.earTag}" already exists');
+      throw ArgumentError('Барчаспи гӯш "${cattle.earTag}" аллакай мавҷуд аст');
     }
     
     final id = await _db.insertCattle(cattle);
@@ -539,7 +549,7 @@ class AppProvider with ChangeNotifier {
     // Verify cattle exists
     final cattle = getCattleById(record.cattleId);
     if (cattle == null) {
-      throw ArgumentError('Cattle with ID ${record.cattleId} not found');
+      throw ArgumentError('Чорвои калон бо ID ${record.cattleId} ёфт нашуд');
     }
     
     final id = await _db.insertCattleRecord(record);
@@ -592,11 +602,11 @@ class AppProvider with ChangeNotifier {
     // Verify cattle exists and is not already sold
     final cattle = getCattleById(sale.cattleId);
     if (cattle == null) {
-      throw ArgumentError('Cattle with ID ${sale.cattleId} not found');
+      throw ArgumentError('Чорвои калон бо ID ${sale.cattleId} ёфт нашуд');
     }
     
     if (cattle.status == CattleStatus.sold) {
-      throw StateError('Cattle with ear tag "${cattle.earTag}" is already sold');
+      throw StateError('Чорвои калон бо барчаспи "${cattle.earTag}" бурун баргаштан мавҷуд аст');
     }
     
     final id = await _db.insertCattleSale(sale);

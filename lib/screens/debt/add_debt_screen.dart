@@ -368,7 +368,6 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
           amount: double.parse(_amountController.text),
           currency: _currency,
           type: _debtType,
-          notes: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
         );
 
         if (mounted) {

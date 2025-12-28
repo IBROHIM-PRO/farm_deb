@@ -734,23 +734,6 @@ class DatabaseHelper {
     };
   }
 
-  Future<List<Map<String, dynamic>>> getCottonSalesByBuyer() async {
-    final r = await (await database).rawQuery('''
-      SELECT 
-        buyerName,
-        SUM(weight) as totalWeight,
-        SUM(units) as totalUnits,
-        SUM(totalAmount) as totalAmount,
-        COUNT(*) as purchaseCount
-      FROM cotton_sales
-      WHERE buyerName IS NOT NULL
-      GROUP BY buyerName
-      ORDER BY totalAmount DESC
-    ''');
-    
-    return r;
-  }
-
   // Cattle Statistics
   Future<Map<String, dynamic>> getCattleInventoryStats() async {
     final r = await (await database).rawQuery('''
@@ -958,6 +941,29 @@ class DatabaseHelper {
       ORDER BY d.date DESC
     ''', [personName]);
     return result.map((map) => Debt.fromMap(map)).toList();
+  }
+
+  // Cotton sales buyer management methods for autocomplete and grouping
+  Future<List<String>> getBuyerNames({String? searchQuery}) async {
+    final db = await database;
+    String query = 'SELECT DISTINCT buyerName FROM cotton_sales WHERE buyerName IS NOT NULL';
+    List<dynamic> args = [];
+    
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      query += ' AND buyerName LIKE ?';
+      args.add('%$searchQuery%');
+    }
+    
+    query += ' ORDER BY buyerName ASC';
+    
+    final result = await db.rawQuery(query, args);
+    return result.map((row) => row['buyerName'] as String).toList();
+  }
+
+  Future<List<CottonSale>> getCottonSalesByBuyer(String buyerName) async {
+    final maps = await (await database).query('cotton_sales', 
+        where: 'buyerName = ?', whereArgs: [buyerName], orderBy: 'date DESC');
+    return maps.map((map) => CottonSale.fromMap(map)).toList();
   }
 
   // Cotton Stock Statistics
