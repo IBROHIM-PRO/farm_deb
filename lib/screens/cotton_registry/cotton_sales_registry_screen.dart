@@ -6,6 +6,16 @@ import '../../models/cotton_sale_registry.dart';
 import '../../models/cotton_inventory.dart';
 import '../../models/cotton_purchase_item.dart';
 
+// Helper class for multi-selection
+class SelectedInventoryItem {
+  final CottonInventory inventory;
+  int quantity;
+  
+  SelectedInventoryItem({required this.inventory, required this.quantity});
+  
+  double get totalWeight => inventory.batchSize * quantity;
+}
+
 /// Cotton Sales Registry Screen - Sell processed cotton with automatic inventory deduction
 /// Implements inventory-based sales with real-time stock validation
 class CottonSalesRegistryScreen extends StatefulWidget {
@@ -28,12 +38,16 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
   
   // Selected values
   CottonInventory? selectedInventory;
+  List<SelectedInventoryItem> selectedInventoryItems = [];
+  Map<int, TextEditingController> quantityControllers = {};
   DateTime saleDate = DateTime.now();
   SalePaymentStatus paymentStatus = SalePaymentStatus.pending;
   
   // Calculated values
   double calculatedWeight = 0;
   double calculatedAmount = 0;
+  int totalSelectedQuantity = 0;
+  double totalSelectedWeight = 0.0;
   
   bool isLoading = false;
 
@@ -51,6 +65,12 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
     _unitsController.dispose();
     _priceController.dispose();
     _notesController.dispose();
+    
+    // Dispose quantity controllers
+    for (var controller in quantityControllers.values) {
+      controller.dispose();
+    }
+    
     super.dispose();
   }
 
@@ -71,6 +91,71 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
     });
   }
 
+  void _toggleInventorySelection(CottonInventory inventory, bool selected) {
+    setState(() {
+      if (selected) {
+        // Add to selection if not already selected
+        if (!selectedInventoryItems.any((item) => item.inventory.id == inventory.id)) {
+          selectedInventoryItems.add(SelectedInventoryItem(inventory: inventory, quantity: 1));
+          // Create quantity controller if it doesn't exist
+          if (!quantityControllers.containsKey(inventory.id)) {
+            quantityControllers[inventory.id!] = TextEditingController(text: '1');
+            quantityControllers[inventory.id!]!.addListener(_calculateMultiSale);
+          }
+        }
+      } else {
+        // Remove from selection
+        selectedInventoryItems.removeWhere((item) => item.inventory.id == inventory.id);
+        // Dispose and remove controller
+        if (quantityControllers.containsKey(inventory.id)) {
+          quantityControllers[inventory.id!]!.dispose();
+          quantityControllers.remove(inventory.id);
+        }
+      }
+      _calculateMultiSale();
+    });
+  }
+
+  TextEditingController _getQuantityController(int inventoryId) {
+    if (!quantityControllers.containsKey(inventoryId)) {
+      quantityControllers[inventoryId] = TextEditingController(text: '1');
+      quantityControllers[inventoryId]!.addListener(_calculateMultiSale);
+    }
+    return quantityControllers[inventoryId]!;
+  }
+
+  void _calculateMultiSale() {
+    setState(() {
+      totalSelectedQuantity = 0;
+      totalSelectedWeight = 0.0;
+      
+      for (var item in selectedInventoryItems) {
+        final controller = quantityControllers[item.inventory.id!];
+        if (controller != null) {
+          final quantity = int.tryParse(controller.text) ?? 0;
+          item.quantity = quantity;
+          totalSelectedQuantity += quantity;
+          totalSelectedWeight += item.totalWeight;
+        }
+      }
+      
+      // Calculate total amount with price per kg
+      final pricePerKg = double.tryParse(_priceController.text) ?? 0;
+      calculatedAmount = totalSelectedWeight * pricePerKg;
+      calculatedWeight = totalSelectedWeight;
+    });
+  }
+
+  String? _validateQuantityForInventory(String? value, CottonInventory inventory) {
+    if (value == null || value.isEmpty) return 'Миқдор зарур аст';
+    final quantity = int.tryParse(value);
+    if (quantity == null || quantity <= 0) return 'Миқдори дуруст ворид кунед';
+    if (quantity > inventory.availableUnits) {
+      return 'Ҳадди аксар: ${inventory.availableUnits} дона';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,6 +163,13 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
         title: const Text('Фуруши пахта'),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            onPressed: _showImportDialog,
+            icon: const Icon(Icons.add),
+            tooltip: 'Ворид кардани фурӯш',
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -164,9 +256,45 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
   Widget _buildInventorySelection() {
     return Consumer<CottonRegistryProvider>(
       builder: (context, provider, _) {
-        final availableInventory = provider.cottonInventory
-            .where((inv) => !inv.isEmpty)
-            .toList();
+        final inventory = provider.cottonInventory;
+        
+        // Filter inventory for 10-50kg range
+        final standardInventory = inventory.where((inv) => 
+          inv.batchSize >= 10.0 && inv.batchSize <= 50.0).toList();
+        
+        if (standardInventory.isEmpty) {
+          return Card(
+            child: Container(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    size: 48,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Пахтаи 10-50 кг дар анбор нест',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Барои фуруш пахтаи 10-50 кг ба анбор илова кунед',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
         
         return Card(
           child: Padding(
@@ -174,56 +302,92 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DropdownButtonFormField<CottonInventory>(
-                  value: selectedInventory,
-                  decoration: const InputDecoration(
-                    labelText: 'Дастаи пахта',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.inventory),
+                Text(
+                  'Интихоби пахта (10-50 кг)',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
-                  items: availableInventory.map((inventory) {
-                    return DropdownMenuItem(
-                      value: inventory,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
+                ),
+                const SizedBox(height: 12),
+                
+                // Multi-selection list of cotton types
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 300),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: standardInventory.length,
+                    itemBuilder: (context, index) {
+                      final inv = standardInventory[index];
+                      final isSelected = selectedInventoryItems.any((item) => 
+                        item.inventory.id == inv.id);
+                      
+      
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        color: isSelected ? Colors.teal.withOpacity(0.1) : null,
+                        child: CheckboxListTile(
+                          value: isSelected,
+                          onChanged: (selected) => _toggleInventorySelection(inv, selected ?? false),
+                          title: Row(
                             children: [
                               Container(
                                 width: 12,
                                 height: 12,
                                 decoration: BoxDecoration(
-                                  color: _getCottonTypeColor(inventory.cottonType),
+                                  color: _getCottonTypeColor(inv.cottonType),
                                   shape: BoxShape.circle,
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Text(inventory.cottonTypeDisplay),
+                              Text(inv.cottonTypeDisplay),
                               const Spacer(),
-                              Text(
-                                inventory.batchSizeDisplay,
-                                style: const TextStyle(fontSize: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  inv.batchSizeDisplay,
+                                  style: const TextStyle(fontSize: 10),
+                                ),
                               ),
                             ],
                           ),
-                          Text(
-                            '${inventory.availableUnitsDisplay} • ${inventory.totalWeightDisplay}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Мавҷуд: ${inv.availableUnitsDisplay} • ${inv.totalWeightDisplay}'),
+                              if (isSelected) ...[
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _getQuantityController(inv.id!),
+                                        decoration: const InputDecoration(
+                                          labelText: 'Миқдор',
+                                          suffixText: 'дона',
+                                          isDense: true,
+                                        ),
+                                        keyboardType: TextInputType.number,
+                                        onChanged: (_) => _calculateMultiSale(),
+                                        validator: (value) => _validateQuantityForInventory(value, inv),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: _onInventorySelected,
-                  validator: (value) => value == null ? 'Дастаи пахта интихоб кунед' : null,
+                        ),
+                      );
+                    },
+                  ),
                 ),
                 
-                // Available Stock Info
-                if (selectedInventory != null) ...[
+                // Selected items summary
+                if (selectedInventoryItems.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -232,29 +396,23 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.teal.withOpacity(0.3)),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.info, color: Colors.teal),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Мавҷуд: ${selectedInventory!.availableUnitsDisplay}',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                'Ҳамагӣ вазн: ${selectedInventory!.totalWeightDisplay}',
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                              Text(
-                                'Статус: ${selectedInventory!.statusDisplay}',
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ],
-                          ),
+                        Row(
+                          children: [
+                            const Icon(Icons.check_circle, color: Colors.teal),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Ҷамъан интихобшуда:',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
+                        const SizedBox(height: 8),
+                        Text('Намудҳо: ${selectedInventoryItems.length}'),
+                        Text('Ҷамъи миқдор: ${totalSelectedQuantity} дона'),
+                        Text('Ҷамъи вазн: ${totalSelectedWeight.toStringAsFixed(1)} кг'),
                       ],
                     ),
                   ),
@@ -287,21 +445,17 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
             
             const SizedBox(height: 16),
             
-            // Units to Sell
+            // Total quantity display (read-only)
             TextFormField(
-              controller: _unitsController,
-              decoration: InputDecoration(
-                labelText: 'Миқдори фуруш',
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.shopping_cart),
+              controller: TextEditingController(text: totalSelectedQuantity.toString()),
+              decoration: const InputDecoration(
+                labelText: 'Ҷамъи миқдор',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.shopping_cart),
                 suffixText: 'дона',
-                helperText: selectedInventory != null
-                    ? 'Ҳадди аксар: ${selectedInventory!.availableUnits} дона'
-                    : null,
+                helperText: 'Ҳисоб аз интихобшудаҳо',
               ),
-              keyboardType: TextInputType.number,
-              validator: _validateUnits,
-              onChanged: (_) => _calculateSale(),
+              enabled: false,
             ),
             
             const SizedBox(height: 16),
@@ -397,18 +551,18 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
             const SizedBox(height: 16),
             
             _buildCalculationRow(
-              'Миқдор:',
-              '${int.tryParse(_unitsController.text) ?? 0} дона',
+              'Намудҳои интихобшуда:',
+              '${selectedInventoryItems.length}',
             ),
             const SizedBox(height: 8),
             _buildCalculationRow(
-              'Андозаи дастаҳо:',
-              selectedInventory?.batchSizeDisplay ?? '0 кг/дона',
+              'Ҷамъи миқдор:',
+              '${totalSelectedQuantity} дона',
             ),
             const SizedBox(height: 8),
             _buildCalculationRow(
-              'Ҳамагӣ вазн:',
-              '${calculatedWeight.toStringAsFixed(1)} кг',
+              'Ҷамъи вазн:',
+              '${totalSelectedWeight.toStringAsFixed(1)} кг',
             ),
             if (calculatedAmount > 0) ...[
               const SizedBox(height: 8),
@@ -785,6 +939,38 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
       case SalePaymentStatus.partial: return 'Қисман';
       case SalePaymentStatus.paid: return 'Пардохт шуда';
     }
+  }
+
+  void _showImportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Ворид кардани фурӯш'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Барои ворид кардани фурӯши пахта як аз роҳҳои зеринро интихоб кунед:'),
+            SizedBox(height: 16),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Бекор кардан'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              // Navigate to new sale tab
+              _tabController.animateTo(0);
+            },
+            icon: const Icon(Icons.add_shopping_cart),
+            label: const Text('Фурӯши нав'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+          ),
+        ],
+      ),
+    );
   }
 
   Color _getPaymentStatusColor(SalePaymentStatus status) {

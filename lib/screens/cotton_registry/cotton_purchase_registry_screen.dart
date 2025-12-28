@@ -25,12 +25,7 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
           IconButton(
             onPressed: _showStatistics,
             icon: const Icon(Icons.analytics),
-          ),
-          IconButton(
-            onPressed: _transferToWarehouse,
-            icon: const Icon(Icons.warehouse),
-            tooltip: 'Гузоштан ба анбор',
-          ),
+          ),          
           IconButton(
             onPressed: () => Navigator.push(
               context,

@@ -254,7 +254,7 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: color.shade800,
+              color: Color.fromARGB(255, (color.red * 0.8).round(), (color.green * 0.8).round(), (color.blue * 0.8).round()),
             ),
           ),
           Container(
