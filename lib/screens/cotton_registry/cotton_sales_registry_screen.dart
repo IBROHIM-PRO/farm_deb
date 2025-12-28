@@ -301,15 +301,7 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Интихоби пахта (10-50 кг)',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                
+              children: [                                
                 // Multi-selection list of cotton types
                 Container(
                   constraints: const BoxConstraints(maxHeight: 300),
@@ -357,7 +349,7 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Мавҷуд: ${inv.availableUnitsDisplay} • ${inv.totalWeightDisplay}'),
+                              Text('Мавҷуд: ${inv.availableUnitsDisplay} '),
                               if (isSelected) ...[
                                 const SizedBox(height: 8),
                                 Row(
@@ -366,8 +358,7 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
                                       child: TextFormField(
                                         controller: _getQuantityController(inv.id!),
                                         decoration: const InputDecoration(
-                                          labelText: 'Миқдор',
-                                          suffixText: 'дона',
+                                          labelText: 'Миқдор',                                         
                                           isDense: true,
                                         ),
                                         keyboardType: TextInputType.number,
@@ -384,39 +375,7 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
                       );
                     },
                   ),
-                ),
-                
-                // Selected items summary
-                if (selectedInventoryItems.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.teal.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.teal.withOpacity(0.3)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.check_circle, color: Colors.teal),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Ҷамъан интихобшуда:',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text('Намудҳо: ${selectedInventoryItems.length}'),
-                        Text('Ҷамъи миқдор: ${totalSelectedQuantity} дона'),
-                        Text('Ҷамъи вазн: ${totalSelectedWeight.toStringAsFixed(1)} кг'),
-                      ],
-                    ),
-                  ),
-                ],
+                ),                              
               ],
             ),
           ),
@@ -437,27 +396,10 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
               decoration: const InputDecoration(
                 labelText: 'Номи харидор',
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person),
-                hintText: 'Номи харидорро ворид кунед',
+                prefixIcon: Icon(Icons.person),                
               ),
               textCapitalization: TextCapitalization.words,
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Total quantity display (read-only)
-            TextFormField(
-              controller: TextEditingController(text: totalSelectedQuantity.toString()),
-              decoration: const InputDecoration(
-                labelText: 'Ҷамъи миқдор',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.shopping_cart),
-                suffixText: 'дона',
-                helperText: 'Ҳисоб аз интихобшудаҳо',
-              ),
-              enabled: false,
-            ),
-            
+            ),                                   
             const SizedBox(height: 16),
             
             // Price per Kg
@@ -505,8 +447,7 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
               controller: _notesController,
               decoration: const InputDecoration(
                 labelText: 'Қайдҳо (ихтиёрӣ)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.note),
+                border: OutlineInputBorder(),                
               ),
               maxLines: 2,
             ),
@@ -1013,9 +954,7 @@ class _CottonSalesRegistryScreenState extends State<CottonSalesRegistryScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildDetailRow('Сана:', DateFormat('dd/MM/yyyy HH:mm', 'en_US').format(sale.saleDate)),
-              const SizedBox(height: 8),
-              _buildDetailRow('Навъи пахта:', sale.cottonTypeDisplay),
+              _buildDetailRow('Сана:', DateFormat('dd/MM/yyyy HH:mm', 'en_US').format(sale.saleDate)),             
               const SizedBox(height: 8),
               _buildDetailRow('Андозаи дастаҳо:', sale.batchSizeDisplay),
               const SizedBox(height: 8),
