@@ -926,6 +926,12 @@ class DatabaseHelper {
     return result.map((row) => row['supplierName'] as String).toList();
   }
 
+  Future<List<CottonPurchaseRegistry>> getCottonPurchasesBySupplier(String supplierName) async {
+    final maps = await (await database).query('cotton_purchase_registry', 
+        where: 'supplierName = ?', whereArgs: [supplierName], orderBy: 'purchaseDate DESC');
+    return maps.map((map) => CottonPurchaseRegistry.fromMap(map)).toList();
+  }
+
   // Cotton Stock Statistics
   Future<Map<String, dynamic>> getCottonStockSummary() async {
     final r = await (await database).rawQuery('''

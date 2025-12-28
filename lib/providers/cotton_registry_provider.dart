@@ -227,6 +227,11 @@ Future<String?> transferAllExistingPurchasesToWarehouse() async {
     return await _dbHelper.getSupplierNames(searchQuery: searchQuery);
   }
 
+  /// Get all purchases by supplier name
+  Future<List<CottonPurchaseRegistry>> getPurchasesBySupplier(String supplierName) async {
+    return await _dbHelper.getCottonPurchasesBySupplier(supplierName);
+  }
+
   // ============ COTTON PROCESSING OPERATIONS ============
 
   /// Load cotton processing registry

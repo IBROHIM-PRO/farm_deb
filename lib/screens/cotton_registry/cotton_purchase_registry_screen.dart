@@ -5,6 +5,7 @@ import '../../providers/cotton_registry_provider.dart';
 import '../../models/cotton_purchase_registry.dart';
 import '../../models/cotton_purchase_item.dart';
 import 'add_cotton_purchase_screen.dart';
+import 'supplier_purchase_history_screen.dart';
 
 class CottonPurchaseRegistryScreen extends StatefulWidget {
   const CottonPurchaseRegistryScreen({super.key});
@@ -140,7 +141,7 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () => _showFullPurchaseDetails(purchase, summary),
+        onTap: () => _navigateToSupplierHistory(purchase.supplierName),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -161,42 +162,13 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
     );
   }
 
-  void _showFullPurchaseDetails(CottonPurchaseRegistry purchase, Map<String, dynamic> summary) {
-    final items = summary['items'] as List<CottonPurchaseItem>;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Маълумоти пурраи харид', textAlign: TextAlign.center),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Сана: ${DateFormat('dd/MM/yyyy').format(purchase.purchaseDate)}'),
-              const SizedBox(height: 8),
-              Text('Таъминикунанда: ${purchase.supplierName}'),
-              const SizedBox(height: 8),
-              Text('Нархҳо ва миқдорҳо:', style: const TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              ...items.map((item) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Text(
-                        '${item.cottonTypeDisplay}: ${item.weight.toStringAsFixed(1)} кг, ${item.units} дона, ${item.totalPrice.toStringAsFixed(0)} сомонӣ'),
-                  )),
-              const SizedBox(height: 8),
-              Text('Ҳамагӣ вазн: ${(summary['totalWeight'] as num?)?.toDouble()?.toStringAsFixed(1) ?? '0.0'} кг'),
-              Text('Ҳамагӣ донаҳо: ${summary['totalUnits']}'),
-              Text('Ҳамагӣ нарх: ${(summary['grandTotal'] as num?)?.toDouble()?.toStringAsFixed(0) ?? '0'} сомонӣ'),
-              if (purchase.transportationCost > 0)
-                Text('Интиқол: ${purchase.transportationCost.toStringAsFixed(0)} TJS'),
-              if (purchase.notes != null && purchase.notes!.isNotEmpty)
-                Text('Эзоҳ: ${purchase.notes!}'),
-            ],
-          ),
+  void _navigateToSupplierHistory(String supplierName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SupplierPurchaseHistoryScreen(
+          supplierName: supplierName,
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Пӯшидан')),
-        ],
       ),
     );
   }

@@ -48,11 +48,6 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Info
-              _buildHeaderCard(),
-
-              const SizedBox(height: 24),
-
               // Purchase Info (Supplier only, no date selection)
               _buildPurchaseInfoSection(),
 
@@ -68,7 +63,7 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
                 controller: _transportationCostController,
                 decoration: InputDecoration(
                   labelText: 'Хароҷоти нақлиёт',
-                  suffixText: 'сомонӣ',
+                  suffixText: 'с',
                   prefixIcon: const Icon(Icons.local_shipping, color: Colors.green),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
