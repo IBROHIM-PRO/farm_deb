@@ -125,36 +125,184 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
   }
 
   Widget _buildPurchaseList(CottonRegistryProvider provider, List<CottonPurchaseRegistry> purchases) {
+    // Group purchases by supplier name
+    final groupedPurchases = <String, List<CottonPurchaseRegistry>>{};
+    for (final purchase in purchases) {
+      groupedPurchases.putIfAbsent(purchase.supplierName, () => []).add(purchase);
+    }
+
+    final supplierNames = groupedPurchases.keys.toList()..sort();
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      itemCount: purchases.length,
+      itemCount: supplierNames.length,
       itemBuilder: (context, index) {
-        final purchase = purchases[index];
-        final summary = provider.getPurchaseSummary(purchase.id!);
-        return _buildPurchaseCard(purchase, summary);
+        final supplierName = supplierNames[index];
+        final supplierPurchases = groupedPurchases[supplierName]!;
+        return _buildSupplierCard(provider, supplierName, supplierPurchases);
       },
     );
   }
 
-  Widget _buildPurchaseCard(CottonPurchaseRegistry purchase, Map<String, dynamic> summary) {
+  Widget _buildSupplierCard(CottonRegistryProvider provider, String supplierName, List<CottonPurchaseRegistry> purchases) {
+    // Calculate totals for this supplier
+    double totalAmount = 0.0;
+    double totalWeight = 0.0;
+    int totalUnits = 0;
+    final latestDate = purchases.map((p) => p.purchaseDate).reduce((a, b) => a.isAfter(b) ? a : b);
+    
+    for (final purchase in purchases) {
+      final items = provider.getItemsForPurchase(purchase.id!);
+      final itemsTotal = items.fold(0.0, (sum, item) => sum + item.totalPrice);
+      totalAmount += itemsTotal + purchase.transportationCost;
+      totalWeight += items.fold(0.0, (sum, item) => sum + item.weight);
+      totalUnits += items.fold(0, (sum, item) => sum + item.units);
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () => _navigateToSupplierHistory(purchase.supplierName),
+        onTap: () => _navigateToSupplierHistory(supplierName),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Сана: ${DateFormat('dd/MM/yyyy').format(purchase.purchaseDate)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text('Таъминикунанда: ${purchase.supplierName}'),
-              const SizedBox(height: 4),
-              Text('Ҳамагӣ нарх: ${(summary['grandTotal'] as num?)?.toDouble()?.toStringAsFixed(0) ?? '0'} сомонӣ',
-                  style: const TextStyle(color: Colors.green)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.person, color: Colors.green, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            supplierName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Охирин харид: ${DateFormat('dd/MM/yyyy').format(latestDate)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${purchases.length} харид',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      children: [
+                        Text(
+                          '${totalWeight.toStringAsFixed(1)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange,
+                          ),
+                        ),
+                        Text(
+                          'кг',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      height: 30,
+                      width: 1,
+                      color: Colors.grey[300],
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          '$totalUnits',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        Text(
+                          'шт',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      height: 30,
+                      width: 1,
+                      color: Colors.grey[300],
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          '${totalAmount.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                        Text(
+                          'с',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
