@@ -473,12 +473,18 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                 labelText: 'Вазни як дона (кг)',
                 border: OutlineInputBorder(),
                 suffixText: 'кг',
-                hintText: 'Вазни як донаи коркардшуда',
+                hintText: '10, 15, 20, 25, 30, 35, 40, 45, 50 кг',
               ),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: (value) {
                 final v = double.tryParse(value ?? '');
                 if (v == null || v <= 0) return 'Лутфан вазнро ворид кунед';
+                
+                // Check if weight is one of the allowed values (10, 15, 20, 25, 30, 35, 40, 45, 50)
+                final allowedWeights = [10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0];
+                if (!allowedWeights.contains(v)) {
+                  return 'Вазн бояд аз 10, 15, 20, 25, 30, 35, 40, 45, 50 кг бошад';
+                }
                 
                 // Only validate against raw cotton if raw cotton is entered
                 final pieces = int.tryParse(_piecesController.text) ?? 0;
