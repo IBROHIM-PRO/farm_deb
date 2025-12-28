@@ -479,6 +479,19 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
               validator: (value) {
                 final v = double.tryParse(value ?? '');
                 if (v == null || v <= 0) return 'Лутфан вазнро ворид кунед';
+                
+                // Only validate against raw cotton if raw cotton is entered
+                final pieces = int.tryParse(_piecesController.text) ?? 0;
+                final batchTotalWeight = v * pieces;
+                final currentProcessedWeight = _totalProcessedCottonWeight;
+                final newTotalProcessedWeight = currentProcessedWeight + batchTotalWeight;
+                final rawCottonWeight = _totalRawCottonWeight;
+                
+                // Only check if raw cotton has been entered (> 0)
+                if (rawCottonWeight > 0 && newTotalProcessedWeight > rawCottonWeight) {
+                  return 'Ҳамагӣ коркардшуда аз пахтаи хом зиёд: ${newTotalProcessedWeight.toStringAsFixed(1)}>${rawCottonWeight.toStringAsFixed(1)}кг';
+                }
+                
                 return null;
               },
             ),
@@ -495,6 +508,19 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
               validator: (value) {
                 final v = int.tryParse(value ?? '');
                 if (v == null || v <= 0) return 'Лутфан шумораро ворид кунед';
+                
+                // Only validate against raw cotton if raw cotton is entered
+                final weight = double.tryParse(_weightController.text) ?? 0;
+                final batchTotalWeight = weight * v;
+                final currentProcessedWeight = _totalProcessedCottonWeight;
+                final newTotalProcessedWeight = currentProcessedWeight + batchTotalWeight;
+                final rawCottonWeight = _totalRawCottonWeight;
+                
+                // Only check if raw cotton has been entered (> 0)
+                if (rawCottonWeight > 0 && newTotalProcessedWeight > rawCottonWeight) {
+                  return 'Ҳамагӣ коркардшуда аз пахтаи хом зиёд: ${newTotalProcessedWeight.toStringAsFixed(1)}>${rawCottonWeight.toStringAsFixed(1)}кг';
+                }
+                
                 return null;
               },
             ),
@@ -508,8 +534,33 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
           ElevatedButton(
             onPressed: () {
               if (_weightController.text.isNotEmpty && _piecesController.text.isNotEmpty) {
+                // Validate before adding
+                final weight = double.tryParse(_weightController.text) ?? 0;
+                final pieces = int.tryParse(_piecesController.text) ?? 0;
+                final batchTotalWeight = weight * pieces;
+                final currentProcessedWeight = _totalProcessedCottonWeight;
+                final newTotalProcessedWeight = currentProcessedWeight + batchTotalWeight;
+                final rawCottonWeight = _totalRawCottonWeight;
+                
+                if (rawCottonWeight > 0 && newTotalProcessedWeight > rawCottonWeight) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Хато: Ҳамагӣ коркардшуда аз пахтаи хом зиёд (${newTotalProcessedWeight.toStringAsFixed(1)} > ${rawCottonWeight.toStringAsFixed(1)} кг)'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                
                 _addSimpleBatch();
                 Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Лутфан ҳамаи майдонҳоро пур кунед'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
               }
             },
             style: ElevatedButton.styleFrom(
