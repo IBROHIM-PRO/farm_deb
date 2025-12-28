@@ -7,7 +7,6 @@ import '../providers/cotton_registry_provider.dart';
 import '../providers/cotton_warehouse_provider.dart';
 import '../utils/data_persistence_manager.dart';
 import '../theme/app_theme.dart';
-import 'debt/debts_screen.dart';
 import 'debt/simple_debts_screen.dart';
 import 'cotton_warehouse/raw_cotton_warehouse_screen.dart';
 import 'cotton_warehouse/processed_cotton_warehouse_screen.dart';
@@ -66,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _selectedIndex,
         children: const [
           _DashboardView(),
-          DebtsScreen(),
+          SimpleDebtsScreen(),
           CottonPurchaseRegistryScreen(),
           CattleRegistryScreen(),
           HistoryScreen(),

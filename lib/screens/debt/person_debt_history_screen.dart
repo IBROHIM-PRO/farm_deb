@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/app_provider.dart';
 import '../../models/debt.dart';
+import 'debt_transaction_history_screen.dart';
 
 /// Person Debt History Screen
 /// Shows all debts (both given and taken) for a specific person
@@ -391,6 +392,94 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
 
           ],
         ),
+      ),
+    );
+  }
+
+  void _showPaymentDialog(Debt debt) {
+    final controller = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Пардохти қарз'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Боқимонда: ${debt.remainingAmount.toStringAsFixed(0)} ${debt.currency}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: controller,
+                decoration: InputDecoration(
+                  labelText: 'Маблағи пардохт (${debt.currency})',
+                  prefixIcon: const Icon(Icons.money),
+                  border: const OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                validator: (v) {
+                  if (v?.isEmpty == true) return 'Зарур аст';
+                  final amount = double.tryParse(v!);
+                  if (amount == null || amount <= 0) return 'Маблағи дуруст ворид кунед';
+                  if (amount > debt.remainingAmount) return 'Аз боқимонда зиёд аст';
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Бекор'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (formKey.currentState?.validate() ?? false) {
+                try {
+                  await context.read<AppProvider>().makePayment(
+                    debt: debt,
+                    amount: double.parse(controller.text),
+                  );
+                  if (mounted) {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Пардохт муваффақият амалӣ шуд'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    _loadPersonDebts(); // Reload debts to show updated amounts
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Хатогӣ дар пардохт: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            child: const Text('Пардохт кардан'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToTransactionHistory(Debt debt) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DebtTransactionHistoryScreen(debt: debt),
       ),
     );
   }
