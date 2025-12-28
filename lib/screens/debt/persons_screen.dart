@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_provider.dart';
 import '../../models/person.dart';
+import '../../models/debt.dart';
 
 class PersonsScreen extends StatelessWidget {
   const PersonsScreen({super.key});
@@ -32,7 +33,7 @@ class PersonsScreen extends StatelessWidget {
             itemCount: provider.persons.length,
             itemBuilder: (context, index) {
               final person = provider.persons[index];
-              final debts = provider.getDebtsForPerson(person.id!);
+              final debts = person.id != null ? provider.getDebtsForPerson(person.id!) : <Debt>[];
               final activeCount = debts.where((d) => d.status.name == 'active').length;
 
               return Card(
@@ -77,7 +78,7 @@ class PersonsScreen extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Бекор кардан')),
           ElevatedButton(
             onPressed: () async {
-              if (formKey.currentState!.validate()) {
+              if (formKey.currentState?.validate() ?? false) {
                 await ctx.read<AppProvider>().addPerson(Person(fullName: nameController.text.trim(), phone: phoneController.text.isEmpty ? null : phoneController.text.trim()));
                 if (ctx.mounted) Navigator.pop(ctx);
               }
@@ -128,7 +129,7 @@ class PersonsScreen extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Бекор кардан')),
           ElevatedButton(
             onPressed: () async {
-              if (formKey.currentState!.validate()) {
+              if (formKey.currentState?.validate() ?? false) {
                 await ctx.read<AppProvider>().updatePerson(person.copyWith(fullName: nameController.text.trim(), phone: phoneController.text.isEmpty ? null : phoneController.text.trim()));
                 if (ctx.mounted) Navigator.pop(ctx);
               }
@@ -148,7 +149,7 @@ class PersonsScreen extends StatelessWidget {
         content: Text('Нест кардани ${person.fullName}? Ин инчунин ҳамаи қарзҳои алоқамандро нест хоҳад кард.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Бекор кардан')),
-          ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white), onPressed: () async { await ctx.read<AppProvider>().deletePerson(person.id!); if (ctx.mounted) Navigator.pop(ctx); }, child: const Text('Нест кардан')),
+          ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white), onPressed: () async { if (person.id != null) await ctx.read<AppProvider>().deletePerson(person.id!); if (ctx.mounted) Navigator.pop(ctx); }, child: const Text('Нест кардан')),
         ],
       ),
     );

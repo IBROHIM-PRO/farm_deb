@@ -329,7 +329,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Бекор')),
           ElevatedButton(
             onPressed: () async {
-              if (formKey.currentState!.validate()) {
+              if (formKey.currentState?.validate() ?? false) {
                 final id = await ctx.read<AppProvider>().addPerson(
                   Person(
                     fullName: nameController.text.trim(),
@@ -351,7 +351,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
   }
 
   Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate() && _selectedPerson != null) {
+    if ((_formKey.currentState?.validate() ?? false) && _selectedPerson != null) {
       try {
         final provider = context.read<AppProvider>();
         

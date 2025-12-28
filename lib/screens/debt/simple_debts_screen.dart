@@ -2,12 +2,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'package:intl/intl.dart';
 import '../../providers/app_provider.dart';
 import '../../models/person.dart';
 import '../../models/debt.dart';
 import 'debt_transaction_history_screen.dart';
 import 'add_debt_screen.dart';
+import 'person_debt_history_screen.dart';
 
 class SimpleDebtsScreen extends StatelessWidget {
   const SimpleDebtsScreen({super.key});
@@ -38,15 +39,27 @@ class SimpleDebtsScreen extends StatelessWidget {
             return _buildEmptyState(context);
           }
 
+          // Group debts by person name
+          final groupedDebts = <String, List<Debt>>{};
+          for (final debt in debts) {
+            final personName = provider.getPersonById(debt.personId)?.fullName ?? 'Unknown';
+            groupedDebts.putIfAbsent(personName, () => []).add(debt);
+          }
+
+          final personNames = groupedDebts.keys.toList()..sort();
+
           return Column(
             children: [
               _buildSummaryCard(provider),
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  itemCount: debts.length,
-                  itemBuilder: (context, index) =>
-                      _buildDebtCard(context, debts[index], provider),
+                  itemCount: personNames.length,
+                  itemBuilder: (context, index) {
+                    final personName = personNames[index];
+                    final personDebts = groupedDebts[personName]!;
+                    return _buildPersonCard(context, personName, personDebts, provider);
+                  },
                 ),
               ),
             ],
@@ -125,16 +138,191 @@ class SimpleDebtsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'Додашуда: ${amounts['given']!.toStringAsFixed(2)}',
+                'Додашуда: ${(amounts['given'] ?? 0.0).toStringAsFixed(2)}',
                 style: TextStyle(color: Colors.green[700], fontSize: 13),
               ),
               Text(
-                'Гирифташуда: ${amounts['taken']!.toStringAsFixed(2)}',
+                'Гирифташуда: ${(amounts['taken'] ?? 0.0).toStringAsFixed(2)}',
                 style: TextStyle(color: Colors.red[700], fontSize: 13),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  // ---------------- PERSON CARD ----------------
+  Widget _buildPersonCard(BuildContext context, String personName, List<Debt> debts, AppProvider provider) {
+    // Calculate totals for this person
+    double totalGiven = 0.0;
+    double totalTaken = 0.0;
+    double remainingGiven = 0.0;
+    double remainingTaken = 0.0;
+    
+    for (final debt in debts) {
+      if (debt.type == DebtType.given) {
+        totalGiven += debt.totalAmount;
+        remainingGiven += debt.remainingAmount;
+      } else {
+        totalTaken += debt.totalAmount;
+        remainingTaken += debt.remainingAmount;
+      }
+    }
+    
+    final activeCount = debts.where((d) => d.status == DebtStatus.active).length;
+    final latestDate = debts.isEmpty 
+        ? DateTime.now() 
+        : debts.map((d) => d.date).reduce((a, b) => a.isAfter(b) ? a : b);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => _navigateToPersonHistory(context, personName),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.person, color: Colors.blue, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            personName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Санаи охирин: ${DateFormat('dd/MM/yyyy').format(latestDate)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: activeCount > 0 ? Colors.orange.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '$activeCount фаъол',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: activeCount > 0 ? Colors.orange : Colors.green,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    if (remainingGiven > 0) ...[
+                      Column(
+                        children: [
+                          Text(
+                            '${remainingGiven.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                          Text(
+                            'Додашуда',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (remainingGiven > 0 && remainingTaken > 0) 
+                      Container(height: 30, width: 1, color: Colors.grey[300]),
+                    if (remainingTaken > 0) ...[
+                      Column(
+                        children: [
+                          Text(
+                            '${remainingTaken.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                          Text(
+                            'Гирифташуда',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (remainingGiven == 0 && remainingTaken == 0) ...[
+                      Column(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.green, size: 20),
+                          Text(
+                            'Пардохташуда',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToPersonHistory(BuildContext context, String personName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PersonDebtHistoryScreen(
+          personName: personName,
+        ),
       ),
     );
   }
@@ -256,7 +444,7 @@ class SimpleDebtsScreen extends StatelessWidget {
               child: const Text('Бекор')),
           ElevatedButton(
             onPressed: () async {
-              if (key.currentState!.validate()) {
+              if (key.currentState?.validate() ?? false) {
                 await ctx.read<AppProvider>().makePayment(
                       debt: debt,
                       amount: double.parse(controller.text),

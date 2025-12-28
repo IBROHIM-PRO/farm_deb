@@ -355,6 +355,40 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
               ),
             ],
 
+            // Payment and Details Buttons
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (debt.status == DebtStatus.active) ...[
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showPaymentDialog(debt),
+                      icon: const Icon(Icons.payment, size: 16),
+                      label: const Text('Пардохт'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: color,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _navigateToTransactionHistory(debt),
+                    icon: const Icon(Icons.history, size: 16),
+                    label: const Text('Таърихи муомилот'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: color,
+                      side: BorderSide(color: color),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
           ],
         ),
       ),
