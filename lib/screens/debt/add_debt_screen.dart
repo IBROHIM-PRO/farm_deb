@@ -15,6 +15,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
+  final _personNameController = TextEditingController();
   Person? _selectedPerson;
   DebtType _debtType = DebtType.given;
   String _currency = 'TJS';
@@ -40,35 +41,130 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                   children: [
                     Text('Шахс', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
-                    if (provider.persons.isEmpty)
-                      ElevatedButton.icon(
-                        onPressed: () => _showAddPersonDialog(context),
-                        icon: const Icon(Icons.add),
-                        label: const Text('Илова кардани шахс'),
-                      )
-                    else
-                      Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButtonFormField<Person>(
-                              value: _selectedPerson,
-                              decoration: const InputDecoration(
-                                labelText: 'Шахсро интихоб кунед',
-                                prefixIcon: Icon(Icons.person),
+                    // Person Name with Autocomplete
+                    Autocomplete<String>(
+                      initialValue: TextEditingValue(text: _personNameController.text),
+                      optionsBuilder: (TextEditingValue textEditingValue) async {
+                        try {
+                          // Always get all person names first
+                          final allPersons = await context.read<AppProvider>().getPersonNames();
+                          
+                          // If input is empty, return all persons
+                          if (textEditingValue.text.isEmpty) {
+                            return allPersons;
+                          }
+                          
+                          // Filter persons based on input
+                          final query = textEditingValue.text.toLowerCase();
+                          return allPersons.where((person) => 
+                            person.toLowerCase().contains(query)).toList();
+                        } catch (e) {
+                          // Return empty list if there's an error
+                          return <String>[];
+                        }
+                      },
+                      onSelected: (String selection) {
+                        _personNameController.text = selection;
+                        // Find the person by name
+                        final person = provider.persons.firstWhere(
+                          (p) => p.fullName == selection,
+                          orElse: () => Person(fullName: selection),
+                        );
+                        setState(() => _selectedPerson = person);
+                      },
+                      fieldViewBuilder: (
+                        BuildContext context,
+                        TextEditingController fieldTextEditingController,
+                        FocusNode fieldFocusNode,
+                        VoidCallback onFieldSubmitted,
+                      ) {
+                        // Sync with our main controller
+                        fieldTextEditingController.addListener(() {
+                          _personNameController.text = fieldTextEditingController.text;
+                          // Auto-create person if name is entered but doesn't exist
+                          final existingPerson = provider.persons.cast<Person?>().firstWhere(
+                            (p) => p?.fullName == fieldTextEditingController.text,
+                            orElse: () => null,
+                          );
+                          if (existingPerson != null) {
+                            setState(() => _selectedPerson = existingPerson);
+                          } else if (fieldTextEditingController.text.isNotEmpty) {
+                            setState(() => _selectedPerson = Person(fullName: fieldTextEditingController.text.trim()));
+                          }
+                        });
+                        
+                        return TextFormField(
+                          controller: fieldTextEditingController,
+                          focusNode: fieldFocusNode,
+                          decoration: const InputDecoration(
+                            labelText: 'Номи шахс',
+                            prefixIcon: Icon(Icons.person),
+                            suffixIcon: Icon(Icons.arrow_drop_down),
+                            hintText: 'Номи шахсро дарҷ кунед ё интихоб кунед',
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                          validator: (value) {
+                            if (value?.trim().isEmpty == true) {
+                              return 'Номи шахс зарур аст';
+                            }
+                            return null;
+                          },
+                          onFieldSubmitted: (value) => onFieldSubmitted(),
+                        );
+                      },
+                      optionsViewBuilder: (
+                        BuildContext context,
+                        AutocompleteOnSelected<String> onSelected,
+                        Iterable<String> options,
+                      ) {
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: Material(
+                            elevation: 4.0,
+                            child: Container(
+                              constraints: const BoxConstraints(maxHeight: 200),
+                              child: ListView.builder(
+                                padding: EdgeInsets.zero,
+                                shrinkWrap: true,
+                                itemCount: options.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  final String option = options.elementAt(index);
+                                  return InkWell(
+                                    onTap: () => onSelected(option),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(16.0),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: Colors.grey.withOpacity(0.2),
+                                            width: 1,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.person, 
+                                            color: Colors.blue, 
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              option,
+                                              style: const TextStyle(fontSize: 16),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                              items: provider.persons
-                                  .map((p) => DropdownMenuItem(value: p, child: Text(p.fullName)))
-                                  .toList(),
-                              onChanged: (v) => setState(() => _selectedPerson = v),
-                              validator: (v) => v == null ? 'Мавҷуд аст' : null,
                             ),
                           ),
-                          IconButton(
-                            onPressed: () => _showAddPersonDialog(context),
-                            icon: const Icon(Icons.person_add),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -255,22 +351,44 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
   }
 
   Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      await context.read<AppProvider>().addDebt(
-            personId: _selectedPerson!.id!,
-            amount: double.parse(_amountController.text),
-            currency: _currency,
-            type: _debtType,
-          );
+    if (_formKey.currentState!.validate() && _selectedPerson != null) {
+      try {
+        final provider = context.read<AppProvider>();
+        
+        // If person doesn't have ID, create them first
+        Person personToUse = _selectedPerson!;
+        if (personToUse.id == null) {
+          final newPersonId = await provider.addPerson(personToUse);
+          personToUse = personToUse.copyWith(id: newPersonId);
+        }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Қарз барои ${_selectedPerson!.fullName} сабт шуд'),
-            backgroundColor: Colors.green,
-          ),
+        // Add the debt
+        await provider.addDebt(
+          personId: personToUse.id!,
+          amount: double.parse(_amountController.text),
+          currency: _currency,
+          type: _debtType,
+          notes: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
         );
-        Navigator.pop(context);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Қарз барои ${personToUse.fullName} сабт шуд'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Хатогӣ: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }

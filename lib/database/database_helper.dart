@@ -932,6 +932,34 @@ class DatabaseHelper {
     return maps.map((map) => CottonPurchaseRegistry.fromMap(map)).toList();
   }
 
+  // Person and Debt management methods for autocomplete and grouping
+  Future<List<String>> getPersonNames({String? searchQuery}) async {
+    final db = await database;
+    String query = 'SELECT DISTINCT fullName FROM persons';
+    List<dynamic> args = [];
+    
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      query += ' WHERE fullName LIKE ?';
+      args.add('%$searchQuery%');
+    }
+    
+    query += ' ORDER BY fullName ASC';
+    
+    final result = await db.rawQuery(query, args);
+    return result.map((row) => row['fullName'] as String).toList();
+  }
+
+  Future<List<Debt>> getDebtsByPersonName(String personName) async {
+    final db = await database;
+    final result = await db.rawQuery('''
+      SELECT d.* FROM debts d
+      JOIN persons p ON d.personId = p.id
+      WHERE p.fullName = ?
+      ORDER BY d.date DESC
+    ''', [personName]);
+    return result.map((map) => Debt.fromMap(map)).toList();
+  }
+
   // Cotton Stock Statistics
   Future<Map<String, dynamic>> getCottonStockSummary() async {
     final r = await (await database).rawQuery('''

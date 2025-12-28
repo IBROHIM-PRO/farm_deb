@@ -113,6 +113,16 @@ class AppProvider with ChangeNotifier {
     await loadAllData();
   }
 
+  /// Get person names for autocomplete with search functionality
+  Future<List<String>> getPersonNames({String? searchQuery}) async {
+    return await _db.getPersonNames(searchQuery: searchQuery);
+  }
+
+  /// Get all debts by person name
+  Future<List<Debt>> getDebtsByPersonName(String personName) async {
+    return await _db.getDebtsByPersonName(personName);
+  }
+
   Person? getPersonById(int id) {
     try { return _persons.firstWhere((p) => p.id == id); } catch (e) { return null; }
   }
