@@ -107,12 +107,23 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
         Autocomplete<String>(
           initialValue: TextEditingValue(text: _supplierController.text),
           optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty) {
-              return await context.read<CottonRegistryProvider>().getSupplierNames();
+            try {
+              // Always get all supplier names first
+              final allSuppliers = await context.read<CottonRegistryProvider>().getSupplierNames();
+              
+              // If input is empty, return all suppliers
+              if (textEditingValue.text.isEmpty) {
+                return allSuppliers;
+              }
+              
+              // Filter suppliers based on input
+              final query = textEditingValue.text.toLowerCase();
+              return allSuppliers.where((supplier) => 
+                supplier.toLowerCase().contains(query)).toList();
+            } catch (e) {
+              // Return empty list if there's an error
+              return <String>[];
             }
-            return await context.read<CottonRegistryProvider>().getSupplierNames(
-              searchQuery: textEditingValue.text,
-            );
           },
           onSelected: (String selection) {
             _supplierController.text = selection;
