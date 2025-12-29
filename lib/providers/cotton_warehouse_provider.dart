@@ -429,6 +429,76 @@ class CottonWarehouseProvider extends ChangeNotifier {
     await loadProcessedCottonInventory();
   }
 
+  /// Remove specific cotton from processed warehouse by weight category and pieces (for sales)
+  Future<void> removeFromProcessedWarehouse({
+    required double weightPerPiece,
+    required int pieces,
+  }) async {
+    final db = await _dbHelper.database;
+    
+    // Find matching batches with this weight per piece (within 0.1kg tolerance)
+    final matchingBatches = _processedCottonInventory.where((batch) => 
+      (batch.weightPerPiece - weightPerPiece).abs() <= 0.1).toList();
+    
+    if (matchingBatches.isEmpty) {
+      throw ArgumentError('Вазни ${weightPerPiece.toStringAsFixed(1)} кг дар анбор мавҷуд нест');
+    }
+    
+    final totalAvailablePieces = matchingBatches.fold<int>(0, (sum, batch) => sum + batch.pieces);
+    
+    if (pieces > totalAvailablePieces) {
+      throw ArgumentError('Дар анбор танҳо $totalAvailablePieces дона мавҷуд, дархост $pieces дона');
+    }
+    
+    // Remove pieces from matching batches (FIFO - oldest first)
+    int remainingToRemove = pieces;
+    final sortedBatches = List<ProcessedCottonWarehouse>.from(matchingBatches)
+      ..sort((a, b) => a.lastUpdated.compareTo(b.lastUpdated));
+    
+    for (final batch in sortedBatches) {
+      if (remainingToRemove <= 0) break;
+      
+      final piecesToRemoveFromThis = batch.pieces >= remainingToRemove 
+          ? remainingToRemove 
+          : batch.pieces;
+      
+      if (piecesToRemoveFromThis >= batch.pieces) {
+        // Remove this batch completely
+        await db.delete(
+          'processed_cotton_warehouse',
+          where: 'id = ?',
+          whereArgs: [batch.id],
+        );
+      } else {
+        // Partially remove from this batch
+        final newPieces = batch.pieces - piecesToRemoveFromThis;
+        final newTotalWeight = newPieces * batch.weightPerPiece;
+        
+        final updatedBatch = ProcessedCottonWarehouse(
+          id: batch.id,
+          pieces: newPieces,
+          totalWeight: newTotalWeight,
+          weightPerPiece: batch.weightPerPiece,
+          lastUpdated: DateTime.now(),
+          notes: batch.notes,
+          batchNumber: batch.batchNumber,
+        );
+        
+        await db.update(
+          'processed_cotton_warehouse',
+          updatedBatch.toMap(),
+          where: 'id = ?',
+          whereArgs: [batch.id],
+        );
+      }
+      
+      remainingToRemove -= piecesToRemoveFromThis;
+    }
+    
+    await loadProcessedCottonInventory();
+    debugPrint('✅ Removed $pieces pieces of ${weightPerPiece.toStringAsFixed(1)}kg cotton from warehouse');
+  }
+
   /// Process cotton: deduct from raw warehouse, add to processed warehouse
   Future<void> processCotton({
     required Map<RawCottonType, double> rawCottonUsage, // Type -> weight used

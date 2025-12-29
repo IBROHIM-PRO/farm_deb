@@ -2,8 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/cotton_warehouse_provider.dart';
 
-class ProcessedCottonWarehouseScreen extends StatelessWidget {
+class ProcessedCottonWarehouseScreen extends StatefulWidget {
   const ProcessedCottonWarehouseScreen({super.key});
+
+  @override
+  State<ProcessedCottonWarehouseScreen> createState() => _ProcessedCottonWarehouseScreenState();
+}
+
+class _ProcessedCottonWarehouseScreenState extends State<ProcessedCottonWarehouseScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Ensure data is loaded when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CottonWarehouseProvider>().loadAllData();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,13 +29,17 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       backgroundColor: Colors.grey[50],
-      body: Consumer<CottonWarehouseProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await context.read<CottonWarehouseProvider>().loadAllData();
+        },
+        child: Consumer<CottonWarehouseProvider>(
+          builder: (context, provider, _) {
+            if (provider.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          final totalInventory = provider.totalProcessedCotton;
+            final totalInventory = provider.totalProcessedCotton;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -34,7 +52,8 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
               ],
             ),
           );
-        },
+          },
+        ),
       ),
     );
   }
@@ -124,18 +143,26 @@ class ProcessedCottonWarehouseScreen extends StatelessWidget {
   Widget _buildInventoryDetails(BuildContext context, CottonWarehouseProvider provider) {
     final inventory = provider.processedCottonInventory;
     
+    // Debug: Print inventory to see what data we have
+    print('DEBUG: Processed cotton inventory count: ${inventory.length}');
+    for (final batch in inventory) {
+      print('DEBUG: Batch - pieces: ${batch.pieces}, totalWeight: ${batch.totalWeight}, weightPerPiece: ${batch.weightPerPiece}');
+    }
+    
     // Define allowed weight categories (10-50kg in 5kg increments)
     final allowedWeights = [10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0];
     
-    // Filter and group inventory by exact weight categories
+    // Filter and group inventory by weight per piece (not total weight)
     final Map<double, List<dynamic>> groupedByWeight = {};
     
     for (final batch in inventory) {
-      // Find the closest allowed weight (within 2.5kg tolerance)
+      // Use weightPerPiece instead of totalWeight for matching
       final double matchingWeight = allowedWeights.firstWhere(
-        (weight) => (batch.totalWeight - weight).abs() <= 2.5,
+        (weight) => (batch.weightPerPiece - weight).abs() <= 2.5,
         orElse: () => -1.0,
       );
+      
+      print('DEBUG: Checking batch weightPerPiece: ${batch.weightPerPiece}, matchingWeight: $matchingWeight');
       
       if (matchingWeight != -1.0) {
         groupedByWeight.putIfAbsent(matchingWeight, () => []).add(batch);
