@@ -5,6 +5,7 @@ import 'cotton_stock_overview_screen.dart';
 import '../cotton_registry/add_cotton_purchase_screen.dart';
 import '../cotton_registry/add_cotton_processing_screen.dart';
 import '../cotton_registry/cotton_sales_registry_screen.dart';
+import 'cotton_sales_screen.dart';
 
 class CottonStockMainScreen extends StatelessWidget {
   const CottonStockMainScreen({super.key});
@@ -69,13 +70,13 @@ class CottonStockMainScreen extends StatelessWidget {
             ),
             _buildModuleCard(
               context,
-              'Реестри фурӯш',
+              'Фурӯши пахтаи коркардшуда',
               'Фурӯши пахтаи коркардшуда бо пайгирии захира',
-              Icons.shopping_cart,
+              Icons.sell,
               Colors.teal,
               () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const CottonSalesRegistryScreen()),
+                MaterialPageRoute(builder: (_) => const CottonSalesScreen()),
               ),
             ),
           ],
