@@ -458,6 +458,33 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
     );
   }
 
+  Widget _buildItemSummary(SaleItem item) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Ҷамъ:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Text(
+            '${item.totalWeight.toStringAsFixed(1)} кг',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.blue,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildWarehouseValidation(SaleItem item) {
     return Consumer<CottonWarehouseProvider>(
       builder: (context, warehouseProvider, _) {
@@ -1016,34 +1043,115 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey[200]!),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                DateFormat('dd/MM/yyyy').format(sale.saleDate),
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                ),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Text(
+                    DateFormat('dd/MM/yyyy').format(sale.saleDate),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '${sale.units} × ${sale.unitWeight.toStringAsFixed(1)}кг',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${sale.totalWeight.toStringAsFixed(1)} кг',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ],
           ),
-          Text(
-            '${sale.totalWeight.toStringAsFixed(1)} кг',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.orange,
-            ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.inventory_2, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 4),
+              Text(
+                '${sale.units} дона × ${sale.unitWeight.toStringAsFixed(1)} кг',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[700],
+                ),
+              ),
+            ],
           ),
+          if (sale.pricePerKg != null) ...[
+            const SizedBox(height: 8),
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.attach_money, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Нархи 1 кг:',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '${sale.pricePerKg!.toStringAsFixed(2)} сомонӣ',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (sale.totalAmount != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.account_balance_wallet, size: 16, color: Colors.green[700]),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'Ҷамъи маблағ:',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '${sale.totalAmount!.toStringAsFixed(2)} сомонӣ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Colors.green[700],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

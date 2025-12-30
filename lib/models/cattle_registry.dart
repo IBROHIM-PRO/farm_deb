@@ -10,6 +10,7 @@ class CattleRegistry {
   final CattleGender gender;     // Male/Female
   final AgeCategory ageCategory; // Calf/Young/Adult
   final int? barnId;             // Barn where cattle is housed
+  final int? breederId;          // Breeder/Seller person
   final DateTime registrationDate; // When registered in system
   final CattleStatus status;     // Active/Sold
 
@@ -19,6 +20,7 @@ class CattleRegistry {
     required this.gender,
     required this.ageCategory,
     this.barnId,
+    this.breederId,
     required this.registrationDate,
     this.status = CattleStatus.active,
   });
@@ -30,6 +32,7 @@ class CattleRegistry {
       'gender': gender.name,
       'ageCategory': ageCategory.name,
       'barnId': barnId,
+      'breederId': breederId,
       'registrationDate': registrationDate.toIso8601String(),
       'status': status.name,
     };
@@ -48,6 +51,7 @@ class CattleRegistry {
         orElse: () => AgeCategory.adult,
       ),
       barnId: map['barnId'] as int?,
+      breederId: map['breederId'] as int?,
       registrationDate: map['registrationDate'] != null ? DateTime.parse(map['registrationDate'] as String) : DateTime.now(),
       status: CattleStatus.values.firstWhere(
         (e) => e.name == map['status'],
@@ -62,6 +66,7 @@ class CattleRegistry {
     CattleGender? gender,
     AgeCategory? ageCategory,
     int? barnId,
+    int? breederId,
     DateTime? registrationDate,
     CattleStatus? status,
   }) {
@@ -71,6 +76,7 @@ class CattleRegistry {
       gender: gender ?? this.gender,
       ageCategory: ageCategory ?? this.ageCategory,
       barnId: barnId ?? this.barnId,
+      breederId: breederId ?? this.breederId,
       registrationDate: registrationDate ?? this.registrationDate,
       status: status ?? this.status,
     );

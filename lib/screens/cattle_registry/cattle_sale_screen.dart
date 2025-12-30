@@ -63,7 +63,7 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
       _selectedCattleId = null;
       if (barnId != null) {
         final provider = context.read<CattleRegistryProvider>();
-        filteredCattle = provider.cattle
+        filteredCattle = provider.cattleRegistry
             .where((c) => c.barnId == barnId && c.status == CattleStatus.active)
             .toList();
       } else {
@@ -541,7 +541,7 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
     switch (status) {
       case SalePaymentStatus.paid:
         return 'Пардохтшуда';
-      case SalePaymentStatus.unpaid:
+      case SalePaymentStatus.pending:
         return 'Пардохтнашуда';
       case SalePaymentStatus.partial:
         return 'Қисман пардохтшуда';
@@ -554,39 +554,44 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final liveWeight = _useWeighing ? double.tryParse(_liveWeightController.text.trim()) : null;
+      final liveWeightValue = _useWeighing ? double.tryParse(_liveWeightController.text.trim()) : null;
       final meatWeight = _saleType == CattleSaleType.slaughtered && _useWeighing
           ? double.tryParse(_meatWeightController.text.trim())
           : null;
-      final pricePerKg = _useWeighing ? double.tryParse(_pricePerKgController.text.trim()) : null;
+      final pricePerKg = _useWeighing ? (double.tryParse(_pricePerKgController.text.trim()) ?? 0.0) : 0.0;
       final fixedPrice = !_useWeighing ? double.parse(_fixedPriceController.text.trim()) : null;
-      final paidAmount = _paymentStatus == SalePaymentStatus.partial
+      final paidAmountValue = _paymentStatus == SalePaymentStatus.partial
           ? double.parse(_paidAmountController.text.trim())
-          : null;
+          : 0.0;
+      
+      // Determine the weight to use (meat weight for slaughtered, live weight for alive)
+      final saleWeight = _saleType == CattleSaleType.slaughtered && meatWeight != null
+          ? meatWeight
+          : liveWeightValue!;
 
       final sale = CattleSale(
         cattleId: _selectedCattleId!,
         saleType: _saleType,
-        liveWeight: liveWeight,
-        meatWeight: meatWeight,
+        saleDate: _saleDate,
+        weight: saleWeight,
+        liveWeight: liveWeightValue,
+        slaughterDate: _saleType == CattleSaleType.slaughtered ? _saleDate : null,
         pricePerKg: pricePerKg,
-        totalPrice: _useWeighing
-            ? (meatWeight ?? liveWeight!) * pricePerKg!
-            : fixedPrice!,
+        totalAmount: _useWeighing ? saleWeight * pricePerKg : fixedPrice!,
         buyerName: _buyerNameController.text.trim().isNotEmpty
             ? _buyerNameController.text.trim()
             : null,
         buyerPhone: _buyerPhoneController.text.trim().isNotEmpty
             ? _buyerPhoneController.text.trim()
             : null,
-        saleDate: _saleDate,
         paymentStatus: _paymentStatus,
-        paidAmount: paidAmount,
+        paidAmount: paidAmountValue,
         notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
       );
 
       final provider = context.read<CattleRegistryProvider>();
-      await provider.addCattleSale(sale);
+      await provider.sellCattle(sale);
+      await provider.loadAllData();
       
       if (mounted) {
         Navigator.pop(context);

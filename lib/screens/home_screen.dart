@@ -10,11 +10,10 @@ import '../theme/app_theme.dart';
 import 'debt/simple_debts_screen.dart';
 import 'cotton_warehouse/raw_cotton_warehouse_screen.dart';
 import 'cotton_warehouse/processed_cotton_warehouse_screen.dart';
-import 'cattle_registry/cattle_registry_screen.dart';
+import 'cattle_registry/add_cattle_registry_screen.dart';
 import 'cattle_registry/cattle_sale_screen.dart';
 import 'cotton_registry/cotton_purchase_registry_screen.dart';
 import 'cotton_registry/cotton_processing_registry_screen.dart';
-import 'cotton_registry/cotton_sales_registry_screen.dart';
 import 'cotton_stock/cotton_stock_main_screen.dart';
 import 'cotton_stock/cotton_sales_screen.dart';
 import 'reports/reports_screen.dart';
@@ -69,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _DashboardView(),
           SimpleDebtsScreen(),
           CottonPurchaseRegistryScreen(),
-          CattleRegistryScreen(),
+          AddCattleRegistryScreen(),
           HistoryScreen(),
           ReportsScreen(),
         ],
@@ -153,7 +152,7 @@ class _DashboardView extends StatelessWidget {
                       crossAxisSpacing: 16,
                       childAspectRatio: 0.95,
                     ),
-                    itemCount: 13,
+                    itemCount: 11,
                     itemBuilder: (context, index) {
                       final items = [
                         ('Идоракунии қарзҳо', 'Сабт ва пайгирии қарзҳо', Icons.account_balance_wallet, 'debt', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SimpleDebtsScreen()))),
@@ -161,11 +160,9 @@ class _DashboardView extends StatelessWidget {
                         ('Анбори пахтаи коркардшуда', 'Пахтаи тайёр дар қуттиҳо', Icons.inventory_2, 'processed_warehouse', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProcessedCottonWarehouseScreen()))),
                         ('Харидании пахта', 'Реестри харидани пахта', Icons.shopping_cart, 'cotton_purchase', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonPurchaseRegistryScreen()))),
                         ('Коркарди пахта', 'Реестри коркарди пахта', Icons.precision_manufacturing, 'cotton_processing', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonProcessingRegistryScreen()))),
-                        ('Фурӯши пахта', 'Реестри фурӯши пахта', Icons.sell, 'cotton_sales', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonSalesRegistryScreen()))),
                         ('Сабти фурӯш', 'Сабти фурӯши пахта', Icons.point_of_sale, 'cotton_stock_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonSalesScreen()))),
                         ('Идоракунии захираи пахта', 'Нигаҳдорӣ ва идораи пахта', Icons.inventory, 'cotton_stock', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonStockMainScreen()))),
-                        ('Идоракунии ховарҳо', 'Ҷойгиркунӣ ва харочоти ховар', Icons.home_work, 'barn', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BarnListScreen()))),
-                        ('Реестри чорво', 'Идоракунии чорво', Icons.pets, 'cattle', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleRegistryScreen()))),
+                        ('Идоракунии ховарҳо', 'Ҷойгиркунӣ ва харочоти ховар', Icons.home_work, 'barn', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BarnListScreen()))),                        
                         ('Фурӯши чорво', 'Сабти фурӯши чорво', Icons.sell_outlined, 'cattle_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleSaleScreen()))),
                         ('Идоракунии корбарон', 'Ашхос ва контактҳо', Icons.people, 'users', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonsScreen()))),
                         ('Ҳисоботҳо ва таҳлил', 'Маълумоти молиявӣ', Icons.bar_chart, 'report', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()))),

@@ -27,6 +27,15 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Load barns when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BarnProvider>().loadBarns();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -62,12 +71,12 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               
               const SizedBox(height: 24),
               
-              // Barn Selection
+              // Barn Selection (Required)
               _buildBarnSelectionSection(),
               
               const SizedBox(height: 24),
               
-              // Registration Date
+              // Registration Date (Auto Display)
               _buildRegistrationDateSection(),
               
               const SizedBox(height: 32),
@@ -359,12 +368,25 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Ховар (ихтиёрӣ)',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              children: [
+                const Text(
+                  'Ховар',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '*',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Card(
@@ -387,11 +409,13 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
                         filled: true,
                         fillColor: Colors.grey[50],
                       ),
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Ховарро интихоб кунед (ҳатмӣ)';
+                        }
+                        return null;
+                      },
                       items: [
-                        const DropdownMenuItem<int>(
-                          value: null,
-                          child: Text('Бе ховар'),
-                        ),
                         ...barns.map((barn) {
                           final cattleCount = barnProvider.getCattleCount(barn.id!);
                           final isAtCapacity = barnProvider.isAtCapacity(barn.id!);
@@ -436,7 +460,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Шумо метавонед чорворо ба ховар муайян кунед ё бидуни ховар бақайд кунед',
+              'Интихоби ховар ҳатмӣ аст - чорвор бояд дар ховар бошад',
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey[600],
@@ -469,8 +493,14 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               '${_registrationDate.month.toString().padLeft(2, '0')}/'
               '${_registrationDate.year}',
             ),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: _selectRegistrationDate,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Санаи имрӯз ба таври худкор сабт мешавад',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
           ),
         ),
       ],
@@ -508,21 +538,6 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               ),
       ),
     );
-  }
-
-  Future<void> _selectRegistrationDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _registrationDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-    );
-    
-    if (date != null) {
-      setState(() {
-        _registrationDate = date;
-      });
-    }
   }
 
   Future<void> _registerCattle() async {

@@ -51,7 +51,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path, 
-      version: 3,  // Updated to version 3 to add barn support
+      version: 4,  // Updated to version 4 to add breeder support
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -122,6 +122,11 @@ class DatabaseHelper {
       // Create indexes for barn tables
       await db.execute('CREATE INDEX idx_barn_expenses_barn ON barn_expenses (barnId, expenseDate DESC)');
       await db.execute('CREATE INDEX idx_cattle_registry_barn ON cattle_registry (barnId)');
+    }
+    
+    if (oldVersion < 4) {
+      // Add breeder support - Add breederId column to cattle_registry table
+      await db.execute('ALTER TABLE cattle_registry ADD COLUMN breederId INTEGER');
     }
   }
 
@@ -607,9 +612,11 @@ class DatabaseHelper {
         gender TEXT NOT NULL,
         ageCategory TEXT NOT NULL,
         barnId INTEGER,
+        breederId INTEGER,
         registrationDate TEXT NOT NULL,
         status TEXT NOT NULL,
-        FOREIGN KEY (barnId) REFERENCES barns (id) ON DELETE SET NULL
+        FOREIGN KEY (barnId) REFERENCES barns (id) ON DELETE SET NULL,
+        FOREIGN KEY (breederId) REFERENCES persons (id) ON DELETE SET NULL
       )
     ''');
     

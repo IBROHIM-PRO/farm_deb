@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import '../cotton_registry/cotton_purchase_registry_screen.dart';
 import '../cotton_registry/cotton_processing_registry_screen.dart';
-import 'cotton_stock_overview_screen.dart';
 import '../cotton_registry/add_cotton_purchase_screen.dart';
 import '../cotton_registry/add_cotton_processing_screen.dart';
-import '../cotton_registry/cotton_sales_registry_screen.dart';
 import 'cotton_sales_screen.dart';
 
 class CottonStockMainScreen extends StatelessWidget {
@@ -26,17 +24,6 @@ class CottonStockMainScreen extends StatelessWidget {
           children: [
             _buildModuleCard(
               context,
-              'Мурорҷоии захира',
-              'Нишон додани миқдори пахта аз рӯи навъ',
-              Icons.inventory,
-              Colors.blue,
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CottonStockOverviewScreen()),
-              ),
-            ),
-            _buildModuleCard(
-              context,
               'Реестри харид',
               'Сабти харидани пахта аз таъминкунандагон',
               Icons.add_box,
@@ -44,17 +31,6 @@ class CottonStockMainScreen extends StatelessWidget {
               () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CottonPurchaseRegistryScreen()),
-              ),
-            ),
-            _buildModuleCard(
-              context,
-              'Вазъияти захира',
-              'Дидани миқдори пахтаи коркардшуда',
-              Icons.warehouse,
-              Colors.orange,
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CottonStockOverviewScreen()),
               ),
             ),
             _buildModuleCard(
