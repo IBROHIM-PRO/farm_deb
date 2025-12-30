@@ -389,74 +389,62 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            Card(
-              child: barns.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text(
-                        'Ҳеҷ ховар бақайд нашудааст',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    )
-                  : DropdownButtonFormField<int>(
-                      value: _selectedBarnId,
-                      decoration: InputDecoration(
-                        hintText: 'Ховарро интихоб кунед',
-                        prefixIcon: const Icon(Icons.home_work),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+            DropdownButtonFormField<int>(
+              value: _selectedBarnId,
+              decoration: InputDecoration(
+                hintText: 'Ховарро интихоб кунед',
+                prefixIcon: const Icon(Icons.home_work),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: Colors.grey[50],
+              ),
+              validator: (value) {
+                if (value == null) {
+                  return 'Ховарро интихоб кунед (ҳатмӣ)';
+                }
+                return null;
+              },
+              items: barns.map((barn) {
+                final cattleCount = barnProvider.getCattleCount(barn.id!);
+                final isAtCapacity = barnProvider.isAtCapacity(barn.id!);
+                
+                return DropdownMenuItem<int>(
+                  value: barn.id,
+                  enabled: !isAtCapacity,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          barn.name,
+                          style: TextStyle(
+                            color: isAtCapacity ? Colors.grey : null,
+                          ),
                         ),
-                        filled: true,
-                        fillColor: Colors.grey[50],
                       ),
-                      validator: (value) {
-                        if (value == null) {
-                          return 'Ховарро интихоб кунед (ҳатмӣ)';
-                        }
-                        return null;
-                      },
-                      items: [
-                        ...barns.map((barn) {
-                          final cattleCount = barnProvider.getCattleCount(barn.id!);
-                          final isAtCapacity = barnProvider.isAtCapacity(barn.id!);
-                          
-                          return DropdownMenuItem<int>(
-                            value: barn.id,
-                            enabled: !isAtCapacity,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    barn.name,
-                                    style: TextStyle(
-                                      color: isAtCapacity ? Colors.grey : null,
-                                    ),
-                                  ),
-                                ),
-                                if (barn.capacity != null)
-                                  Text(
-                                    '$cattleCount/${barn.capacity}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isAtCapacity ? Colors.red : Colors.grey,
-                                    ),
-                                  ),
-                                if (isAtCapacity)
-                                  const Padding(
-                                    padding: EdgeInsets.only(left: 4),
-                                    child: Icon(Icons.block, size: 16, color: Colors.red),
-                                  ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedBarnId = value;
-                        });
-                      },
-                    ),
+                      if (barn.capacity != null)
+                        Text(
+                          '$cattleCount/${barn.capacity}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isAtCapacity ? Colors.red : Colors.grey,
+                          ),
+                        ),
+                      if (isAtCapacity)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4),
+                          child: Icon(Icons.block, size: 16, color: Colors.red),
+                        ),
+                    ],
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedBarnId = value;
+                });
+              },
             ),
             const SizedBox(height: 4),
             Text(

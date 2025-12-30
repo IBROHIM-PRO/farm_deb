@@ -939,6 +939,10 @@ class DatabaseHelper {
   // Buyer CRUD
   Future<int> insertBuyer(Buyer b) async => (await database).insert('buyers', b.toMap());
   Future<List<Buyer>> getAllBuyers() async => (await (await database).query('buyers', orderBy: 'name ASC')).map((m) => Buyer.fromMap(m)).toList();
+  Future<Buyer?> getBuyerById(int id) async {
+    final maps = await (await database).query('buyers', where: 'id = ?', whereArgs: [id]);
+    return maps.isNotEmpty ? Buyer.fromMap(maps.first) : null;
+  }
   Future<int> updateBuyer(Buyer b) async => (await database).update('buyers', b.toMap(), where: 'id = ?', whereArgs: [b.id]);
   Future<int> deleteBuyer(int id) async => (await database).delete('buyers', where: 'id = ?', whereArgs: [id]);
 

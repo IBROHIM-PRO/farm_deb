@@ -115,9 +115,7 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
         // Summary Card (Clickable to view transaction history of first debt)
         Container(
           margin: const EdgeInsets.all(16),
-          child: InkWell(
-            onTap: _debts.isNotEmpty ? () => _navigateToTransactionHistory(_debts.first) : null,
-            borderRadius: BorderRadius.circular(12),
+          
             child: Card(
               elevation: 4,
               child: Padding(
@@ -182,7 +180,6 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
                 ),
               ),
             ),
-          ),
         ),
 
         // Debts List
@@ -234,9 +231,12 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      child: InkWell(
+        onTap: () => _navigateToTransactionHistory(debt),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Debt Header
@@ -359,41 +359,9 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
                 backgroundColor: color.withOpacity(0.1),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
-            ],
-
-            // Payment and Details Buttons
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _navigateToTransactionHistory(debt),
-                    icon: const Icon(Icons.payment, size: 16),
-                    label: const Text('Пардохт'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: color,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _navigateToTransactionHistory(debt),
-                    icon: const Icon(Icons.history, size: 16),
-                    label: const Text('Таърихи муомилот'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: color,
-                      side: BorderSide(color: color),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
+            ],        
           ],
+          ),
         ),
       ),
     );

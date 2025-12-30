@@ -5,6 +5,7 @@ import '../../database/database_helper.dart';
 import '../../models/buyer.dart';
 import '../../models/cotton_stock_sale.dart';
 import '../../providers/cotton_warehouse_provider.dart';
+import 'cotton_sale_detail_screen.dart';
 
 class SaleItem {
   double weight;
@@ -108,12 +109,11 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
         backgroundColor: Colors.blue[600],
         foregroundColor: Colors.white,
         actions: [
-          if (!showSaleForm)
-            IconButton(
-              onPressed: () => setState(() => showSaleForm = true),
-              icon: const Icon(Icons.add),
-              tooltip: 'Илова кардани фуруш',
-            ),
+          IconButton(
+            onPressed: () => setState(() => showSaleForm = !showSaleForm),
+            icon: Icon(showSaleForm ? Icons.remove : Icons.add),
+            tooltip: showSaleForm ? 'Пӯшонидани форма' : 'Илова кардани фуруш',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadData,
@@ -1035,15 +1035,25 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
   }
 
   Widget _buildIndividualSaleItem(CottonStockSale sale) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CottonSaleDetailScreen(sale: sale),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -1153,6 +1163,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
             ),
           ],
         ],
+        ),
       ),
     );
   }
