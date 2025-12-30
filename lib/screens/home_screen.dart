@@ -11,6 +11,7 @@ import 'debt/simple_debts_screen.dart';
 import 'cotton_warehouse/raw_cotton_warehouse_screen.dart';
 import 'cotton_warehouse/processed_cotton_warehouse_screen.dart';
 import 'cattle_registry/cattle_registry_screen.dart';
+import 'cattle_registry/cattle_sale_screen.dart';
 import 'cotton_registry/cotton_purchase_registry_screen.dart';
 import 'cotton_registry/cotton_processing_registry_screen.dart';
 import 'cotton_registry/cotton_sales_registry_screen.dart';
@@ -152,7 +153,7 @@ class _DashboardView extends StatelessWidget {
                       crossAxisSpacing: 16,
                       childAspectRatio: 0.95,
                     ),
-                    itemCount: 12,
+                    itemCount: 13,
                     itemBuilder: (context, index) {
                       final items = [
                         ('Идоракунии қарзҳо', 'Сабт ва пайгирии қарзҳо', Icons.account_balance_wallet, 'debt', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SimpleDebtsScreen()))),
@@ -165,6 +166,7 @@ class _DashboardView extends StatelessWidget {
                         ('Идоракунии захираи пахта', 'Нигаҳдорӣ ва идораи пахта', Icons.inventory, 'cotton_stock', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonStockMainScreen()))),
                         ('Идоракунии ховарҳо', 'Ҷойгиркунӣ ва харочоти ховар', Icons.home_work, 'barn', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BarnListScreen()))),
                         ('Реестри чорво', 'Идоракунии чорво', Icons.pets, 'cattle', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleRegistryScreen()))),
+                        ('Фурӯши чорво', 'Сабти фурӯши чорво', Icons.sell_outlined, 'cattle_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleSaleScreen()))),
                         ('Идоракунии корбарон', 'Ашхос ва контактҳо', Icons.people, 'users', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonsScreen()))),
                         ('Ҳисоботҳо ва таҳлил', 'Маълумоти молиявӣ', Icons.bar_chart, 'report', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()))),
                       ];
