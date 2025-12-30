@@ -38,14 +38,23 @@ class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const AddCattleRegistryScreen(),
-                ),
-              );
-              if (result == true) {
-                context.read<CattleRegistryProvider>().loadAllData();
+              try {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AddCattleRegistryScreen(),
+                  ),
+                );
+                if (result == true && mounted) {
+                  await context.read<CattleRegistryProvider>().loadAllData();
+                }
+              } catch (e) {
+                debugPrint('Error navigating to add cattle screen: $e');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Хато: ${e.toString()}')),
+                  );
+                }
               }
             },
             tooltip: 'Илова кардани чорво',
@@ -54,33 +63,67 @@ class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
       ),
       body: Consumer<CattleRegistryProvider>(
         builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          try {
+            if (provider.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          final cattle = provider.allCattle;
-          
-          if (cattle.isEmpty) {
-            return _buildEmptyState();
-          }
+            final cattle = provider.allCattle;
+            
+            if (cattle.isEmpty) {
+              return _buildEmptyState();
+            }
 
-          return RefreshIndicator(
-            onRefresh: () => provider.loadAllData(),
-            child: Column(
-              children: [
-                _buildSummaryCard(cattle),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: cattle.length,
-                    itemBuilder: (context, index) {
-                      return _buildCattleCard(cattle[index]);
-                    },
+            return RefreshIndicator(
+              onRefresh: () async {
+                try {
+                  await provider.loadAllData();
+                } catch (e) {
+                  debugPrint('Error refreshing cattle data: $e');
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Хато: ${e.toString()}')),
+                    );
+                  }
+                }
+              },
+              child: Column(
+                children: [
+                  _buildSummaryCard(cattle),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: cattle.length,
+                      itemBuilder: (context, index) {
+                        return _buildCattleCard(cattle[index]);
+                      },
+                    ),
                   ),
-                ),
-              ],
-            ),
-          );
+                ],
+              ),
+            );
+          } catch (e) {
+            debugPrint('Error building cattle registry screen: $e');
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text('Хатогӣ: ${e.toString()}'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (mounted) {
+                        context.read<CattleRegistryProvider>().loadAllData();
+                      }
+                    },
+                    child: const Text('Дубора кӯшиш кунед'),
+                  ),
+                ],
+              ),
+            );
+          }
         },
       ),
     );
@@ -205,27 +248,39 @@ class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
   }
 
   Widget _buildCattleCard(CattleRegistry cattle) {
-    final barnProvider = context.read<BarnProvider>();
-    final barn = cattle.barnId != null ? barnProvider.getBarnById(cattle.barnId!) : null;
-    final cattleProvider = context.read<CattleRegistryProvider>();
-    final purchase = cattleProvider.getCattlePurchases(cattle.id!).isNotEmpty
-        ? cattleProvider.getCattlePurchases(cattle.id!).first
-        : null;
-    final weights = cattleProvider.getCattleWeights(cattle.id!);
+    try {
+      final barnProvider = context.read<BarnProvider>();
+      final barn = cattle.barnId != null ? barnProvider.getBarnById(cattle.barnId!) : null;
+      final cattleProvider = context.read<CattleRegistryProvider>();
+      final purchase = cattle.id != null && cattleProvider.getCattlePurchases(cattle.id!).isNotEmpty
+          ? cattleProvider.getCattlePurchases(cattle.id!).first
+          : null;
+      final weights = cattle.id != null ? cattleProvider.getCattleWeights(cattle.id!) : <CattleWeight>[];
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CattleFinancialDetailScreen(cattleId: cattle.id!),
-            ),
-          );
-          context.read<CattleRegistryProvider>().loadAllData();
-        },
-        borderRadius: BorderRadius.circular(12),
+      return Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: InkWell(
+          onTap: () async {
+            try {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CattleFinancialDetailScreen(cattleId: cattle.id!),
+                ),
+              );
+              if (mounted) {
+                await context.read<CattleRegistryProvider>().loadAllData();
+              }
+            } catch (e) {
+              debugPrint('Error navigating to cattle detail: $e');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Хато: ${e.toString()}')),
+                );
+              }
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -414,6 +469,26 @@ class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  } catch (e) {
+    debugPrint('Error building cattle card: $e');
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Хатогӣ дар намоиши маълумоти чорво: ${e.toString()}',
+                style: TextStyle(color: Colors.red, fontSize: 14),
+              ),
+            ),
+          ],
         ),
       ),
     );

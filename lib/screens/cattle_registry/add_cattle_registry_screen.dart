@@ -565,11 +565,24 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
         return;
       }
       
+      // Validate: if purchase price is entered, weight must also be entered
+      if (_purchasePriceController.text.trim().isNotEmpty && 
+          _initialWeightController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Барои ворид кардани нархи харид, вазни ибтидоӣ низ зарур аст'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
       setState(() {
         _isLoading = true;
       });
 
       try {
+        debugPrint('🐄 Starting cattle registration...');
         final cattle = CattleRegistry(
           earTag: earTag,
           gender: _selectedGender,
@@ -578,40 +591,66 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
           registrationDate: _registrationDate,
         );
 
+        debugPrint('🐄 Adding cattle to registry...');
         final cattleId = await provider.addCattleToRegistry(cattle);
+        debugPrint('🐄 Cattle registered with ID: $cattleId');
         
         // Add initial weight record
         if (_initialWeightController.text.trim().isNotEmpty && cattleId != null) {
-          final initialWeight = double.parse(_initialWeightController.text.trim());
-          final weightRecord = CattleWeight(
-            cattleId: cattleId,
-            measurementDate: _registrationDate,
-            weight: initialWeight,
-            notes: 'Вазни ибтидоӣ ҳангоми бақайдгирӣ',
-          );
-          await context.read<CattleRegistryProvider>().addCattleWeight(weightRecord);
+          try {
+            debugPrint('🐄 Adding initial weight...');
+            final initialWeight = double.parse(_initialWeightController.text.trim());
+            final weightRecord = CattleWeight(
+              cattleId: cattleId,
+              measurementDate: _registrationDate,
+              weight: initialWeight,
+              notes: 'Вазни ибтидоӣ ҳангоми бақайдгирӣ',
+            );
+            await context.read<CattleRegistryProvider>().addCattleWeight(weightRecord);
+            debugPrint('🐄 Weight added successfully');
+          } catch (weightError) {
+            debugPrint('Error adding weight: $weightError');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Хато дар ворид кардани вазн'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+          }
         }
         
-        // Add purchase record if price is provided
-        if (_purchasePriceController.text.trim().isNotEmpty && cattleId != null) {
-          final purchasePrice = double.parse(_purchasePriceController.text.trim());
-          final initialWeight = double.parse(_initialWeightController.text.trim());
-          final purchaseRecord = CattlePurchase(
-            cattleId: cattleId,
-            purchaseDate: _registrationDate,
-            weightAtPurchase: initialWeight,
-            totalPrice: purchasePrice,
-            currency: 'TJS',
-            notes: 'Харид ҳангоми бақайдгирӣ',
-          );
-          await context.read<CattleRegistryProvider>().addCattlePurchase(purchaseRecord);
+        // Add purchase record if price is provided AND weight exists
+        if (_purchasePriceController.text.trim().isNotEmpty && 
+            _initialWeightController.text.trim().isNotEmpty && 
+            cattleId != null) {
+          try {
+            debugPrint('🐄 Adding purchase record...');
+            final purchasePrice = double.parse(_purchasePriceController.text.trim());
+            final initialWeight = double.parse(_initialWeightController.text.trim());
+            final purchaseRecord = CattlePurchase(
+              cattleId: cattleId,
+              purchaseDate: _registrationDate,
+              weightAtPurchase: initialWeight,
+              totalPrice: purchasePrice,
+              currency: 'TJS',
+              notes: 'Харид ҳангоми бақайдгирӣ',
+            );
+            await context.read<CattleRegistryProvider>().addCattlePurchase(purchaseRecord);
+            debugPrint('🐄 Purchase record added successfully');
+          } catch (parseError) {
+            debugPrint('Error parsing purchase data: $parseError');
+          }
         }
         
         // Reload barn provider to update cattle counts
         if (_selectedBarnId != null && mounted) {
+          debugPrint('🐄 Reloading barn data...');
           await context.read<BarnProvider>().loadBarns();
         }
 
+        debugPrint('🐄 Cattle registration completed successfully!');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -619,9 +658,12 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.pop(context);
+          debugPrint('🐄 Navigating back with success result');
+          Navigator.pop(context, true);
         }
       } catch (e) {
+        debugPrint('❌ Error during cattle registration: $e');
+        debugPrint('❌ Stack trace: ${StackTrace.current}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

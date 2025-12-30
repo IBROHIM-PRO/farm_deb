@@ -108,6 +108,16 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
       return sum + itemsTotal + purchase.transportationCost;
     });
 
+    // Group purchases by date
+    final Map<String, List<CottonPurchaseRegistry>> groupedPurchases = {};
+    for (var purchase in _purchases) {
+      final dateKey = DateFormat('dd/MM/yyyy').format(purchase.purchaseDate);
+      if (!groupedPurchases.containsKey(dateKey)) {
+        groupedPurchases[dateKey] = [];
+      }
+      groupedPurchases[dateKey]!.add(purchase);
+    }
+
     return Column(
       children: [
         // Summary Card
@@ -178,14 +188,15 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
           ),
         ),
 
-        // Purchases List
+        // Purchases List grouped by date
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _purchases.length,
+            itemCount: groupedPurchases.length,
             itemBuilder: (context, index) {
-              final purchase = _purchases[index];
-              return _buildPurchaseCard(purchase);
+              final dateKey = groupedPurchases.keys.elementAt(index);
+              final purchases = groupedPurchases[dateKey]!;
+              return _buildDateGroup(dateKey, purchases);
             },
           ),
         ),
@@ -458,6 +469,40 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
     );
   }
 
+  Widget _buildDateGroup(String dateKey, List<CottonPurchaseRegistry> purchases) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Date Header
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: Colors.green.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.calendar_today, color: Colors.green, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                dateKey,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Purchase cards for this date
+        ...purchases.map((purchase) => _buildPurchaseCard(purchase)),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
   Widget _buildPurchaseCard(CottonPurchaseRegistry purchase) {
     final provider = context.read<CottonRegistryProvider>();
     final items = provider.getItemsForPurchase(purchase.id!);
@@ -478,7 +523,7 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
           child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Purchase Header
+            // Purchase Header (without date)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -493,24 +538,12 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
                       child: Icon(Icons.receipt, color: Colors.green, size: 20),
                     ),
                     const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Харид №${purchase.id}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          DateFormat('dd.MM.yyyy').format(purchase.purchaseDate),
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
+                    Text(
+                      'Харид №${purchase.id}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -522,7 +555,7 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
                     border: Border.all(color: Colors.green.withOpacity(0.3)),
                   ),
                   child: Text(
-                    '${grandTotal.toStringAsFixed(0)} с',
+                    '${grandTotal.toStringAsFixed(0)} кг',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,

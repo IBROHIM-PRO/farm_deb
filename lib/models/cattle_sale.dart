@@ -54,7 +54,7 @@ class CattleSale {
     return {
       'id': id,
       'cattleId': cattleId,
-      'saleDate': saleDate.toIso8601String(),
+      'date': saleDate.toIso8601String(),
       'saleType': saleType.name,
       'weight': weight,
       'slaughterDate': slaughterDate?.toIso8601String(),
@@ -66,7 +66,7 @@ class CattleSale {
       'buyerPhone': buyerPhone,
       'paymentStatus': paymentStatus.name,
       'paidAmount': paidAmount,
-      'transportationCost': transportationCost,
+      'freightCost': transportationCost,
       'notes': notes,
     };
   }
@@ -75,7 +75,7 @@ class CattleSale {
     return CattleSale(
       id: map['id'] as int?,
       cattleId: (map['cattleId'] as num?)?.toInt() ?? 0,
-      saleDate: map['saleDate'] != null ? DateTime.parse(map['saleDate'] as String) : DateTime.now(),
+      saleDate: map['date'] != null ? DateTime.parse(map['date'] as String) : DateTime.now(),
       saleType: CattleSaleType.values.firstWhere(
         (e) => e.name == map['saleType'],
         orElse: () => CattleSaleType.alive,
@@ -95,7 +95,7 @@ class CattleSale {
         orElse: () => SalePaymentStatus.pending,
       ),
       paidAmount: (map['paidAmount'] as num?)?.toDouble() ?? 0,
-      transportationCost: (map['transportationCost'] as num?)?.toDouble() ?? 0,
+      transportationCost: (map['freightCost'] as num?)?.toDouble() ?? 0,
       notes: map['notes'] as String?,
     );
   }
