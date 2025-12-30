@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/cattle_registry_provider.dart';
+import '../../providers/barn_provider.dart';
 import '../../models/cattle_registry.dart';
+import '../../models/barn.dart';
 import '../../theme/app_theme.dart';
 
 /// Add Cattle Registry Screen - Register new cattle identity only
-/// Clean Registry approach: only ear tag, gender, age category, registration date
+/// Clean Registry approach: only ear tag, gender, age category, barn, registration date
 class AddCattleRegistryScreen extends StatefulWidget {
   const AddCattleRegistryScreen({super.key});
 
@@ -19,6 +21,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
   
   CattleGender _selectedGender = CattleGender.male;
   AgeCategory _selectedAgeCategory = AgeCategory.adult;
+  int? _selectedBarnId;
   DateTime _registrationDate = DateTime.now();
   
   bool _isLoading = false;
@@ -56,6 +59,11 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               
               // Age Category Selection
               _buildAgeCategorySection(),
+              
+              const SizedBox(height: 24),
+              
+              // Barn Selection
+              _buildBarnSelectionSection(),
               
               const SizedBox(height: 24),
               
@@ -343,6 +351,103 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
     );
   }
 
+  Widget _buildBarnSelectionSection() {
+    return Consumer<BarnProvider>(
+      builder: (context, barnProvider, _) {
+        final barns = barnProvider.barns;
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ховар (ихтиёрӣ)',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Card(
+              child: barns.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                        'Ҳеҷ ховар бақайд нашудааст',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  : DropdownButtonFormField<int>(
+                      value: _selectedBarnId,
+                      decoration: InputDecoration(
+                        hintText: 'Ховарро интихоб кунед',
+                        prefixIcon: const Icon(Icons.home_work),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                      ),
+                      items: [
+                        const DropdownMenuItem<int>(
+                          value: null,
+                          child: Text('Бе ховар'),
+                        ),
+                        ...barns.map((barn) {
+                          final cattleCount = barnProvider.getCattleCount(barn.id!);
+                          final isAtCapacity = barnProvider.isAtCapacity(barn.id!);
+                          
+                          return DropdownMenuItem<int>(
+                            value: barn.id,
+                            enabled: !isAtCapacity,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    barn.name,
+                                    style: TextStyle(
+                                      color: isAtCapacity ? Colors.grey : null,
+                                    ),
+                                  ),
+                                ),
+                                if (barn.capacity != null)
+                                  Text(
+                                    '$cattleCount/${barn.capacity}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isAtCapacity ? Colors.red : Colors.grey,
+                                    ),
+                                  ),
+                                if (isAtCapacity)
+                                  const Padding(
+                                    padding: EdgeInsets.only(left: 4),
+                                    child: Icon(Icons.block, size: 16, color: Colors.red),
+                                  ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedBarnId = value;
+                        });
+                      },
+                    ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Шумо метавонед чорворо ба ховар муайян кунед ё бидуни ховар бақайд кунед',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildRegistrationDateSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,10 +536,16 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
           earTag: _earTagController.text.trim(),
           gender: _selectedGender,
           ageCategory: _selectedAgeCategory,
+          barnId: _selectedBarnId,
           registrationDate: _registrationDate,
         );
 
         await context.read<CattleRegistryProvider>().addCattleToRegistry(cattle);
+        
+        // Reload barn provider to update cattle counts
+        if (_selectedBarnId != null && mounted) {
+          await context.read<BarnProvider>().loadBarns();
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

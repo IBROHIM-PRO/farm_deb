@@ -9,6 +9,7 @@ class CattleRegistry {
   final String earTag;           // Unique identifier (mandatory)
   final CattleGender gender;     // Male/Female
   final AgeCategory ageCategory; // Calf/Young/Adult
+  final int? barnId;             // Barn where cattle is housed
   final DateTime registrationDate; // When registered in system
   final CattleStatus status;     // Active/Sold
 
@@ -17,6 +18,7 @@ class CattleRegistry {
     required this.earTag,
     required this.gender,
     required this.ageCategory,
+    this.barnId,
     required this.registrationDate,
     this.status = CattleStatus.active,
   });
@@ -27,6 +29,7 @@ class CattleRegistry {
       'earTag': earTag,
       'gender': gender.name,
       'ageCategory': ageCategory.name,
+      'barnId': barnId,
       'registrationDate': registrationDate.toIso8601String(),
       'status': status.name,
     };
@@ -44,6 +47,7 @@ class CattleRegistry {
         (e) => e.name == map['ageCategory'],
         orElse: () => AgeCategory.adult,
       ),
+      barnId: map['barnId'] as int?,
       registrationDate: map['registrationDate'] != null ? DateTime.parse(map['registrationDate'] as String) : DateTime.now(),
       status: CattleStatus.values.firstWhere(
         (e) => e.name == map['status'],
@@ -57,6 +61,7 @@ class CattleRegistry {
     String? earTag,
     CattleGender? gender,
     AgeCategory? ageCategory,
+    int? barnId,
     DateTime? registrationDate,
     CattleStatus? status,
   }) {
@@ -65,6 +70,7 @@ class CattleRegistry {
       earTag: earTag ?? this.earTag,
       gender: gender ?? this.gender,
       ageCategory: ageCategory ?? this.ageCategory,
+      barnId: barnId ?? this.barnId,
       registrationDate: registrationDate ?? this.registrationDate,
       status: status ?? this.status,
     );

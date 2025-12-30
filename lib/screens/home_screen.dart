@@ -10,7 +10,6 @@ import '../theme/app_theme.dart';
 import 'debt/simple_debts_screen.dart';
 import 'cotton_warehouse/raw_cotton_warehouse_screen.dart';
 import 'cotton_warehouse/processed_cotton_warehouse_screen.dart';
-import 'cotton/fields_screen.dart';
 import 'cattle_registry/cattle_registry_screen.dart';
 import 'cotton_registry/cotton_purchase_registry_screen.dart';
 import 'cotton_registry/cotton_processing_registry_screen.dart';
@@ -19,6 +18,7 @@ import 'cotton_stock/cotton_stock_main_screen.dart';
 import 'reports/reports_screen.dart';
 import 'history_screen.dart';
 import 'debt/persons_screen.dart';
+import 'barn/barn_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -151,7 +151,7 @@ class _DashboardView extends StatelessWidget {
                       crossAxisSpacing: 16,
                       childAspectRatio: 0.95,
                     ),
-                    itemCount: 10,
+                    itemCount: 11,
                     itemBuilder: (context, index) {
                       final items = [
                         ('Идоракунии қарзҳо', 'Сабт ва пайгирии қарзҳо', Icons.account_balance_wallet, 'debt', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SimpleDebtsScreen()))),
@@ -161,6 +161,7 @@ class _DashboardView extends StatelessWidget {
                         ('Коркарди пахта', 'Реестри коркарди пахта', Icons.precision_manufacturing, 'cotton_processing', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonProcessingRegistryScreen()))),
                         ('Фурӯши пахта', 'Реестри фурӯши пахта', Icons.sell, 'cotton_sales', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonSalesRegistryScreen()))),
                         ('Идоракунии захираи пахта', 'Нигаҳдорӣ ва идораи пахта', Icons.inventory, 'cotton_stock', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonStockMainScreen()))),
+                        ('Идоракунии ховарҳо', 'Ҷойгиркунӣ ва харочоти ховар', Icons.home_work, 'barn', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BarnListScreen()))),
                         ('Реестри чорво', 'Идоракунии чорво', Icons.pets, 'cattle', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleRegistryScreen()))),
                         ('Идоракунии корбарон', 'Ашхос ва контактҳо', Icons.people, 'users', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonsScreen()))),
                         ('Ҳисоботҳо ва таҳлил', 'Маълумоти молиявӣ', Icons.bar_chart, 'report', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()))),

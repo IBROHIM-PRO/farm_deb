@@ -31,6 +31,8 @@ import '../models/cotton_processing_output.dart';
 import '../models/cotton_inventory.dart';
 import '../models/cotton_sale_registry.dart';
 import '../models/cotton_traceability.dart';
+import '../models/barn.dart';
+import '../models/barn_expense.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -49,7 +51,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path, 
-      version: 2,  // Updated to version 2 to remove UNIQUE constraint from cotton_types.name
+      version: 3,  // Updated to version 3 to add barn support
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -80,6 +82,46 @@ class DatabaseHelper {
       
       // Rename temp table to original name
       await db.execute('ALTER TABLE cotton_types_temp RENAME TO cotton_types');
+    }
+    
+    if (oldVersion < 3) {
+      // Add barn support - Create barns table
+      await db.execute('''
+        CREATE TABLE barns (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          location TEXT,
+          capacity INTEGER,
+          createdDate TEXT NOT NULL,
+          notes TEXT
+        )
+      ''');
+      
+      // Create barn_expenses table
+      await db.execute('''
+        CREATE TABLE barn_expenses (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          barnId INTEGER NOT NULL,
+          expenseType TEXT NOT NULL,
+          itemName TEXT NOT NULL,
+          quantity REAL NOT NULL,
+          quantityUnit TEXT NOT NULL,
+          pricePerUnit REAL NOT NULL,
+          totalCost REAL NOT NULL,
+          currency TEXT NOT NULL,
+          supplier TEXT,
+          expenseDate TEXT NOT NULL,
+          notes TEXT,
+          FOREIGN KEY (barnId) REFERENCES barns (id) ON DELETE CASCADE
+        )
+      ''');
+      
+      // Add barnId column to cattle_registry table
+      await db.execute('ALTER TABLE cattle_registry ADD COLUMN barnId INTEGER');
+      
+      // Create indexes for barn tables
+      await db.execute('CREATE INDEX idx_barn_expenses_barn ON barn_expenses (barnId, expenseDate DESC)');
+      await db.execute('CREATE INDEX idx_cattle_registry_barn ON cattle_registry (barnId)');
     }
   }
 
@@ -527,6 +569,36 @@ class DatabaseHelper {
       )
     ''');
 
+    // Barn Management Tables
+    await db.execute('''
+      CREATE TABLE barns (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        location TEXT,
+        capacity INTEGER,
+        createdDate TEXT NOT NULL,
+        notes TEXT
+      )
+    ''');
+    
+    await db.execute('''
+      CREATE TABLE barn_expenses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        barnId INTEGER NOT NULL,
+        expenseType TEXT NOT NULL,
+        itemName TEXT NOT NULL,
+        quantity REAL NOT NULL,
+        quantityUnit TEXT NOT NULL,
+        pricePerUnit REAL NOT NULL,
+        totalCost REAL NOT NULL,
+        currency TEXT NOT NULL,
+        supplier TEXT,
+        expenseDate TEXT NOT NULL,
+        notes TEXT,
+        FOREIGN KEY (barnId) REFERENCES barns (id) ON DELETE CASCADE
+      )
+    ''');
+
     // Cattle Registry Management Tables
     await db.execute('''
       CREATE TABLE cattle_registry (
@@ -534,8 +606,10 @@ class DatabaseHelper {
         earTag TEXT NOT NULL UNIQUE,
         gender TEXT NOT NULL,
         ageCategory TEXT NOT NULL,
+        barnId INTEGER,
         registrationDate TEXT NOT NULL,
-        status TEXT NOT NULL
+        status TEXT NOT NULL,
+        FOREIGN KEY (barnId) REFERENCES barns (id) ON DELETE SET NULL
       )
     ''');
     
@@ -587,6 +661,8 @@ class DatabaseHelper {
     ''');
 
     // Create indexes for registry tables
+    await db.execute('CREATE INDEX idx_barn_expenses_barn ON barn_expenses (barnId, expenseDate DESC)');
+    await db.execute('CREATE INDEX idx_cattle_registry_barn ON cattle_registry (barnId)');
     await db.execute('CREATE INDEX idx_cattle_registry_eartag ON cattle_registry (earTag)');
     await db.execute('CREATE INDEX idx_cattle_registry_status ON cattle_registry (status)');
     await db.execute('CREATE INDEX idx_cattle_expenses_cattle ON cattle_expenses (cattleId, expenseDate DESC)');
@@ -1214,5 +1290,105 @@ class DatabaseHelper {
     ''', [year.toString()]);
     
     return {'monthlyTransactions': result};
+  }
+
+  // Barn CRUD Operations
+  Future<int> insertBarn(Barn barn) async {
+    return (await database).insert('barns', barn.toMap());
+  }
+
+  Future<List<Barn>> getAllBarns() async {
+    final result = await (await database).query('barns', orderBy: 'name ASC');
+    return result.map((m) => Barn.fromMap(m)).toList();
+  }
+
+  Future<Barn?> getBarnById(int id) async {
+    final result = await (await database).query(
+      'barns',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return result.isNotEmpty ? Barn.fromMap(result.first) : null;
+  }
+
+  Future<int> updateBarn(Barn barn) async {
+    return (await database).update(
+      'barns',
+      barn.toMap(),
+      where: 'id = ?',
+      whereArgs: [barn.id],
+    );
+  }
+
+  Future<int> deleteBarn(int id) async {
+    return (await database).delete('barns', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> getCattleCountInBarn(int barnId) async {
+    final result = await (await database).rawQuery(
+      'SELECT COUNT(*) as count FROM cattle_registry WHERE barnId = ? AND status = ?',
+      [barnId, 'active'],
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  // Barn Expense CRUD Operations
+  Future<int> insertBarnExpense(BarnExpense expense) async {
+    return (await database).insert('barn_expenses', expense.toMap());
+  }
+
+  Future<List<BarnExpense>> getBarnExpensesByBarnId(int barnId) async {
+    final result = await (await database).query(
+      'barn_expenses',
+      where: 'barnId = ?',
+      whereArgs: [barnId],
+      orderBy: 'expenseDate DESC',
+    );
+    return result.map((m) => BarnExpense.fromMap(m)).toList();
+  }
+
+  Future<BarnExpense?> getBarnExpenseById(int id) async {
+    final result = await (await database).query(
+      'barn_expenses',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return result.isNotEmpty ? BarnExpense.fromMap(result.first) : null;
+  }
+
+  Future<int> updateBarnExpense(BarnExpense expense) async {
+    return (await database).update(
+      'barn_expenses',
+      expense.toMap(),
+      where: 'id = ?',
+      whereArgs: [expense.id],
+    );
+  }
+
+  Future<int> deleteBarnExpense(int id) async {
+    return (await database).delete('barn_expenses', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<double> getTotalBarnExpenses(int barnId) async {
+    final result = await (await database).rawQuery(
+      'SELECT SUM(totalCost) as total FROM barn_expenses WHERE barnId = ?',
+      [barnId],
+    );
+    return (result.first['total'] as num?)?.toDouble() ?? 0.0;
+  }
+
+  Future<Map<String, dynamic>> getBarnExpensesByType(int barnId) async {
+    final result = await (await database).rawQuery('''
+      SELECT 
+        expenseType,
+        SUM(totalCost) as totalCost,
+        SUM(quantity) as totalQuantity,
+        COUNT(*) as count
+      FROM barn_expenses 
+      WHERE barnId = ?
+      GROUP BY expenseType
+    ''', [barnId]);
+    
+    return {'expensesByType': result};
   }
 }
