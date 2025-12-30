@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/barn_provider.dart';
+import '../../providers/cattle_registry_provider.dart';
 import '../../models/barn.dart';
 import '../../models/barn_expense.dart';
+import '../../models/cattle_registry.dart';
 import '../../theme/app_theme.dart';
 import 'add_barn_screen.dart';
 import 'add_barn_expense_screen.dart';
+import '../cattle_registry/cattle_financial_detail_screen.dart';
 
 class BarnDetailScreen extends StatefulWidget {
   final int barnId;
@@ -23,9 +26,10 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BarnProvider>().loadBarnExpenses(widget.barnId);
+      context.read<CattleRegistryProvider>().loadAllData();
     });
   }
 
@@ -55,6 +59,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with SingleTickerPr
           controller: _tabController,
           tabs: const [
             Tab(text: 'Маълумот', icon: Icon(Icons.info_outline)),
+            Tab(text: 'Чорво', icon: Icon(Icons.pets)),
             Tab(text: 'Харочот', icon: Icon(Icons.attach_money)),
           ],
         ),
@@ -71,6 +76,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with SingleTickerPr
             controller: _tabController,
             children: [
               _buildInfoTab(barn, provider),
+              _buildCattleTab(),
               _buildExpensesTab(provider),
             ],
           );
@@ -186,6 +192,180 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with SingleTickerPr
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCattleTab() {
+    return Consumer<CattleRegistryProvider>(
+      builder: (context, cattleProvider, _) {
+        final allCattle = cattleProvider.allCattle;
+        final barnCattle = allCattle.where((c) => c.barnId == widget.barnId).toList();
+
+        if (barnCattle.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.pets_outlined, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  'Дар ин ховар чорво нест',
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Барои илова кардан чорворо бақайд кунед',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: barnCattle.length,
+          itemBuilder: (context, index) {
+            return _buildCattleCard(barnCattle[index], cattleProvider);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCattleCard(CattleRegistry cattle, CattleRegistryProvider provider) {
+    final purchase = provider.getCattlePurchases(cattle.id!).isNotEmpty
+        ? provider.getCattlePurchases(cattle.id!).first
+        : null;
+    final weights = provider.getCattleWeights(cattle.id!);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CattleFinancialDetailScreen(cattleId: cattle.id!),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: cattle.gender == CattleGender.male
+                          ? Colors.blue.withOpacity(0.1)
+                          : Colors.pink.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      cattle.gender == CattleGender.male ? Icons.male : Icons.female,
+                      color: cattle.gender == CattleGender.male ? Colors.blue : Colors.pink,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          cattle.earTag,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                cattle.ageCategoryDisplay,
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              cattle.genderDisplay,
+                              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                ],
+              ),
+              
+              if (purchase != null || weights.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                const SizedBox(height: 12),
+              ],
+              
+              // Purchase Info
+              if (purchase != null)
+                Row(
+                  children: [
+                    Icon(Icons.shopping_cart, size: 14, color: Colors.grey[600]),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Харид: ${purchase.weightAtPurchase.toStringAsFixed(0)} кг',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                    ),
+                    if (purchase.totalPrice != null) ...[
+                      const SizedBox(width: 10),
+                      Text(
+                        '•',
+                        style: TextStyle(color: Colors.grey[400]),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        '${purchase.totalPrice!.toStringAsFixed(0)} ${purchase.currency}',
+                        style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ],
+                ),
+              
+              // Latest Weight
+              if (weights.isNotEmpty) ...[
+                if (purchase != null) const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(Icons.scale, size: 14, color: Colors.grey[600]),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Вазни охирин: ${weights.last.weight.toStringAsFixed(0)} кг',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '(${DateFormat('dd.MM.yyyy').format(weights.last.measurementDate)})',
+                      style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 

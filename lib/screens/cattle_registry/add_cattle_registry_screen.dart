@@ -551,20 +551,34 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
 
   Future<void> _registerCattle() async {
     if (_formKey.currentState!.validate()) {
+      // Check if ear tag already exists
+      final provider = context.read<CattleRegistryProvider>();
+      final earTag = _earTagController.text.trim();
+      
+      if (provider.isEarTagExists(earTag)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Рақами гӯш "$earTag" аллакай вуҷуд дорад. Лутфан рақами дигар ворид кунед.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
       setState(() {
         _isLoading = true;
       });
 
       try {
         final cattle = CattleRegistry(
-          earTag: _earTagController.text.trim(),
+          earTag: earTag,
           gender: _selectedGender,
           ageCategory: _selectedAgeCategory,
           barnId: _selectedBarnId,
           registrationDate: _registrationDate,
         );
 
-        final cattleId = await context.read<CattleRegistryProvider>().addCattleToRegistry(cattle);
+        final cattleId = await provider.addCattleToRegistry(cattle);
         
         // Add initial weight record
         if (_initialWeightController.text.trim().isNotEmpty && cattleId != null) {

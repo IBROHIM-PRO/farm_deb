@@ -44,7 +44,7 @@ class _CattleWeightTrackingScreenState extends State<CattleWeightTrackingScreen>
     setState(() => _isLoading = true);
     try {
       final provider = context.read<CattleRegistryProvider>();
-      await provider.loadCattleWeights(widget.cattleId);
+      await provider.loadCattleWeights();
       setState(() {
         weights = provider.getCattleWeights(widget.cattleId);
         _isLoading = false;

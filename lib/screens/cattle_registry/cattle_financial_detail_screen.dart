@@ -40,11 +40,7 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
     try {
       final provider = context.read<CattleRegistryProvider>();
       
-      await provider.loadCattleDetails(widget.cattleId);
-      await provider.loadCattlePurchases(widget.cattleId);
-      await provider.loadCattleExpenses(widget.cattleId);
-      await provider.loadCattleWeights(widget.cattleId);
-      await provider.loadCattleSales(widget.cattleId);
+      await provider.loadAllData();
 
       setState(() {
         cattle = provider.getCattleById(widget.cattleId);
@@ -108,7 +104,7 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
     }
 
     final totalCosts = _calculateTotalCosts();
-    final revenue = sale?.totalPrice ?? 0;
+    final revenue = sale?.totalAmount ?? 0;
     final profitLoss = revenue - totalCosts;
 
     return Scaffold(
@@ -332,9 +328,11 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
               ],
             ),
             const Divider(height: 16),
-            _buildInfoRow('Вазн', '${purchase!.weight} кг'),
-            _buildInfoRow('Нархи як кг', '${purchase!.pricePerKg.toStringAsFixed(2)} ${purchase!.currency}'),
-            _buildInfoRow('Нархи умумӣ', '${purchase!.totalPrice.toStringAsFixed(2)} ${purchase!.currency}'),
+            _buildInfoRow('Вазн', '${purchase!.weightAtPurchase} кг'),
+            if (purchase!.pricePerKg != null)
+              _buildInfoRow('Нархи як кг', '${purchase!.pricePerKg!.toStringAsFixed(2)} ${purchase!.currency}'),
+            if (purchase!.totalPrice != null)
+              _buildInfoRow('Нархи умумӣ', '${purchase!.totalPrice!.toStringAsFixed(2)} ${purchase!.currency}'),
             if (purchase!.transportationCost > 0)
               _buildInfoRow('Хароҷоти нақлиёт', '${purchase!.transportationCost.toStringAsFixed(2)} ${purchase!.currency}'),
             _buildInfoRow('Санаи харид', DateFormat('dd/MM/yyyy').format(purchase!.purchaseDate)),
@@ -353,7 +351,7 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
   }
 
   Widget _buildExpensesCard() {
-    final totalExpenses = expenses.fold<double>(0, (sum, e) => sum + e.totalCost);
+    final totalExpenses = expenses.fold<double>(0, (sum, e) => sum + e.cost);
 
     return Card(
       child: Padding(
@@ -409,7 +407,7 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
                           ),
                         ),
                         Text(
-                          '${expense.totalCost.toStringAsFixed(0)} сомонӣ',
+                          '${expense.cost.toStringAsFixed(0)} сомонӣ',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -546,11 +544,10 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
               ],
             ),
             const Divider(height: 16),
-            _buildInfoRow('Навъи фурӯш', sale!.saleTypeDisplay),
+            _buildInfoRow('Навъи фурӯш', sale!.saleType == CattleSaleType.alive ? 'Зинда' : 'Забиҳшуда'),
             if (sale!.liveWeight != null)
-              _buildInfoRow('Вазни зинда', '${sale!.liveWeight} кг'),
-            if (sale!.meatWeight != null)
-              _buildInfoRow('Вазни гӯшт', '${sale!.meatWeight} кг'),
+              _buildInfoRow('Вазни зинда', '${sale!.liveWeight!.toStringAsFixed(1)} кг'),
+            _buildInfoRow('Вазн', '${sale!.weight.toStringAsFixed(1)} кг'),
             if (sale!.pricePerKg != null)
               _buildInfoRow('Нархи як кг', '${sale!.pricePerKg!.toStringAsFixed(2)} сомонӣ'),
             _buildInfoRow('Санаи фурӯш', DateFormat('dd/MM/yyyy').format(sale!.saleDate)),
@@ -559,7 +556,7 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
             const Divider(height: 16),
             _buildInfoRow(
               'Нархи фурӯш',
-              '${sale!.totalPrice.toStringAsFixed(2)} сомонӣ',
+              '${sale!.totalAmount.toStringAsFixed(2)} сомонӣ',
               isBold: true,
             ),
           ],
@@ -601,7 +598,7 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
     }
 
     // Individual expenses
-    total += expenses.fold<double>(0, (sum, e) => sum + e.totalCost);
+    total += expenses.fold<double>(0, (sum, e) => sum + e.cost);
 
     // Barn expense share
     total += barnExpenseShare;

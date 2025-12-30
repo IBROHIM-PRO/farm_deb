@@ -22,6 +22,7 @@ class CattleRegistryProvider with ChangeNotifier {
 
   // Getters
   List<CattleRegistry> get cattleRegistry => _cattleRegistry;
+  List<CattleRegistry> get allCattle => _cattleRegistry; // Alias for screens
   List<CattlePurchase> get cattlePurchases => _cattlePurchases;
   List<CattleExpense> get cattleExpenses => _cattleExpenses;
   List<CattleWeight> get cattleWeights => _cattleWeights;
@@ -39,6 +40,7 @@ class CattleRegistryProvider with ChangeNotifier {
         loadCattleWeights(),
         loadCattleSales(),
       ]);
+      debugPrint('✅ CattleRegistryProvider loaded successfully');
     } finally {
       _setLoading(false);
     }
@@ -87,6 +89,19 @@ class CattleRegistryProvider with ChangeNotifier {
     await loadAllData(); // Reload all data as linked records are deleted
   }
 
+  /// Get cattle by ID
+  CattleRegistry? getCattleById(int cattleId) {
+    return _cattleRegistry.where((c) => c.id == cattleId).firstOrNull;
+  }
+
+  /// Check if ear tag already exists
+  bool isEarTagExists(String earTag, {int? excludeId}) {
+    return _cattleRegistry.any((c) => 
+      c.earTag.toLowerCase() == earTag.toLowerCase() && 
+      (excludeId == null || c.id != excludeId)
+    );
+  }
+
   /// Get active cattle only
   List<CattleRegistry> get activeCattle => 
       _cattleRegistry.where((cattle) => cattle.status == CattleStatus.active).toList();
@@ -119,6 +134,12 @@ class CattleRegistryProvider with ChangeNotifier {
     return _cattlePurchases.where((p) => p.cattleId == cattleId).firstOrNull;
   }
 
+  /// Get purchases list for specific cattle (returns as list for compatibility)
+  List<CattlePurchase> getCattlePurchases(int cattleId) {
+    final purchase = getPurchaseForCattle(cattleId);
+    return purchase != null ? [purchase] : [];
+  }
+
   // ============ CATTLE EXPENSE OPERATIONS ============
 
   /// Load cattle expenses
@@ -141,6 +162,11 @@ class CattleRegistryProvider with ChangeNotifier {
   /// Get expenses for specific cattle
   List<CattleExpense> getExpensesForCattle(int cattleId) {
     return _cattleExpenses.where((e) => e.cattleId == cattleId).toList();
+  }
+
+  /// Alias for screens
+  List<CattleExpense> getCattleExpenses(int cattleId) {
+    return getExpensesForCattle(cattleId);
   }
 
   /// Get total expenses for cattle
@@ -175,13 +201,18 @@ class CattleRegistryProvider with ChangeNotifier {
   /// Get weights for specific cattle
   List<CattleWeight> getWeightsForCattle(int cattleId) {
     return _cattleWeights.where((w) => w.cattleId == cattleId).toList()
-        ..sort((a, b) => b.measurementDate.compareTo(a.measurementDate));
+        ..sort((a, b) => a.measurementDate.compareTo(b.measurementDate));
+  }
+
+  /// Alias for screens
+  List<CattleWeight> getCattleWeights(int cattleId) {
+    return getWeightsForCattle(cattleId);
   }
 
   /// Get latest weight for cattle
   CattleWeight? getLatestWeightForCattle(int cattleId) {
     final weights = getWeightsForCattle(cattleId);
-    return weights.isNotEmpty ? weights.first : null;
+    return weights.isNotEmpty ? weights.last : null;
   }
 
   /// Calculate weight gain for cattle
@@ -229,6 +260,12 @@ class CattleRegistryProvider with ChangeNotifier {
   /// Get sale for specific cattle
   CattleSale? getSaleForCattle(int cattleId) {
     return _cattleSales.where((s) => s.cattleId == cattleId).firstOrNull;
+  }
+
+  /// Get sales list for specific cattle (returns as list for compatibility)
+  List<CattleSale> getCattleSales(int cattleId) {
+    final sale = getSaleForCattle(cattleId);
+    return sale != null ? [sale] : [];
   }
 
   // ============ ANALYTICS & REPORTING ============
