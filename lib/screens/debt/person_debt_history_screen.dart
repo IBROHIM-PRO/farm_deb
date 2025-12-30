@@ -112,69 +112,74 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
 
     return Column(
       children: [
-        // Summary Card
+        // Summary Card (Clickable to view transaction history of first debt)
         Container(
           margin: const EdgeInsets.all(16),
-          child: Card(
-            elevation: 4,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.person, color: Colors.blue, size: 28),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.personName,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+          child: InkWell(
+            onTap: _debts.isNotEmpty ? () => _navigateToTransactionHistory(_debts.first) : null,
+            borderRadius: BorderRadius.circular(12),
+            child: Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.person, color: Colors.blue, size: 28),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.personName,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            Text(
-                              'Таърихи қарз',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
+                              Text(
+                                'Таърихи қарз',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 32),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatItem(
-                          'Додашуда',
-                          '${remainingGiven.toStringAsFixed(0)} TJS',
-                          Icons.arrow_upward,
-                          Colors.green,
+                        Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                      ],
+                    ),
+                    const Divider(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatItem(
+                            'Додашуда',
+                            '${remainingGiven.toStringAsFixed(0)} TJS',
+                            Icons.arrow_upward,
+                            Colors.green,
+                          ),
                         ),
-                      ),
-                      Container(
-                        height: 40,
-                        width: 1,
-                        color: Colors.grey[300],
-                      ),
-                      Expanded(
-                        child: _buildStatItem(
-                          'Гирифташуда',
-                          '${remainingTaken.toStringAsFixed(0)} TJS',
-                          Icons.arrow_downward,
-                          Colors.red,
+                        Container(
+                          height: 40,
+                          width: 1,
+                          color: Colors.grey[300],
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        Expanded(
+                          child: _buildStatItem(
+                            'Гирифташуда',
+                            '${remainingTaken.toStringAsFixed(0)} TJS',
+                            Icons.arrow_downward,
+                            Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -360,21 +365,19 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                if (debt.status == DebtStatus.active) ...[
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _showPaymentDialog(debt),
-                      icon: const Icon(Icons.payment, size: 16),
-                      label: const Text('Пардохт'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: color,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                      ),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _navigateToTransactionHistory(debt),
+                    icon: const Icon(Icons.payment, size: 16),
+                    label: const Text('Пардохт'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: color,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                ],
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _navigateToTransactionHistory(debt),
