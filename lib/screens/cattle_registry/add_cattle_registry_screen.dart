@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/cattle_registry_provider.dart';
 import '../../providers/barn_provider.dart';
 import '../../models/cattle_registry.dart';
+import '../../models/cattle_purchase.dart';
+import '../../models/cattle_weight.dart';
 import '../../models/barn.dart';
 import '../../theme/app_theme.dart';
 
@@ -18,6 +20,8 @@ class AddCattleRegistryScreen extends StatefulWidget {
 class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
   final _formKey = GlobalKey<FormState>();
   final _earTagController = TextEditingController();
+  final _initialWeightController = TextEditingController();
+  final _purchasePriceController = TextEditingController();
   
   CattleGender _selectedGender = CattleGender.male;
   AgeCategory _selectedAgeCategory = AgeCategory.adult;
@@ -33,6 +37,14 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BarnProvider>().loadBarns();
     });
+  }
+
+  @override
+  void dispose() {
+    _earTagController.dispose();
+    _initialWeightController.dispose();
+    _purchasePriceController.dispose();
+    super.dispose();
   }
 
   @override
@@ -68,6 +80,16 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               
               // Barn Selection (Required)
               _buildBarnSelectionSection(),
+              
+              const SizedBox(height: 24),
+              
+              // Initial Weight Input
+              _buildInitialWeightSection(),
+              
+              const SizedBox(height: 24),
+              
+              // Purchase Price Input (Optional)
+              _buildPurchasePriceSection(),
               
               const SizedBox(height: 32),
               
@@ -381,6 +403,117 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
     },
   );
 }
+
+  Widget _buildInitialWeightSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Вазни ибтидоӣ',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _initialWeightController,
+          decoration: InputDecoration(
+            hintText: 'Мисол: 250',
+            suffixText: 'кг',
+            prefixIcon: const Icon(Icons.scale),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            filled: true,
+            fillColor: Colors.grey[50],
+          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          validator: (value) {
+            if (value?.trim().isEmpty == true) {
+              return 'Вазни ибтидоӣ зарур аст';
+            }
+            final weight = double.tryParse(value!);
+            if (weight == null || weight <= 0) {
+              return 'Вазни дурустро ворид кунед';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Вазни чорво ҳангоми бақайдгирӣ',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPurchasePriceSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Нархи харид',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Ихтиёрӣ',
+                style: TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _purchasePriceController,
+          decoration: InputDecoration(
+            hintText: 'Мисол: 5000',
+            suffixText: 'TJS',
+            prefixIcon: const Icon(Icons.attach_money),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            filled: true,
+            fillColor: Colors.grey[50],
+          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          validator: (value) {
+            if (value?.trim().isNotEmpty == true) {
+              final price = double.tryParse(value!);
+              if (price == null || price < 0) {
+                return 'Нархи дурустро ворид кунед';
+              }
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Агар харида бошад, нархи харидро ворид кунед',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
  
 
   Widget _buildRegisterButton() {
@@ -431,7 +564,34 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
           registrationDate: _registrationDate,
         );
 
-        await context.read<CattleRegistryProvider>().addCattleToRegistry(cattle);
+        final cattleId = await context.read<CattleRegistryProvider>().addCattleToRegistry(cattle);
+        
+        // Add initial weight record
+        if (_initialWeightController.text.trim().isNotEmpty && cattleId != null) {
+          final initialWeight = double.parse(_initialWeightController.text.trim());
+          final weightRecord = CattleWeight(
+            cattleId: cattleId,
+            measurementDate: _registrationDate,
+            weight: initialWeight,
+            notes: 'Вазни ибтидоӣ ҳангоми бақайдгирӣ',
+          );
+          await context.read<CattleRegistryProvider>().addCattleWeight(weightRecord);
+        }
+        
+        // Add purchase record if price is provided
+        if (_purchasePriceController.text.trim().isNotEmpty && cattleId != null) {
+          final purchasePrice = double.parse(_purchasePriceController.text.trim());
+          final initialWeight = double.parse(_initialWeightController.text.trim());
+          final purchaseRecord = CattlePurchase(
+            cattleId: cattleId,
+            purchaseDate: _registrationDate,
+            weightAtPurchase: initialWeight,
+            totalPrice: purchasePrice,
+            currency: 'TJS',
+            notes: 'Харид ҳангоми бақайдгирӣ',
+          );
+          await context.read<CattleRegistryProvider>().addCattlePurchase(purchaseRecord);
+        }
         
         // Reload barn provider to update cattle counts
         if (_selectedBarnId != null && mounted) {
@@ -464,11 +624,5 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
         }
       }
     }
-  }
-
-  @override
-  void dispose() {
-    _earTagController.dispose();
-    super.dispose();
   }
 }
