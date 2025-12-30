@@ -38,6 +38,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
   // Form controllers
   final _formKey = GlobalKey<FormState>();
   final _buyerNameController = TextEditingController();
+  final _pricePerKgController = TextEditingController(text: '0');
   
   // UI State
   List<Buyer> buyers = [];
@@ -46,6 +47,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
   DateTime selectedDate = DateTime.now();
   bool isLoading = false;
   bool showSaleForm = false;
+  double pricePerKg = 0.0;
   
   // Dynamic sale items
   List<SaleItem> saleItems = [];
@@ -63,6 +65,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
   @override
   void dispose() {
     _buyerNameController.dispose();
+    _pricePerKgController.dispose();
     for (final item in saleItems) {
       item.dispose();
     }
@@ -135,15 +138,14 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
           children: [
             _buildSectionTitle('Маълумоти харидор'),
             _buildBuyerNameInput(),
+            const SizedBox(height: 16),
+            _buildPricePerKgInput(),
             const SizedBox(height: 24),
             
             _buildSectionTitle('Дастаҳои фуруш'),
             _buildSaleItemsList(),
             const SizedBox(height: 16),
             _buildAddItemButton(),
-            const SizedBox(height: 24),
-            
-            _buildDateSelector(),
             const SizedBox(height: 24),
             
             _buildSaleSummary(),
@@ -312,6 +314,39 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
     );
   }
 
+  Widget _buildPricePerKgInput() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: TextFormField(
+          controller: _pricePerKgController,
+          decoration: const InputDecoration(
+            labelText: 'Нархи 1 кг пахта',
+            prefixIcon: Icon(Icons.attach_money),
+            suffixText: 'сомонӣ',
+            hintText: 'Нархи як килограмро ворид кунед',
+          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Нархи як килограм зарур аст';
+            }
+            final price = double.tryParse(value);
+            if (price == null || price < 0) {
+              return 'Нархи дуруст ворид кунед';
+            }
+            return null;
+          },
+          onChanged: (value) {
+            setState(() {
+              pricePerKg = double.tryParse(value) ?? 0.0;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildSaleItemsList() {
     if (saleItems.isEmpty) {
       return Card(
@@ -419,35 +454,6 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
             _buildWarehouseValidation(item),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildItemSummary(SaleItem item) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Ҳамагӣ:',
-            style: TextStyle(
-              color: Colors.blue[700],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Text(
-            '${item.pieces} × ${item.weight.toStringAsFixed(1)} = ${item.totalWeight.toStringAsFixed(1)} кг',
-            style: TextStyle(
-              color: Colors.blue[700],
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -585,6 +591,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
   Widget _buildSaleSummary() {
     final totalPieces = saleItems.fold<int>(0, (sum, item) => sum + item.pieces);
     final totalWeight = saleItems.fold<double>(0, (sum, item) => sum + item.totalWeight);
+    final totalAmount = totalWeight * pricePerKg;
     
     return Card(
       color: Colors.green.withOpacity(0.1),
@@ -605,20 +612,38 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
             _buildSummaryRow('Ҷамъи донаҳо', '$totalPieces дона'),
             const SizedBox(height: 8),
             _buildSummaryRow('Ҷамъи вазн', '${totalWeight.toStringAsFixed(1)} кг'),
+            const SizedBox(height: 8),
+            _buildSummaryRow('Нархи 1 кг', '${pricePerKg.toStringAsFixed(2)} сомонӣ'),
+            const Divider(height: 24),
+            _buildSummaryRow(
+              'Ҷамъи маблағ',
+              '${totalAmount.toStringAsFixed(2)} сомонӣ',
+              isTotal: true,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSummaryRow(String label, String value) {
+  Widget _buildSummaryRow(String label, String value, {bool isTotal = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label),
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            fontSize: isTotal ? 16 : 14,
+          ),
+        ),
         Text(
           value,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: isTotal ? 18 : 14,
+            color: isTotal ? Colors.green[700] : null,
+          ),
         ),
       ],
     );
