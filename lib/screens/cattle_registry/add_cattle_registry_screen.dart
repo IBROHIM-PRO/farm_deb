@@ -88,47 +88,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildHeaderCard() {
-    return Card(
-      color: AppTheme.primaryIndigo.withOpacity(0.1),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.pets,
-                  color: AppTheme.primaryIndigo,
-                  size: 28,
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Бақайдгирии чорвои нав',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Танҳо маълумоти асосии чорво дарҷ кунед. Хариданӣ ва хароҷотҳо баъдан илова мешаванд.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-                height: 1.4,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  }  
 
   Widget _buildEarTagSection() {
     return Column(
@@ -361,139 +321,77 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
   }
 
   Widget _buildBarnSelectionSection() {
-    return Consumer<BarnProvider>(
-      builder: (context, barnProvider, _) {
-        final barns = barnProvider.barns;
-        
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Text(
-                  'Ховар',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '*',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<int>(
-              value: _selectedBarnId,
-              decoration: InputDecoration(
-                hintText: 'Ховарро интихоб кунед',
-                prefixIcon: const Icon(Icons.home_work),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              validator: (value) {
-                if (value == null) {
-                  return 'Ховарро интихоб кунед (ҳатмӣ)';
-                }
-                return null;
-              },
-              items: barns.map((barn) {
-                final cattleCount = barnProvider.getCattleCount(barn.id!);
-                final isAtCapacity = barnProvider.isAtCapacity(barn.id!);
-                
-                return DropdownMenuItem<int>(
-                  value: barn.id,
-                  enabled: !isAtCapacity,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          barn.name,
-                          style: TextStyle(
-                            color: isAtCapacity ? Colors.grey : null,
-                          ),
-                        ),
-                      ),
-                      if (barn.capacity != null)
-                        Text(
-                          '$cattleCount/${barn.capacity}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isAtCapacity ? Colors.red : Colors.grey,
-                          ),
-                        ),
-                      if (isAtCapacity)
-                        const Padding(
-                          padding: EdgeInsets.only(left: 4),
-                          child: Icon(Icons.block, size: 16, color: Colors.red),
-                        ),
-                    ],
-                  ),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedBarnId = value;
-                });
-              },
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Интихоби ховар ҳатмӣ аст - чорвор бояд дар ховар бошад',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  return Consumer<BarnProvider>(
+    builder: (context, barnProvider, _) {
+      final barns = barnProvider.barns;
 
-  Widget _buildRegistrationDateSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Санаи бақайдгирӣ',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Text(
+                'Ховар',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(width: 4),
+              Text(
+                '*',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.calendar_today),
-            title: const Text('Санаи бақайдгирӣ'),
-            subtitle: Text(
-              '${_registrationDate.day.toString().padLeft(2, '0')}/'
-              '${_registrationDate.month.toString().padLeft(2, '0')}/'
-              '${_registrationDate.year}',
+          const SizedBox(height: 8),
+          DropdownButtonFormField<int>(
+            value: _selectedBarnId,
+            decoration: InputDecoration(
+              hintText: 'Ховарро интихоб кунед',
+              prefixIcon: const Icon(Icons.home_work),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              filled: true,
+              fillColor: Colors.grey[50],
+            ),
+            validator: (value) {
+              if (value == null) {
+                return 'Ховарро интихоб кунед (ҳатмӣ)';
+              }
+              return null;
+            },
+            items: barns.map((barn) {
+              return DropdownMenuItem<int>(
+                value: barn.id,
+                child: Text(barn.name),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedBarnId = value;
+              });
+            },
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Интихоби ховар ҳатмӣ аст - чорвор бояд дар ховар бошад',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
             ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Санаи имрӯз ба таври худкор сабт мешавад',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
+        ],
+      );
+    },
+  );
+}
+ 
 
   Widget _buildRegisterButton() {
     return SizedBox(
@@ -518,7 +416,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
                 ),
               )
             : const Text(
-                'Бақайд кардан',
+                'Ворид кардан',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
