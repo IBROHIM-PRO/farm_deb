@@ -361,7 +361,7 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
                       )),
 
                       // Transportation Cost
-                      if (purchase.transportationCost > 0) ..[
+                      if (purchase.transportationCost > 0) ...[
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(

@@ -51,11 +51,6 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Info Card
-              _buildHeaderCard(),
-              
-              const SizedBox(height: 24),
-              
               // Ear Tag Input
               _buildEarTagSection(),
               
@@ -73,11 +68,6 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               
               // Barn Selection (Required)
               _buildBarnSelectionSection(),
-              
-              const SizedBox(height: 24),
-              
-              // Registration Date (Auto Display)
-              _buildRegistrationDateSection(),
               
               const SizedBox(height: 32),
               
