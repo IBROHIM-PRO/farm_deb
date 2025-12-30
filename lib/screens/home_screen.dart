@@ -15,6 +15,7 @@ import 'cotton_registry/cotton_purchase_registry_screen.dart';
 import 'cotton_registry/cotton_processing_registry_screen.dart';
 import 'cotton_registry/cotton_sales_registry_screen.dart';
 import 'cotton_stock/cotton_stock_main_screen.dart';
+import 'cotton_stock/cotton_sales_screen.dart';
 import 'reports/reports_screen.dart';
 import 'history_screen.dart';
 import 'debt/persons_screen.dart';
@@ -151,7 +152,7 @@ class _DashboardView extends StatelessWidget {
                       crossAxisSpacing: 16,
                       childAspectRatio: 0.95,
                     ),
-                    itemCount: 11,
+                    itemCount: 12,
                     itemBuilder: (context, index) {
                       final items = [
                         ('Идоракунии қарзҳо', 'Сабт ва пайгирии қарзҳо', Icons.account_balance_wallet, 'debt', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SimpleDebtsScreen()))),
@@ -160,6 +161,7 @@ class _DashboardView extends StatelessWidget {
                         ('Харидании пахта', 'Реестри харидани пахта', Icons.shopping_cart, 'cotton_purchase', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonPurchaseRegistryScreen()))),
                         ('Коркарди пахта', 'Реестри коркарди пахта', Icons.precision_manufacturing, 'cotton_processing', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonProcessingRegistryScreen()))),
                         ('Фурӯши пахта', 'Реестри фурӯши пахта', Icons.sell, 'cotton_sales', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonSalesRegistryScreen()))),
+                        ('Сабти фурӯш', 'Сабти фурӯши пахта', Icons.point_of_sale, 'cotton_stock_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonSalesScreen()))),
                         ('Идоракунии захираи пахта', 'Нигаҳдорӣ ва идораи пахта', Icons.inventory, 'cotton_stock', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonStockMainScreen()))),
                         ('Идоракунии ховарҳо', 'Ҷойгиркунӣ ва харочоти ховар', Icons.home_work, 'barn', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BarnListScreen()))),
                         ('Реестри чорво', 'Идоракунии чорво', Icons.pets, 'cattle', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleRegistryScreen()))),
