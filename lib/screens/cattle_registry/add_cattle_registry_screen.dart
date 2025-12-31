@@ -20,6 +20,7 @@ class AddCattleRegistryScreen extends StatefulWidget {
 class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
   final _formKey = GlobalKey<FormState>();
   final _earTagController = TextEditingController();
+  final _nameController = TextEditingController();
   final _initialWeightController = TextEditingController();
   final _purchasePriceController = TextEditingController();
   
@@ -42,6 +43,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
   @override
   void dispose() {
     _earTagController.dispose();
+    _nameController.dispose();
     _initialWeightController.dispose();
     _purchasePriceController.dispose();
     super.dispose();
@@ -65,6 +67,11 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
             children: [
               // Ear Tag Input
               _buildEarTagSection(),
+              
+              const SizedBox(height: 24),
+              
+              // Name Input (Optional)
+              _buildNameSection(),
               
               const SizedBox(height: 24),
               
@@ -137,6 +144,60 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
         const SizedBox(height: 4),
         Text(
           'Рамзи якто барои шиносоии чорво',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNameSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Номи чорво',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Ихтиёрӣ',
+                style: TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _nameController,
+          decoration: InputDecoration(
+            hintText: 'Мисол: Лола, Марҷон, ...',
+            prefixIcon: const Icon(Icons.pets),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            filled: true,
+            fillColor: Colors.grey[50],
+          ),
+          keyboardType: TextInputType.text,
+          textCapitalization: TextCapitalization.words,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Номи ихтиёрӣ барои осон шиносоии чорво',
           style: TextStyle(
             fontSize: 12,
             color: Colors.grey[600],
@@ -583,8 +644,10 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
 
       try {
         debugPrint('🐄 Starting cattle registration...');
+        final name = _nameController.text.trim();
         final cattle = CattleRegistry(
           earTag: earTag,
+          name: name.isNotEmpty ? name : null,
           gender: _selectedGender,
           ageCategory: _selectedAgeCategory,
           barnId: _selectedBarnId,

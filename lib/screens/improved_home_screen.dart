@@ -8,6 +8,7 @@ import 'debt/simple_debts_screen.dart';
 import 'debt/persons_screen.dart';
 import 'cotton_registry/cotton_purchase_registry_screen.dart';
 import 'cotton_registry/cotton_processing_registry_screen.dart';
+import 'cotton_stock/cotton_sales_screen.dart';
 import 'cattle_registry/cattle_registry_screen.dart';
 import 'reports/reports_screen.dart';
 import 'history_screen.dart';
@@ -254,6 +255,13 @@ class _ImprovedHomeScreenState extends State<ImprovedHomeScreen> {
         icon: Icons.precision_manufacturing,
         color: Colors.purple,
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonProcessingRegistryScreen())),
+      ),
+      _FeatureItem(
+        title: 'Фурӯши пахта',
+        subtitle: 'Идоракунии фурӯш',
+        icon: Icons.point_of_sale,
+        color: Colors.indigo,
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonSalesScreen())),
       ),
       _FeatureItem(
         title: 'Ҳисоботҳо',

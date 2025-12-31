@@ -59,7 +59,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Таърихи харид', style: TextStyle(fontSize: 18)),
+            const Text('Фурӯши пахта', style: TextStyle(fontSize: 18)),
             Text(
               widget.buyerName,
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
@@ -212,15 +212,121 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
 
         // Sales List
         Expanded(
-          child: ListView.builder(
+          child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: sales.length,
-            itemBuilder: (context, index) {
-              final sale = sales[index];
-              return _buildSaleCard(sale);
-            },
+            children: _buildGroupedSales(),
           ),
         ),
+      ],
+    );
+  }
+
+  List<Widget> _buildGroupedSales() {
+    // Group sales by date
+    final Map<String, List<CottonStockSale>> groupedSales = {};
+    
+    for (var sale in sales) {
+      final dateKey = DateFormat('dd.MM.yyyy').format(sale.saleDate);
+      if (!groupedSales.containsKey(dateKey)) {
+        groupedSales[dateKey] = [];
+      }
+      groupedSales[dateKey]!.add(sale);
+    }
+    
+    // Build widgets for each date group
+    final List<Widget> widgets = [];
+    groupedSales.forEach((dateKey, salesList) {
+      widgets.add(_buildDateGroup(dateKey, salesList));
+      widgets.add(const SizedBox(height: 16));
+    });
+    
+    return widgets;
+  }
+
+  Widget _buildDateGroup(String dateKey, List<CottonStockSale> salesList) {
+    final totalWeight = salesList.fold<double>(0, (sum, sale) => sum + sale.totalWeight);
+    final totalPieces = salesList.fold<int>(0, (sum, sale) => sum + sale.units);
+    final totalAmount = salesList.fold<double>(0, (sum, sale) => sum + (sale.totalAmount ?? 0));
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Date Header
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue[700]!, Colors.blue[500]!],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blue.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.calendar_today, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      dateKey,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      '${salesList.length} фурӯш',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$totalPieces дона',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    '${totalWeight.toStringAsFixed(1)} кг',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Sales in this date group
+        ...salesList.map((sale) => _buildSaleCard(sale)),
       ],
     );
   }
@@ -252,7 +358,8 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
 
   Widget _buildSaleCard(CottonStockSale sale) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
+      elevation: 1,
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -264,88 +371,58 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.all(12),
+          child: Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
-                      const SizedBox(width: 4),
-                      Text(
-                        DateFormat('dd/MM/yyyy').format(sale.saleDate),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${sale.totalWeight.toStringAsFixed(1)} кг',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.inventory_2, color: Colors.orange, size: 20),
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.inventory_2, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${sale.units} дона × ${sale.unitWeight.toStringAsFixed(1)} кг',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ],
-              ),
-              if (sale.totalAmount != null) ...[
-                const SizedBox(height: 8),
-                const Divider(height: 1),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Icon(Icons.account_balance_wallet, size: 16, color: Colors.green[700]),
-                        const SizedBox(width: 4),
-                        const Text(
-                          'Ҷамъи маблағ:',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
                     Text(
-                      '${sale.totalAmount!.toStringAsFixed(2)} сомонӣ',
+                      '${sale.units} дона × ${sale.unitWeight.toStringAsFixed(1)} кг',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${sale.totalWeight.toStringAsFixed(1)} кг',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: Colors.green[700],
+                        fontSize: 12,
+                        color: Colors.grey[600],
                       ),
                     ),
                   ],
                 ),
-              ],
+              ),
+              if (sale.totalAmount != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${sale.totalAmount!.toStringAsFixed(0)} с',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right, color: Colors.grey[400]),
             ],
           ),
         ),

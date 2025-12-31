@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../providers/cattle_registry_provider.dart';
 import '../../providers/barn_provider.dart';
 import '../../models/cattle_registry.dart';
+import '../../models/cattle_weight.dart';
 import '../../theme/app_theme.dart';
 import 'add_cattle_registry_screen.dart';
 import 'cattle_financial_detail_screen.dart';
@@ -17,14 +18,23 @@ class CattleRegistryScreen extends StatefulWidget {
   State<CattleRegistryScreen> createState() => _CattleRegistryScreenState();
 }
 
-class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
+class _CattleRegistryScreenState extends State<CattleRegistryScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CattleRegistryProvider>().loadAllData();
       context.read<BarnProvider>().loadBarns();
     });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -34,6 +44,16 @@ class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
         title: const Text('Реестри чорво'),
         backgroundColor: AppTheme.primaryIndigo,
         foregroundColor: Colors.white,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          tabs: const [
+            Tab(text: 'Фаъол', icon: Icon(Icons.check_circle_outline)),
+            Tab(text: 'Фурӯхташуда', icon: Icon(Icons.sell_outlined)),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -61,89 +81,124 @@ class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
           ),
         ],
       ),
-      body: Consumer<CattleRegistryProvider>(
-        builder: (context, provider, _) {
-          try {
-            if (provider.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            final cattle = provider.allCattle;
-            
-            if (cattle.isEmpty) {
-              return _buildEmptyState();
-            }
-
-            return RefreshIndicator(
-              onRefresh: () async {
-                try {
-                  await provider.loadAllData();
-                } catch (e) {
-                  debugPrint('Error refreshing cattle data: $e');
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Хато: ${e.toString()}')),
-                    );
-                  }
-                }
-              },
-              child: Column(
-                children: [
-                  _buildSummaryCard(cattle),
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: cattle.length,
-                      itemBuilder: (context, index) {
-                        return _buildCattleCard(cattle[index]);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          } catch (e) {
-            debugPrint('Error building cattle registry screen: $e');
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text('Хатогӣ: ${e.toString()}'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (mounted) {
-                        context.read<CattleRegistryProvider>().loadAllData();
-                      }
-                    },
-                    child: const Text('Дубора кӯшиш кунед'),
-                  ),
-                ],
-              ),
-            );
-          }
-        },
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildActiveCattleTab(),
+          _buildSoldCattleTab(),
+        ],
       ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildActiveCattleTab() {
+    return Consumer<CattleRegistryProvider>(
+      builder: (context, provider, _) {
+        try {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final activeCattle = provider.activeCattle;
+          
+          if (activeCattle.isEmpty) {
+            return _buildEmptyState('Ҳеҷ чорвои фаъол нест', Icons.pets_outlined);
+          }
+
+          return RefreshIndicator(
+            onRefresh: () => provider.loadAllData(),
+            child: Column(
+              children: [
+                _buildSummaryCard(provider.allCattle),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: activeCattle.length,
+                    itemBuilder: (context, index) {
+                      return _buildCattleCard(activeCattle[index], false);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        } catch (e) {
+          debugPrint('Error building active cattle tab: $e');
+          return _buildErrorState();
+        }
+      },
+    );
+  }
+
+  Widget _buildSoldCattleTab() {
+    return Consumer<CattleRegistryProvider>(
+      builder: (context, provider, _) {
+        try {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final soldCattle = provider.soldCattle;
+          
+          if (soldCattle.isEmpty) {
+            return _buildEmptyState('Ҳеҷ чорво фурӯхта нашудааст', Icons.sell_outlined);
+          }
+
+          return RefreshIndicator(
+            onRefresh: () => provider.loadAllData(),
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: soldCattle.length,
+              itemBuilder: (context, index) {
+                return _buildCattleCard(soldCattle[index], true);
+              },
+            ),
+          );
+        } catch (e) {
+          debugPrint('Error building sold cattle tab: $e');
+          return _buildErrorState();
+        }
+      },
+    );
+  }
+
+  Widget _buildEmptyState(String message, IconData icon) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.pets_outlined, size: 80, color: Colors.grey[400]),
+          Icon(icon, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'Ҳеҷ чорво бақайд нашудааст',
+            message,
             style: TextStyle(fontSize: 18, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
             'Барои илова кардан тугмаи + -ро пахш кунед',
             style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 64, color: Colors.red),
+          const SizedBox(height: 16),
+          const Text('Хатогӣ дар боркунии маълумот'),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              if (mounted) {
+                context.read<CattleRegistryProvider>().loadAllData();
+              }
+            },
+            child: const Text('Дубора кӯшиш кунед'),
           ),
         ],
       ),
@@ -247,7 +302,7 @@ class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
     );
   }
 
-  Widget _buildCattleCard(CattleRegistry cattle) {
+  Widget _buildCattleCard(CattleRegistry cattle, bool isSold) {
     try {
       final barnProvider = context.read<BarnProvider>();
       final barn = cattle.barnId != null ? barnProvider.getBarnById(cattle.barnId!) : null;
@@ -256,6 +311,9 @@ class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
           ? cattleProvider.getCattlePurchases(cattle.id!).first
           : null;
       final weights = cattle.id != null ? cattleProvider.getCattleWeights(cattle.id!) : <CattleWeight>[];
+      final sale = isSold && cattle.id != null && cattleProvider.getCattleSales(cattle.id!).isNotEmpty
+          ? cattleProvider.getCattleSales(cattle.id!).first
+          : null;
 
       return Card(
         margin: const EdgeInsets.only(bottom: 12),
@@ -281,7 +339,7 @@ class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
             }
           },
           borderRadius: BorderRadius.circular(12),
-        child: Padding(
+          child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -314,6 +372,17 @@ class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        if (cattle.name != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            cattle.name!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[700],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 4),
                         Row(
                           children: [
@@ -421,9 +490,74 @@ class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
                 ),
               ],
               
+              // Sale Info (for sold cattle)
+              if (isSold && sale != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.sell, size: 16, color: Colors.orange),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Маълумоти фурӯш',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange[800],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Вазн: ${sale.weight.toStringAsFixed(0)} кг',
+                            style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                          ),
+                          Text(
+                            '${sale.pricePerKg.toStringAsFixed(0)} ${sale.currency}/кг',
+                            style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            DateFormat('dd.MM.yyyy').format(sale.saleDate),
+                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          ),
+                          Text(
+                            '${sale.totalAmount.toStringAsFixed(0)} ${sale.currency}',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              
               const SizedBox(height: 12),
               
-              // Action Buttons
+              // Action Buttons (only for active cattle)
+              if (!isSold)
               Row(
                 children: [
                   Expanded(
@@ -472,7 +606,7 @@ class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
         ),
       ),
     );
-  } catch (e) {
+    } catch (e) {
     debugPrint('Error building cattle card: $e');
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -493,4 +627,5 @@ class _CattleRegistryScreenState extends State<CattleRegistryScreen> {
       ),
     );
   }
+}
 }

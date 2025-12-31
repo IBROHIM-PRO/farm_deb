@@ -10,9 +10,10 @@ import '../theme/app_theme.dart';
 import 'debt/simple_debts_screen.dart';
 import 'cotton_warehouse/raw_cotton_warehouse_screen.dart';
 import 'cotton_warehouse/processed_cotton_warehouse_screen.dart';
-import 'cattle_registry/add_cattle_registry_screen.dart';
+import 'cattle_registry/cattle_registry_screen.dart';
+import 'cattle_registry/cattle_management_hub_screen.dart';
 import 'cattle_registry/cattle_sale_screen.dart';
-import 'cotton_registry/cotton_purchase_registry_screen.dart';
+import 'cotton_registry/cotton_management_hub_screen.dart';
 import 'cotton_registry/cotton_processing_registry_screen.dart';
 import 'cotton_stock/cotton_stock_main_screen.dart';
 import 'cotton_stock/cotton_sales_screen.dart';
@@ -64,13 +65,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: const [
+        children: [
           _DashboardView(),
-          SimpleDebtsScreen(),
-          CottonPurchaseRegistryScreen(),
-          AddCattleRegistryScreen(),
-          HistoryScreen(),
-          ReportsScreen(),
+          const SimpleDebtsScreen(),
+          const CottonManagementHubScreen(),
+          const CattleManagementHubScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -105,18 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Чорво',
             tooltip: 'Чорво',
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.history_outlined, size: 26), 
-            selectedIcon: const Icon(Icons.history, size: 26), 
-            label: 'Таърих',
-            tooltip: 'Таърих',
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.analytics_outlined, size: 26), 
-            selectedIcon: const Icon(Icons.analytics, size: 26), 
-            label: 'Ҳисоботҳо',
-            tooltip: 'Ҳисоботҳо',
-          ),
         ],
       ),
     );
@@ -124,10 +111,27 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _DashboardView extends StatelessWidget {
-  const _DashboardView();
+  _DashboardView();
 
   @override
+  List<(String, String, IconData, String, VoidCallback)> _getDashboardItems(BuildContext context) {
+    return [
+      ('Идоракунии қарзҳо', 'Сабт ва пайгирии қарзҳо', Icons.account_balance_wallet, 'debt', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SimpleDebtsScreen()))),
+      ('Анбори пахтаи хом', 'Линт, слайвер ва дигар', Icons.warehouse, 'raw_warehouse', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RawCottonWarehouseScreen()))),
+      ('Анбори пахтаи коркардшуда', 'Пахтаи тайёр дар қуттиҳо', Icons.inventory_2, 'processed_warehouse', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProcessedCottonWarehouseScreen()))),      
+      ('Коркарди пахта', 'Реестри коркарди пахта', Icons.precision_manufacturing, 'cotton_processing', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonProcessingRegistryScreen()))),
+      ('Сабти фурӯш', 'Сабти фурӯши пахта', Icons.point_of_sale, 'cotton_stock_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonSalesScreen()))),
+      ('Идоракунии захираи пахта', 'Нигаҳдорӣ ва идораи пахта', Icons.inventory, 'cotton_stock', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonStockMainScreen()))),
+      ('Идоракунии ховарҳо', 'Ҷойгиркунӣ ва харочоти ховар', Icons.home_work, 'barn', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BarnListScreen()))),
+      ('Фурӯши чорво', 'Сабти фурӯши чорво', Icons.sell_outlined, 'cattle_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleSaleScreen()))),
+      ('Чорво', 'Сабт ва пайгирии чорво', Icons.pets, 'cattle', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleRegistryScreen()))),
+      ('Идоракунии корбарон', 'Ашхос ва контактҳо', Icons.people, 'users', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonsScreen()))),
+      ('Ҳисоботҳо ва таҳлил', 'Маълумоти молиявӣ', Icons.bar_chart, 'report', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()))),
+    ];
+  }
+
   Widget build(BuildContext context) {
+    final dashboardItems = _getDashboardItems(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Асосӣ'),
@@ -152,23 +156,9 @@ class _DashboardView extends StatelessWidget {
                       crossAxisSpacing: 16,
                       childAspectRatio: 0.95,
                     ),
-                    itemCount: 11,
+                    itemCount: dashboardItems.length,
                     itemBuilder: (context, index) {
-                      final items = [
-                        ('Идоракунии қарзҳо', 'Сабт ва пайгирии қарзҳо', Icons.account_balance_wallet, 'debt', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SimpleDebtsScreen()))),
-                        ('Анбори пахтаи хом', 'Линт, слайвер ва дигар', Icons.warehouse, 'raw_warehouse', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RawCottonWarehouseScreen()))),
-                        ('Анбори пахтаи коркардшуда', 'Пахтаи тайёр дар қуттиҳо', Icons.inventory_2, 'processed_warehouse', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProcessedCottonWarehouseScreen()))),
-                        ('Харидании пахта', 'Реестри харидани пахта', Icons.shopping_cart, 'cotton_purchase', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonPurchaseRegistryScreen()))),
-                        ('Коркарди пахта', 'Реестри коркарди пахта', Icons.precision_manufacturing, 'cotton_processing', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonProcessingRegistryScreen()))),
-                        ('Сабти фурӯш', 'Сабти фурӯши пахта', Icons.point_of_sale, 'cotton_stock_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonSalesScreen()))),
-                        ('Идоракунии захираи пахта', 'Нигаҳдорӣ ва идораи пахта', Icons.inventory, 'cotton_stock', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonStockMainScreen()))),
-                        ('Идоракунии ховарҳо', 'Ҷойгиркунӣ ва харочоти ховар', Icons.home_work, 'barn', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BarnListScreen()))),                        
-                        ('Фурӯши чорво', 'Сабти фурӯши чорво', Icons.sell_outlined, 'cattle_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleSaleScreen()))),
-                        ('Идоракунии корбарон', 'Ашхос ва контактҳо', Icons.people, 'users', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonsScreen()))),
-                        ('Ҳисоботҳо ва таҳлил', 'Маълумоти молиявӣ', Icons.bar_chart, 'report', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()))),
-                      ];
-                      
-                      final item = items[index];
+                      final item = dashboardItems[index];
                       return _buildModernPortfolioCard(context, item.$1, item.$2, item.$3, item.$4, item.$5);
                     },
                   ),

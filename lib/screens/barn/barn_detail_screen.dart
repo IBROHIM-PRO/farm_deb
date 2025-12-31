@@ -20,13 +20,15 @@ class BarnDetailScreen extends StatefulWidget {
   State<BarnDetailScreen> createState() => _BarnDetailScreenState();
 }
 
-class _BarnDetailScreenState extends State<BarnDetailScreen> with SingleTickerProviderStateMixin {
+class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProviderStateMixin {
   late TabController _tabController;
+  late TabController _cattleTabController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _cattleTabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BarnProvider>().loadBarnExpenses(widget.barnId);
       context.read<CattleRegistryProvider>().loadAllData();
@@ -36,6 +38,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with SingleTickerPr
   @override
   void dispose() {
     _tabController.dispose();
+    _cattleTabController.dispose();
     super.dispose();
   }
 
@@ -196,12 +199,42 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with SingleTickerPr
   }
 
   Widget _buildCattleTab() {
+    return Column(
+      children: [
+        Container(
+          color: Colors.grey[100],
+          child: TabBar(
+            controller: _cattleTabController,
+            labelColor: AppTheme.primaryIndigo,
+            unselectedLabelColor: Colors.grey[600],
+            indicatorColor: AppTheme.primaryIndigo,
+            tabs: const [
+              Tab(text: 'Фаъол', icon: Icon(Icons.check_circle_outline, size: 20)),
+              Tab(text: 'Фурӯхташуда', icon: Icon(Icons.sell_outlined, size: 20)),
+            ],
+          ),
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _cattleTabController,
+            children: [
+              _buildActiveBarnCattle(),
+              _buildSoldBarnCattle(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActiveBarnCattle() {
     return Consumer<CattleRegistryProvider>(
       builder: (context, cattleProvider, _) {
-        final allCattle = cattleProvider.allCattle;
-        final barnCattle = allCattle.where((c) => c.barnId == widget.barnId).toList();
+        final activeCattle = cattleProvider.activeCattle
+            .where((c) => c.barnId == widget.barnId)
+            .toList();
 
-        if (barnCattle.isEmpty) {
+        if (activeCattle.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -209,7 +242,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with SingleTickerPr
                 Icon(Icons.pets_outlined, size: 64, color: Colors.grey[400]),
                 const SizedBox(height: 16),
                 Text(
-                  'Дар ин ховар чорво нест',
+                  'Дар ин ховар чорвои фаъол нест',
                   style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 8),
@@ -224,9 +257,43 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with SingleTickerPr
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: barnCattle.length,
+          itemCount: activeCattle.length,
           itemBuilder: (context, index) {
-            return _buildCattleCard(barnCattle[index], cattleProvider);
+            return _buildCattleCard(activeCattle[index], cattleProvider);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSoldBarnCattle() {
+    return Consumer<CattleRegistryProvider>(
+      builder: (context, cattleProvider, _) {
+        final soldCattle = cattleProvider.soldCattle
+            .where((c) => c.barnId == widget.barnId)
+            .toList();
+
+        if (soldCattle.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.sell_outlined, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  'Дар ин ховар чорво фурӯхта нашудааст',
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: soldCattle.length,
+          itemBuilder: (context, index) {
+            return _buildCattleCard(soldCattle[index], cattleProvider);
           },
         );
       },
@@ -284,6 +351,17 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with SingleTickerPr
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        if (cattle.name != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            cattle.name!,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[700],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 4),
                         Row(
                           children: [

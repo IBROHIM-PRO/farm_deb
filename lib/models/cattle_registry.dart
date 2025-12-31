@@ -7,6 +7,7 @@ enum AgeCategory { calf, young, adult }
 class CattleRegistry {
   final int? id;
   final String earTag;           // Unique identifier (mandatory)
+  final String? name;            // Optional name for cattle
   final CattleGender gender;     // Male/Female
   final AgeCategory ageCategory; // Calf/Young/Adult
   final int? barnId;             // Barn where cattle is housed
@@ -17,6 +18,7 @@ class CattleRegistry {
   CattleRegistry({
     this.id,
     required this.earTag,
+    this.name,
     required this.gender,
     required this.ageCategory,
     this.barnId,
@@ -29,6 +31,7 @@ class CattleRegistry {
     return {
       'id': id,
       'earTag': earTag,
+      'name': name,
       'gender': gender.name,
       'ageCategory': ageCategory.name,
       'barnId': barnId,
@@ -42,6 +45,7 @@ class CattleRegistry {
     return CattleRegistry(
       id: map['id'] as int?,
       earTag: map['earTag'] as String? ?? '',
+      name: map['name'] as String?,
       gender: CattleGender.values.firstWhere(
         (e) => e.name == map['gender'],
         orElse: () => CattleGender.male,
@@ -63,6 +67,7 @@ class CattleRegistry {
   CattleRegistry copyWith({
     int? id,
     String? earTag,
+    String? name,
     CattleGender? gender,
     AgeCategory? ageCategory,
     int? barnId,
@@ -73,6 +78,7 @@ class CattleRegistry {
     return CattleRegistry(
       id: id ?? this.id,
       earTag: earTag ?? this.earTag,
+      name: name ?? this.name,
       gender: gender ?? this.gender,
       ageCategory: ageCategory ?? this.ageCategory,
       barnId: barnId ?? this.barnId,

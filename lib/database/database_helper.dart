@@ -51,7 +51,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path, 
-      version: 4,  // Updated to version 4 to add breeder support
+      version: 5,  // Updated to version 5 to add name field to cattle_registry
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -127,6 +127,11 @@ class DatabaseHelper {
     if (oldVersion < 4) {
       // Add breeder support - Add breederId column to cattle_registry table
       await db.execute('ALTER TABLE cattle_registry ADD COLUMN breederId INTEGER');
+    }
+    
+    if (oldVersion < 5) {
+      // Add name field to cattle_registry table
+      await db.execute('ALTER TABLE cattle_registry ADD COLUMN name TEXT');
     }
   }
 
@@ -609,6 +614,7 @@ class DatabaseHelper {
       CREATE TABLE cattle_registry (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         earTag TEXT NOT NULL UNIQUE,
+        name TEXT,
         gender TEXT NOT NULL,
         ageCategory TEXT NOT NULL,
         barnId INTEGER,
