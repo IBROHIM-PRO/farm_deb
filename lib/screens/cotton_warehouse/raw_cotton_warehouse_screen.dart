@@ -145,19 +145,15 @@ class RawCottonWarehouseScreen extends StatelessWidget {
     final hasInventory = inventory != null && inventory.pieces > 0;
 
     Color cardColor;
-    IconData icon;
     switch (type) {
       case RawCottonType.lint:
         cardColor = Colors.blue;
-        icon = Icons.fiber_manual_record;
         break;
       case RawCottonType.sliver:
-        cardColor = Colors.orange;
-        icon = Icons.linear_scale;
+        cardColor = Colors.blue;
         break;
       case RawCottonType.other:
-        cardColor = Colors.purple;
-        icon = Icons.category;
+        cardColor = Colors.blue;
         break;
     }
 
@@ -180,20 +176,7 @@ class RawCottonWarehouseScreen extends StatelessWidget {
         ],
       ),
       child: Row(
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: cardColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              color: cardColor,
-              size: 24,
-            ),
-          ),
+        children: [          
           const SizedBox(width: 16),
           Expanded(
             child: Column(

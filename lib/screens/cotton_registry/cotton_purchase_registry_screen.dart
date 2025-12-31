@@ -22,11 +22,7 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
     return Scaffold(
       appBar: AppBar(
         title: const Text('Хариди пахта'),
-        actions: [
-          IconButton(
-            onPressed: _showStatistics,
-            icon: const Icon(Icons.analytics),
-          ),          
+        actions: [                   
           IconButton(
             onPressed: () => Navigator.push(
               context,
@@ -42,7 +38,11 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
             return const Center(child: CircularProgressIndicator());
           }
 
-          final filteredPurchases = _getFilteredPurchases(provider.purchaseRegistry);          
+          final filteredPurchases = _getFilteredPurchases(provider.purchaseRegistry);
+          
+          return filteredPurchases.isEmpty
+              ? _buildEmptyState()
+              : _buildPurchaseList(provider, filteredPurchases);
         },
       ),
     );
@@ -106,19 +106,16 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
   }
 
   Widget _buildSupplierCard(CottonRegistryProvider provider, String supplierName, List<CottonPurchaseRegistry> purchases) {
-    // Calculate totals for this supplier
-    double totalAmount = 0.0;
-    double totalWeight = 0.0;
-    int totalUnits = 0;
-    final latestDate = purchases.map((p) => p.purchaseDate).reduce((a, b) => a.isAfter(b) ? a : b);
+    // Get latest purchase
+    final latestPurchase = purchases.reduce((a, b) => a.purchaseDate.isAfter(b.purchaseDate) ? a : b);
+    final latestDate = latestPurchase.purchaseDate;
     
-    for (final purchase in purchases) {
-      final items = provider.getItemsForPurchase(purchase.id!);
-      final itemsTotal = items.fold(0.0, (sum, item) => sum + item.totalPrice);
-      totalAmount += itemsTotal + purchase.transportationCost;
-      totalWeight += items.fold(0.0, (sum, item) => sum + item.weight);
-      totalUnits += items.fold(0, (sum, item) => sum + item.units);
-    }
+    // Get items for latest purchase only
+    final items = provider.getItemsForPurchase(latestPurchase.id!);
+    final totalWeight = items.fold(0.0, (sum, item) => sum + item.weight);
+    final totalUnits = items.fold(0, (sum, item) => sum + item.units);
+    final itemsTotal = items.fold(0.0, (sum, item) => sum + item.totalPrice);
+    final totalAmount = itemsTotal + latestPurchase.transportationCost;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -306,41 +303,7 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
       return true;
     }).toList();
   }
-
-  void _showStatistics() {
-    final provider = context.read<CottonRegistryProvider>();
-    final stats = provider.overallStatistics;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Омори харид'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildStatRow('Ҳамагӣ хариданӣ:', '${stats['totalPurchases']}'),
-              _buildStatRow('Ҳамагӣ коркард:', '${stats['totalProcessed']}'),
-              _buildStatRow('Ҳамагӣ фуруш:', '${stats['totalSales']}'),
-              const Divider(),
-              _buildStatRow('Ҳамагӣ харидор:', '${(stats['totalPurchaseCost'] as num?)?.toDouble()?.toStringAsFixed(0) ?? '0'} сомонӣ'),
-              _buildStatRow('Ҳамагӣ фуруш:', '${(stats['totalSalesRevenue'] as num?)?.toDouble()?.toStringAsFixed(0) ?? '0'} сомонӣ'),
-              const Divider(),
-              _buildStatRow(
-                'Ҳамагӣ фоида:',
-                '${(stats['totalProfit'] as num?)?.toDouble()?.toStringAsFixed(0) ?? '0'} сомонӣ',
-                color: ((stats['totalProfit'] as num?)?.toDouble() ?? 0) >= 0 ? Colors.green : Colors.red,
-              ),
-              _buildStatRow('Самаранокӣ:', '${(stats['processingEfficiency'] as num?)?.toDouble()?.toStringAsFixed(1) ?? '0.0'}%'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Пӯшидан')),
-        ],
-      ),
-    );
-  }
+  
 
   Widget _buildStatRow(String label, String value, {Color? color}) {
     return Padding(

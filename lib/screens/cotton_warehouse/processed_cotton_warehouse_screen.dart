@@ -272,14 +272,7 @@ class _ProcessedCottonWarehouseScreenState extends State<ProcessedCottonWarehous
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${weight.toStringAsFixed(0)} кг',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    children: [                      
                       Text(
                         '${_formatDate(DateTime.now())}',
                         style: TextStyle(
@@ -290,22 +283,7 @@ class _ProcessedCottonWarehouseScreenState extends State<ProcessedCottonWarehous
                     ],
                   ),
                 ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.green[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Вазнин',
-                  style: TextStyle(
-                    color: Colors.green[800],
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              ),              
             ],
           ),
           
@@ -324,37 +302,14 @@ class _ProcessedCottonWarehouseScreenState extends State<ProcessedCottonWarehous
               ),
               Expanded(
                 child: _buildDetailItem(
-                  Icons.trending_up,
-                  'Дона (Афзуд)',
-                  '${(totalQuantity * (weight / 10)).toInt()} дона',
-                  Colors.orange,
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 12),
-          
-          Row(
-            children: [
-              Expanded(
-                child: _buildDetailItem(
                   Icons.scale,
                   'Вазни умумӣ',
                   '${totalWeight.toStringAsFixed(0)} кг',
                   Colors.green,
                 ),
               ),
-              Expanded(
-                child: _buildDetailItem(
-                  Icons.assessment,
-                  'Коэффитсиент',
-                  'x${(weight / 10).toStringAsFixed(0)}',
-                  Colors.purple,
-                ),
-              ),
             ],
-          ),
+          ),                    
         ],
       ),
     );

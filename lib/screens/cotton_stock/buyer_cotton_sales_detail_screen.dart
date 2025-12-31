@@ -253,7 +253,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => CottonSaleDetailScreen(sale: sale),
+              builder: (context) => CottonSaleDetailScreen(sales: [sale]),
             ),
           );
         },

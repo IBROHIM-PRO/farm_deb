@@ -248,8 +248,8 @@ class AppProvider with ChangeNotifier {
     final result = <String, Map<String, double>>{};
     for (final c in currencies) {
       result[c] = {
-        'додашуда': activeDebts.where((d) => d.type == DebtType.given && d.currency == c).fold(0.0, (s, d) => s + d.remainingAmount),
-        'гирифташуда': activeDebts.where((d) => d.type == DebtType.taken && d.currency == c).fold(0.0, (s, d) => s + d.remainingAmount),
+        'given': activeDebts.where((d) => d.type == DebtType.given && d.currency == c).fold(0.0, (s, d) => s + d.remainingAmount),
+        'taken': activeDebts.where((d) => d.type == DebtType.taken && d.currency == c).fold(0.0, (s, d) => s + d.remainingAmount),
       };
     }
     return result;

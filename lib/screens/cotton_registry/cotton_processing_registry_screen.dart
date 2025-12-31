@@ -27,12 +27,7 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
         elevation: 0,
         backgroundColor: Colors.purple,
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            onPressed: _showStatistics,
-            icon: const Icon(Icons.analytics),
-            tooltip: 'Омор',
-          ),
+        actions: [          
           IconButton(
             onPressed: () => Navigator.push(
               context,
@@ -250,45 +245,7 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
                     ),
                   ),
                 ],
-              ),                            
-              
-              const SizedBox(height: 8),
-              
-              // Input Cotton Types
-              if (inputs.isNotEmpty) ...[
-                const Text(
-                  'Навъҳои истифодашуда:',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: inputs.map((input) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _getCottonTypeColor(input.cottonType).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${input.cottonTypeDisplay}: ${input.weightUsedDisplay}',
-                        style: TextStyle(
-                          color: _getCottonTypeColor(input.cottonType),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
+              ),                                                        
               
               const SizedBox(height: 12),
               
@@ -464,16 +421,12 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Тафсилоти коркард'),
+        title: const Text('Маълумоти пурра'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (linkedPurchase != null) ...[
-                Text('Хариди асосӣ: ${linkedPurchase.supplierName}'),
-                const SizedBox(height: 8),
-              ],
+            children: [              
               if (processing.processingDate != null) ...[
                 Text('Санаи коркард: ${DateFormat('dd/MM/yyyy', 'en_US').format(processing.processingDate!)}'),
                 const SizedBox(height: 8),
@@ -488,11 +441,11 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
               
               const SizedBox(height: 12),
               
-              const Text('Бастаҳои тайёршуда:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Коркардшуда:', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
               ...outputs.map((output) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Text('• Коркард: ${output.unitsDisplay} × ${output.batchWeightDisplay}'),
+                child: Text('• ${output.unitsDisplay} × ${output.batchWeightDisplay}'),
               )),
               
               if (processing.notes != null) ...[
@@ -511,81 +464,7 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
         ],
       ),
     );
-  }
-
-  void _showProcessingGuide() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Дастури коркарди пахта'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Формулаҳои коркард:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 12),
-              
-              const Text('1. Се навъи пахта (Линт + Улук + Валакно):', style: TextStyle(fontWeight: FontWeight.bold)),
-              const Text('• Линт ва Улук якҷоя ҳисоб мешаванд'),
-              const Text('• Валакно автоматӣ ҳисоб карда мешавад'),
-              const Text('• Нисбат: (Линт + Улук) ≈ 1тона, Валакно ≈ 250 кило'),
-              const SizedBox(height: 8),
-              
-              const Text('2. Ду навъи пахта:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const Text('• (Линт ё Улук) + Валакно'),
-              const Text('• Нисбат: Асосӣ ≈ 1 тона, Валакно ≈ 500 кило'),
-              const SizedBox(height: 8),                           
-              
-              const Text(
-                'Эзоҳ: Системаи автоматӣ нисбатҳоро ҳисоб мекунад, аммо шумо метавонед дастӣ тағйир диҳед.',
-                style: TextStyle(color: Colors.blue, fontStyle: FontStyle.italic),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Фаҳмидам'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showStatistics() {
-    final provider = context.read<CottonRegistryProvider>();
-    final stats = provider.overallStatistics;
-    
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Омори коркарди пахта'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildStatRow('Ҳамагӣ коркард:', '${stats['totalProcessed']}'),
-              _buildStatRow('Ҳамагӣ фуруш:', '${stats['totalSales']}'),
-              _buildStatRow('Самаранокӣ:', '${(stats['processingEfficiency'] as num?)?.toDouble()?.toStringAsFixed(1) ?? '0.0'}%'),
-              const Divider(),
-              _buildStatRow('Вазни инвентор:', '${(stats['totalInventoryWeight'] as num?)?.toDouble()?.toStringAsFixed(0) ?? '0'} кг'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Пӯшидан'),
-          ),
-        ],
-      ),
-    );
-  }
+  }  
 
   Widget _buildStatRow(String label, String value, {Color? color}) {
     return Padding(

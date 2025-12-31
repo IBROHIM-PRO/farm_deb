@@ -167,7 +167,7 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
               '${sale.totalWeight.toStringAsFixed(1)} кг',
               isHighlighted: true,
             ),
-            if (sale.totalAmount != null) ..[
+            if (sale.totalAmount != null) ...[
               const SizedBox(height: 12),
               _buildDetailRow(
                 'Ҳамагӣ маблағ',
