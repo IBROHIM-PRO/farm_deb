@@ -88,6 +88,14 @@ class _DebtTransactionHistoryScreenState
         backgroundColor: color,
         foregroundColor: Colors.white,
         centerTitle: true,
+        actions: [
+          if (widget.debt.remainingAmount > 0)
+            IconButton(
+              onPressed: () => _showPaymentDialog(context),
+              icon: const Icon(Icons.add),
+              tooltip: 'Пардохт',
+            ),
+        ],
       ),
       backgroundColor: Colors.grey[100],
       body: Column(
@@ -119,39 +127,24 @@ class _DebtTransactionHistoryScreenState
         subtitle: _person.phone != null && _person.phone!.isNotEmpty
             ? Text(_person.phone!)
             : null,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Намуди қарз
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: (widget.debt.type == DebtType.given
-                        ? Colors.green
-                        : Colors.blue)[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                widget.debt.type == DebtType.given ? 'Додашуда' : 'Гирифташуда',
-                style: TextStyle(
-                  color: widget.debt.type == DebtType.given
-                      ? Colors.green[800]
-                      : Colors.blue[800],
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: (widget.debt.type == DebtType.given
+                    ? Colors.green
+                    : Colors.blue)[100],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            widget.debt.type == DebtType.given ? 'Додашуда' : 'Гирифташуда',
+            style: TextStyle(
+              color: widget.debt.type == DebtType.given
+                  ? Colors.green[800]
+                  : Colors.blue[800],
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(width: 8),
-            // Тугмаи пардохт (+)
-            if (widget.debt.remainingAmount > 0)
-              FloatingActionButton(
-                mini: true,
-                backgroundColor: Colors.green,
-                child: const Icon(Icons.add),
-                onPressed: () => _showPaymentDialog(context),
-              ),
-          ],
+          ),
         ),
       ),
     );

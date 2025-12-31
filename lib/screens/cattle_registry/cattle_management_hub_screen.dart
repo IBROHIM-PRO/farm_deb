@@ -4,6 +4,7 @@ import '../../providers/cattle_registry_provider.dart';
 import '../../theme/app_theme.dart';
 import 'add_cattle_registry_screen.dart';
 import 'cattle_registry_screen.dart';
+import 'cattle_sale_screen.dart';
 import '../debt/persons_screen.dart';
 import '../barn/barn_list_screen.dart';
 
@@ -71,7 +72,7 @@ class CattleManagementHubScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const CattleRegistryScreen(),
+                        builder: (_) => const CattleSaleScreen(),
                       ),
                     );
                   },

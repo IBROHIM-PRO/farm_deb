@@ -29,14 +29,19 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            onPressed: _showProcessingGuide,
-            icon: const Icon(Icons.help_outline),
-            tooltip: 'Дастури коркард',
-          ),
-          IconButton(
             onPressed: _showStatistics,
             icon: const Icon(Icons.analytics),
             tooltip: 'Омор',
+          ),
+          IconButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const AddCottonProcessingScreen(),
+              ),
+            ),
+            icon: const Icon(Icons.add),
+            tooltip: 'Коркарди нав',
           ),
         ],
       ),
@@ -52,18 +57,6 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
               ? _buildEmptyState(context)
               : _buildProcessingList(context, provider, filteredProcessing);
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: "cotton_processing_main_fab",
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const AddCottonProcessingScreen(),
-          ),
-        ),
-        icon: const Icon(Icons.precision_manufacturing),
-        label: const Text('Коркарди нав'),
-        backgroundColor: Colors.purple,
       ),
     );
   }

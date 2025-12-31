@@ -248,24 +248,29 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
     final totalPieces = salesList.fold<int>(0, (sum, sale) => sum + sale.units);
     final totalAmount = salesList.fold<double>(0, (sum, sale) => sum + (sale.totalAmount ?? 0));
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Date Header
-        Container(
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: () {
+          // Navigate to detail screen showing all sales for this date
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CottonSaleDetailScreen(sale: salesList.first),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [Colors.blue[700]!, Colors.blue[500]!],
             ),
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.blue.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: Row(
             children: [
@@ -324,10 +329,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        // Sales in this date group
-        ...salesList.map((sale) => _buildSaleCard(sale)),
-      ],
+      ),
     );
   }
 
