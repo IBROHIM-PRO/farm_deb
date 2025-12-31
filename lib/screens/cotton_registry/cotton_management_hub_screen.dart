@@ -26,10 +26,7 @@ class CottonManagementHubScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Summary Card
-                _buildSummaryCard(cottonProvider, warehouseProvider),
-                
+              children: [                                
                 const SizedBox(height: 32),
                 
                 // Main Action Buttons
@@ -114,8 +111,7 @@ class CottonManagementHubScreen extends StatelessWidget {
                 // Raw Cotton Storage Button
                 _buildActionCard(
                   context: context,
-                  title: 'Анбори пахтаи хом',
-                  subtitle: 'Пахтаи хомро дида баромадед',
+                  title: 'Анбори пахтаи хом',                  
                   icon: Icons.warehouse,
                   color: Colors.brown,
                   onTap: () {
@@ -153,100 +149,7 @@ class CottonManagementHubScreen extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildSummaryCard(CottonRegistryProvider cottonProvider, CottonWarehouseProvider warehouseProvider) {
-    final totalPurchases = cottonProvider.purchaseRegistry.length;
-    final totalProcessing = cottonProvider.processingRegistry.length;
-    final rawStock = warehouseProvider.rawCottonInventory;
-    final processedStock = warehouseProvider.processedCottonInventory;
-    
-    // Calculate totals
-    final totalRawWeight = rawStock.fold<double>(0, (sum, item) => sum + item.totalWeight);
-    final totalProcessedWeight = processedStock.fold<double>(0, (sum, item) => sum + item.totalWeight);
-    
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppTheme.primaryIndigo, AppTheme.primaryIndigo.withOpacity(0.7)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.agriculture,
-              color: Colors.white,
-              size: 48,
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Хулосаи пахта',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem(
-                  label: 'Харидҳо',
-                  value: totalPurchases.toString(),
-                  icon: Icons.shopping_cart,
-                ),
-                Container(
-                  height: 40,
-                  width: 1,
-                  color: Colors.white.withOpacity(0.3),
-                ),
-                _buildStatItem(
-                  label: 'Коркард',
-                  value: totalProcessing.toString(),
-                  icon: Icons.settings,
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            const Divider(color: Colors.white38, thickness: 1),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildWeightStatItem(
-                  label: 'Хом',
-                  value: totalRawWeight.toStringAsFixed(0),
-                  unit: 'кг',
-                  icon: Icons.warehouse,
-                ),
-                Container(
-                  height: 40,
-                  width: 1,
-                  color: Colors.white.withOpacity(0.3),
-                ),
-                _buildWeightStatItem(
-                  label: 'Коркардшуда',
-                  value: totalProcessedWeight.toStringAsFixed(0),
-                  unit: 'кг',
-                  icon: Icons.inventory_2,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+ 
   Widget _buildStatItem({
     required String label,
     required String value,

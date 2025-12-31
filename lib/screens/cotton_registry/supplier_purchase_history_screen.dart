@@ -59,7 +59,10 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Таърихи харид', style: TextStyle(fontSize: 18)),            
+            Text(
+        widget.supplierName,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      )  
           ],
         ),
         backgroundColor: Colors.green,

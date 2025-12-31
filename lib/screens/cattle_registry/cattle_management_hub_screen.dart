@@ -25,10 +25,7 @@ class CattleManagementHubScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Summary Card
-                _buildSummaryCard(provider),
-                
+              children: [                                
                 const SizedBox(height: 32),
                 
                 // Main Action Buttons
@@ -102,79 +99,7 @@ class CattleManagementHubScreen extends StatelessWidget {
         },
       ),
     );
-  }
-
-  Widget _buildSummaryCard(CattleRegistryProvider provider) {
-    final activeCattle = provider.activeCattle;
-    final soldCattle = provider.soldCattle;
-    
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppTheme.primaryIndigo, AppTheme.primaryIndigo.withOpacity(0.7)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.pets,
-              color: Colors.white,
-              size: 48,
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Хулосаи чорво',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem(
-                  label: 'Фаъол',
-                  value: activeCattle.length.toString(),
-                  icon: Icons.check_circle,
-                ),
-                Container(
-                  height: 40,
-                  width: 1,
-                  color: Colors.white.withOpacity(0.3),
-                ),
-                _buildStatItem(
-                  label: 'Фурӯхташуда',
-                  value: soldCattle.length.toString(),
-                  icon: Icons.sell,
-                ),
-                Container(
-                  height: 40,
-                  width: 1,
-                  color: Colors.white.withOpacity(0.3),
-                ),
-                _buildStatItem(
-                  label: 'Ҷамъ',
-                  value: provider.allCattle.length.toString(),
-                  icon: Icons.format_list_numbered,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  }  
 
   Widget _buildStatItem({
     required String label,

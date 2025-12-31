@@ -59,7 +59,10 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Фурӯши пахта', style: TextStyle(fontSize: 18)),            
+            Text(
+        widget.buyerName,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
           ],
         ),
         backgroundColor: Colors.blue[600],

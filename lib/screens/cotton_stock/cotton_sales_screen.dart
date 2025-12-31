@@ -242,8 +242,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
               decoration: const InputDecoration(
                 labelText: 'Номи харидор',
                 prefixIcon: Icon(Icons.person),
-                suffixIcon: Icon(Icons.arrow_drop_down),
-                hintText: 'Номи харидорро ворид кунед',
+                suffixIcon: Icon(Icons.arrow_drop_down),                
               ),
               textCapitalization: TextCapitalization.words,
               validator: (value) {
@@ -321,7 +320,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
           decoration: const InputDecoration(
             labelText: 'Нархи 1 кг пахта',
             prefixIcon: Icon(Icons.attach_money),
-            suffixText: 'сомонӣ',
+            suffixText: 'с',
             hintText: 'Нархи як килограмро ворид кунед',
           ),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -399,14 +398,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Дастаи ${index + 1}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
+              children: [                
                 IconButton(
                   onPressed: () => _removeSaleItem(index),
                   icon: const Icon(Icons.delete, color: Colors.red),
@@ -423,8 +415,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
                     controller: item.weightController,
                     decoration: const InputDecoration(
                       labelText: 'Вазни як дона (кг)',
-                      suffixText: 'кг',
-                      hintText: '10, 15, 20...',
+                      suffixText: 'кг',                      
                     ),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     validator: (value) => _validateWeight(value),
@@ -437,8 +428,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
                     controller: item.piecesController,
                     decoration: const InputDecoration(
                       labelText: 'Адад',
-                      suffixText: 'дона',
-                      hintText: 'Шумора',
+                      suffixText: 'шт',                      
                     ),
                     keyboardType: TextInputType.number,
                     validator: (value) => _validatePieces(value),
@@ -447,41 +437,13 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            _buildItemSummary(item),
+            const SizedBox(height: 12),           
             _buildWarehouseValidation(item),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildItemSummary(SaleItem item) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'Ҷамъ:',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          Text(
-            '${item.totalWeight.toStringAsFixed(1)} кг',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.blue,
-              fontSize: 16,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  }  
 
   Widget _buildWarehouseValidation(SaleItem item) {
     return Consumer<CottonWarehouseProvider>(

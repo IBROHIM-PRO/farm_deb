@@ -123,8 +123,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
         const SizedBox(height: 8),
         TextFormField(
           controller: _earTagController,
-          decoration: InputDecoration(
-            hintText: 'Мисол: A001, Ҷ12, ...',
+          decoration: InputDecoration(            
             prefixIcon: const Icon(Icons.tag),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -182,16 +181,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
         ),
         const SizedBox(height: 8),
         TextFormField(
-          controller: _nameController,
-          decoration: InputDecoration(
-            hintText: 'Мисол: Лола, Марҷон, ...',
-            prefixIcon: const Icon(Icons.pets),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            filled: true,
-            fillColor: Colors.grey[50],
-          ),
+          controller: _nameController,          
           keyboardType: TextInputType.text,
           textCapitalization: TextCapitalization.words,
         ),
@@ -308,8 +298,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               child: _buildAgeCategoryCard(
                 AgeCategory.calf,
                 'Гӯсола',
-                '< 1 сол',
-                Icons.child_care,
+                '< 1 сол',                
                 Colors.green,
               ),
             ),
@@ -318,8 +307,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               child: _buildAgeCategoryCard(
                 AgeCategory.young,
                 'Ҷавон',
-                '1-2 сол',
-                Icons.pets,
+                '1-2 сол',                
                 Colors.orange,
               ),
             ),
@@ -328,8 +316,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               child: _buildAgeCategoryCard(
                 AgeCategory.adult,
                 'Калон',
-                '> 2 сол',
-                Icons.agriculture,
+                '> 2 сол',                
                 Colors.purple,
               ),
             ),
@@ -485,8 +472,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
         const SizedBox(height: 8),
         TextFormField(
           controller: _initialWeightController,
-          decoration: InputDecoration(
-            hintText: 'Мисол: 250',
+          decoration: InputDecoration(            
             suffixText: 'кг',
             prefixIcon: const Icon(Icons.scale),
             border: OutlineInputBorder(
@@ -531,26 +517,13 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                'Ихтиёрӣ',
-                style: TextStyle(fontSize: 11, color: Colors.grey),
-              ),
-            ),
+            ),            
           ],
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _purchasePriceController,
-          decoration: InputDecoration(
-            hintText: 'Мисол: 5000',
+          decoration: InputDecoration(            
             suffixText: 'TJS',
             prefixIcon: const Icon(Icons.attach_money),
             border: OutlineInputBorder(

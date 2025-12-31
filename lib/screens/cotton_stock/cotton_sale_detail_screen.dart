@@ -66,17 +66,8 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
                   ),
                   const SizedBox(height: 12),
                   
-                  // All Sales List
-                  ...widget.sales.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final sale = entry.value;
-                    return Column(
-                      children: [
-                        _buildSaleItemCard(sale, index + 1),
-                        const SizedBox(height: 12),
-                      ],
-                    );
-                  }).toList(),
+                  // Single card with all sales
+                  _buildAllSalesCard(),
                 ],
               ),
             ),
@@ -125,7 +116,7 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
     );
   }
 
-  Widget _buildSaleItemCard(CottonStockSale sale, int itemNumber) {
+  Widget _buildAllSalesCard() {
     return Card(
       elevation: 2,
       child: Padding(
@@ -133,48 +124,61 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.inventory_2,
-                    color: Colors.orange,
-                    size: 24,
-                  ),
+            ...widget.sales.asMap().entries.expand((entry) {
+              final index = entry.key;
+              final sale = entry.value;
+              final isLast = index == widget.sales.length - 1;
+              
+              return [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.inventory_2,
+                        color: Colors.orange,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Дастаи фурӯш ${index + 1}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  'Дастаи фурӯш $itemNumber',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                const Divider(height: 24),
+                _buildDetailRow('Донаҳо', '${sale.units} дона'),
+                const SizedBox(height: 12),
+                _buildDetailRow('Вазни як дона', '${sale.unitWeight.toStringAsFixed(1)} кг'),
+                const SizedBox(height: 12),
+                _buildDetailRow(
+                  'Ҳамагӣ вазн',
+                  '${sale.totalWeight.toStringAsFixed(1)} кг',
+                  isHighlighted: true,
                 ),
-              ],
-            ),
-            const Divider(height: 24),
-            _buildDetailRow('Донаҳо', '${sale.units} дона'),
-            const SizedBox(height: 12),
-            _buildDetailRow('Вазни як дона', '${sale.unitWeight.toStringAsFixed(1)} кг'),
-            const SizedBox(height: 12),
-            _buildDetailRow(
-              'Ҳамагӣ вазн',
-              '${sale.totalWeight.toStringAsFixed(1)} кг',
-              isHighlighted: true,
-            ),
-            if (sale.totalAmount != null) ...[
-              const SizedBox(height: 12),
-              _buildDetailRow(
-                'Ҳамагӣ маблағ',
-                '${sale.totalAmount!.toStringAsFixed(0)} с',
-                isHighlighted: true,
-              ),
-            ],
+                if (sale.totalAmount != null) ...[
+                  const SizedBox(height: 12),
+                  _buildDetailRow(
+                    'Ҳамагӣ маблағ',
+                    '${sale.totalAmount!.toStringAsFixed(0)} с',
+                    isHighlighted: true,
+                  ),
+                ],
+                if (!isLast) ...[
+                  const SizedBox(height: 16),
+                  const Divider(thickness: 2),
+                  const SizedBox(height: 16),
+                ],
+              ];
+            }).toList(),
           ],
         ),
       ),

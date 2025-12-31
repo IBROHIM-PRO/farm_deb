@@ -58,12 +58,12 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Таърихи қарз', style: TextStyle(fontSize: 18)),
-            Text(
-              widget.personName,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-            ),
-          ],
+  Text(
+    widget.personName,
+    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  ),
+]
+
         ),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
@@ -121,35 +121,7 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.person, color: Colors.blue, size: 28),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.personName,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                'Таърихи қарз',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
-                      ],
-                    ),
+                  children: [                    
                     const Divider(height: 32),
                     Row(
                       children: [

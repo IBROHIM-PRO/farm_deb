@@ -36,6 +36,7 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
   final _ulukPiecesController = TextEditingController();
   final _valaknoPiecesController = TextEditingController();
   bool isValaknoManualOverride = false;
+  double? suggestedValaknoWeight;
   
   // Simple batch output for processed cotton (modal)
   final _weightController = TextEditingController();
@@ -83,12 +84,9 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
   void _setupListeners() {
     _lintWeightController.addListener(_calculateValakno);
     _ulukWeightController.addListener(_calculateValakno);
-    _valaknoWeightController.addListener(_onValaknoManualChange);
   }
 
   void _calculateValakno() {
-    if (isValaknoManualOverride) return;
-    
     final lintKg = double.tryParse(_lintWeightController.text) ?? 0;
     final ulukKg = double.tryParse(_ulukWeightController.text) ?? 0;
     
@@ -105,18 +103,17 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
       calculatedValakno = ulukKg * 0.5;
     }
     
-    if (calculatedValakno > 0) {
-      setState(() {
-        _valaknoWeightController.text = calculatedValakno.toStringAsFixed(2);
-      });
-    }
+    setState(() {
+      suggestedValaknoWeight = calculatedValakno > 0 ? calculatedValakno : null;
+    });
   }
 
-  void _onValaknoManualChange() {
-    // Mark as manual override if user changes the calculated value
-    setState(() {
-      isValaknoManualOverride = true;
-    });
+  void _applyValaknoSuggestion() {
+    if (suggestedValaknoWeight != null) {
+      setState(() {
+        _valaknoWeightController.text = suggestedValaknoWeight!.toStringAsFixed(2);
+      });
+    }
   }
 
   @override
@@ -189,8 +186,7 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Линт (кг)',
                       border: OutlineInputBorder(),
-                      suffixText: 'кг',
-                      hintText: 'Вазн',
+                      suffixText: 'кг',                  
                     ),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     validator: (value) {
@@ -215,8 +211,8 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Адад',
                       border: OutlineInputBorder(),
-                      suffixText: 'дона',
-                      hintText: 'Шумора',
+                      suffixText: 'шт',
+                    
                     ),
                     keyboardType: TextInputType.number,
                     validator: (value) {
@@ -247,8 +243,7 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Улук (кг)',
                       border: OutlineInputBorder(),
-                      suffixText: 'кг',
-                      hintText: 'Вазн',
+                      suffixText: 'кг',                      
                     ),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     validator: (value) {
@@ -273,8 +268,7 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Адад',
                       border: OutlineInputBorder(),
-                      suffixText: 'дона',
-                      hintText: 'Шумора',
+                      suffixText: 'шт',                      
                     ),
                     keyboardType: TextInputType.number,
                     validator: (value) {
@@ -295,25 +289,17 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
             ),
             const SizedBox(height: 16),
             
-            // Valakno Input Row (with auto-calculation)
+            // Valakno Input Row (with suggestion)
             Row(
               children: [
                 Expanded(
                   flex: 2,
                   child: TextFormField(
                     controller: _valaknoWeightController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Валакно (кг)',
-                      border: const OutlineInputBorder(),
-                      suffixText: 'кг',
-                      hintText: 'Автоматӣ',
-                      helperText: isValaknoManualOverride ? 
-                        'Дастӣ тағйир дода шуд' : 
-                        'Автоматӣ: ${_getValaknoFormula()}',
-                      helperStyle: TextStyle(
-                        color: isValaknoManualOverride ? Colors.orange : Colors.blue,
-                        fontSize: 11,
-                      ),
+                      border: OutlineInputBorder(),
+                      suffixText: 'кг',                      
                     ),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     validator: (value) {
@@ -338,8 +324,7 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Адад',
                       border: OutlineInputBorder(),
-                      suffixText: 'дона',
-                      hintText: 'Шумора',
+                      suffixText: 'шт',               
                     ),
                     keyboardType: TextInputType.number,
                     validator: (value) {
@@ -359,17 +344,43 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
               ],
             ),
             
-            if (isValaknoManualOverride) ...[
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: () {
-                  setState(() {
-                    isValaknoManualOverride = false;
-                    _calculateValakno();
-                  });
-                },
-                icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Ба ҳисоби автоматӣ баргардонед'),
+            // Valakno suggestion display
+            if (suggestedValaknoWeight != null && suggestedValaknoWeight! > 0) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.lightbulb_outline, size: 16, color: Colors.blue[700]),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Пешниҳод: ${suggestedValaknoWeight!.toStringAsFixed(2)} кг',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.blue[700],
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _applyValaknoSuggestion,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'Ворид кунед',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ],
@@ -475,8 +486,7 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
               decoration: const InputDecoration(
                 labelText: 'Вазни як дона (кг)',
                 border: OutlineInputBorder(),
-                suffixText: 'кг',
-                hintText: '10, 15, 20, 25, 30, 35, 40, 45, 50 кг',
+                suffixText: 'кг',                
                 errorMaxLines: 2,
               ),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -520,8 +530,7 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
               decoration: const InputDecoration(
                 labelText: 'Шумораи донаҳо',
                 border: OutlineInputBorder(),
-                suffixText: 'дона',
-                hintText: 'Шумораи донаҳои коркардшуда',
+                suffixText: 'шт',                
                 errorMaxLines: 2,
               ),
               keyboardType: TextInputType.number,
@@ -674,18 +683,13 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Санаи коркард: ${DateFormat('dd/MM/yyyy', 'en_US').format(processingDate)}',
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
+          children: [            
             const SizedBox(height: 16),
             TextFormField(
               controller: _notesController,
               decoration: const InputDecoration(
                 labelText: 'Қайдҳо (ихтиёрӣ)',
-                border: OutlineInputBorder(),
-                hintText: 'Қайдҳои иловагӣ дар бораи коркард...',
+                border: OutlineInputBorder(),                
               ),
               maxLines: 3,
             ),
