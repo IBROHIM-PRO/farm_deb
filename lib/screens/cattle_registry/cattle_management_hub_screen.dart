@@ -5,6 +5,7 @@ import '../../theme/app_theme.dart';
 import 'add_cattle_registry_screen.dart';
 import 'cattle_registry_screen.dart';
 import '../debt/persons_screen.dart';
+import '../barn/barn_list_screen.dart';
 
 class CattleManagementHubScreen extends StatelessWidget {
   const CattleManagementHubScreen({super.key});
@@ -15,21 +16,7 @@ class CattleManagementHubScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Идоракунии чорво'),
         backgroundColor: AppTheme.primaryIndigo,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.list),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const CattleRegistryScreen(),
-                ),
-              );
-            },
-            tooltip: 'Реестри чорво',
-          ),
-        ],
+        foregroundColor: Colors.white,        
       ),
       body: Consumer<CattleRegistryProvider>(
         builder: (context, provider, _) {
@@ -92,41 +79,22 @@ class CattleManagementHubScreen extends StatelessWidget {
                 
                 const SizedBox(height: 16),
                 
-                // View Registry Button
+                // Barns Button
                 _buildActionCard(
                   context: context,
-                  title: 'Реестри чорво',
-                  subtitle: 'Тамоми чорвоҳоро бинед',
-                  icon: Icons.list_alt,
-                  color: Colors.blue,
+                  title: 'Ховарҳо',
+                  subtitle: 'Идоракунии ховарҳо ва ҷойгирии чорво',
+                  icon: Icons.home_work,
+                  color: Colors.brown,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const CattleRegistryScreen(),
+                        builder: (_) => const BarnListScreen(),
                       ),
                     );
                   },
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Breeders/Suppliers Button
-                _buildActionCard(
-                  context: context,
-                  title: 'Ашхос (Таъминкунандагон)',
-                  subtitle: 'Маълумоти хариддорон ва фурӯшандагон',
-                  icon: Icons.people,
-                  color: Colors.teal,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const PersonsScreen(),
-                      ),
-                    );
-                  },
-                ),
+                ),                                
               ],
             ),
           );
