@@ -25,6 +25,7 @@ class _AddBarnExpenseScreenState extends State<AddBarnExpenseScreen> {
   final _notesController = TextEditingController();
 
   BarnExpenseType _expenseType = BarnExpenseType.feed;
+  FeedType? _feedType;
   DateTime _expenseDate = DateTime.now();
   bool _isEditing = false;
 
@@ -34,6 +35,7 @@ class _AddBarnExpenseScreenState extends State<AddBarnExpenseScreen> {
     if (widget.expense != null) {
       _isEditing = true;
       _expenseType = widget.expense!.expenseType;
+      _feedType = widget.expense!.feedType;
       _itemNameController.text = widget.expense!.itemName;
       _quantityController.text = widget.expense!.quantity.toString();
       _quantityUnitController.text = widget.expense!.quantityUnit;
@@ -97,20 +99,53 @@ class _AddBarnExpenseScreenState extends State<AddBarnExpenseScreen> {
               },
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _itemNameController,
-              decoration: const InputDecoration(
-                labelText: 'Номи мол *',
-                hintText: 'Масалан: Алаф, Дово, Об',
-                prefixIcon: Icon(Icons.inventory),
+            // Feed type dropdown (only for feed expenses)
+            if (_expenseType == BarnExpenseType.feed) ...[
+              DropdownButtonFormField<FeedType>(
+                value: _feedType,
+                decoration: const InputDecoration(
+                  labelText: 'Навъи хӯрок *',
+                  prefixIcon: Icon(Icons.grass),
+                ),
+                items: FeedType.values.map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Text(_getFeedTypeDisplay(type)),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _feedType = value;
+                    if (value != null) {
+                      _itemNameController.text = _getFeedTypeDisplay(value);
+                      _updateUnitByFeedType(value);
+                    }
+                  });
+                },
+                validator: (value) {
+                  if (_expenseType == BarnExpenseType.feed && value == null) {
+                    return 'Навъи хӯрок зарур аст';
+                  }
+                  return null;
+                },
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Номи мол зарур аст';
-                }
-                return null;
-              },
-            ),
+              const SizedBox(height: 16),
+            ],
+            // Item name field (hidden for feed, shown for others)
+            if (_expenseType != BarnExpenseType.feed)
+              TextFormField(
+                controller: _itemNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Номи мол *',
+                  prefixIcon: Icon(Icons.inventory),
+                ),
+                validator: (value) {
+                  if (_expenseType != BarnExpenseType.feed && (value == null || value.trim().isEmpty)) {
+                    return 'Номи мол зарур аст';
+                  }
+                  return null;
+                },
+              ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -242,6 +277,11 @@ class _AddBarnExpenseScreenState extends State<AddBarnExpenseScreen> {
   }
 
   void _updateDefaultUnit() {
+    setState(() {
+      _feedType = null; // Reset feed type when changing expense type
+      _itemNameController.clear(); // Clear item name
+    });
+    
     switch (_expenseType) {
       case BarnExpenseType.feed:
         _quantityUnitController.text = 'кг';
@@ -254,6 +294,17 @@ class _AddBarnExpenseScreenState extends State<AddBarnExpenseScreen> {
         break;
       case BarnExpenseType.other:
         _quantityUnitController.text = 'дона';
+        break;
+    }
+  }
+  
+  void _updateUnitByFeedType(FeedType type) {
+    switch (type) {
+      case FeedType.press:
+        _quantityUnitController.text = 'дона';
+        break;
+      case FeedType.karma:
+        _quantityUnitController.text = 'кг';
         break;
     }
   }
@@ -287,6 +338,7 @@ class _AddBarnExpenseScreenState extends State<AddBarnExpenseScreen> {
       id: widget.expense?.id,
       barnId: widget.barnId,
       expenseType: _expenseType,
+      feedType: _feedType,
       itemName: _itemNameController.text.trim(),
       quantity: quantity,
       quantityUnit: _quantityUnitController.text.trim(),
@@ -360,6 +412,15 @@ class _AddBarnExpenseScreenState extends State<AddBarnExpenseScreen> {
         return 'Об';
       case BarnExpenseType.other:
         return 'Дигар';
+    }
+  }
+  
+  String _getFeedTypeDisplay(FeedType type) {
+    switch (type) {
+      case FeedType.press:
+        return 'Пресс';
+      case FeedType.karma:
+        return 'Корм';
     }
   }
 }

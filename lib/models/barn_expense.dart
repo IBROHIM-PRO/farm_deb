@@ -1,11 +1,14 @@
 enum BarnExpenseType { feed, medication, water, other }
 
+enum FeedType { press, karma }
+
 /// Barn Expense Model - Barn-level costs
 /// Tracks feed (fodder, press), water, medicine and other barn expenses
 class BarnExpense {
   final int? id;
   final int barnId;               // Link to Barn
   final BarnExpenseType expenseType;
+  final FeedType? feedType;       // Feed subtype (press/karma) - only for feed expenses
   final String itemName;          // Item name (fodder, medicine name, etc.)
   final double quantity;          // Quantity purchased
   final String quantityUnit;      // kg, liters, pieces, etc.
@@ -20,6 +23,7 @@ class BarnExpense {
     this.id,
     required this.barnId,
     required this.expenseType,
+    this.feedType,
     required this.itemName,
     required this.quantity,
     required this.quantityUnit,
@@ -36,6 +40,7 @@ class BarnExpense {
       'id': id,
       'barnId': barnId,
       'expenseType': expenseType.name,
+      'feedType': feedType?.name,
       'itemName': itemName,
       'quantity': quantity,
       'quantityUnit': quantityUnit,
@@ -56,6 +61,12 @@ class BarnExpense {
         (e) => e.name == map['expenseType'],
         orElse: () => BarnExpenseType.other,
       ),
+      feedType: map['feedType'] != null
+          ? FeedType.values.firstWhere(
+              (e) => e.name == map['feedType'],
+              orElse: () => FeedType.karma,
+            )
+          : null,
       itemName: map['itemName'] as String? ?? '',
       quantity: (map['quantity'] as num?)?.toDouble() ?? 0.0,
       quantityUnit: map['quantityUnit'] as String? ?? '',
@@ -74,6 +85,7 @@ class BarnExpense {
     int? id,
     int? barnId,
     BarnExpenseType? expenseType,
+    FeedType? feedType,
     String? itemName,
     double? quantity,
     String? quantityUnit,
@@ -88,6 +100,7 @@ class BarnExpense {
       id: id ?? this.id,
       barnId: barnId ?? this.barnId,
       expenseType: expenseType ?? this.expenseType,
+      feedType: feedType ?? this.feedType,
       itemName: itemName ?? this.itemName,
       quantity: quantity ?? this.quantity,
       quantityUnit: quantityUnit ?? this.quantityUnit,
@@ -112,4 +125,13 @@ class BarnExpense {
 
   /// Display formatted quantity with unit
   String get quantityDisplay => '${quantity.toStringAsFixed(1)} ${quantityUnit}';
+  
+  /// Feed type display in Tajik
+  String get feedTypeDisplay {
+    if (feedType == null) return '';
+    switch (feedType!) {
+      case FeedType.press: return 'Пресс';
+      case FeedType.karma: return 'Корма';
+    }
+  }
 }

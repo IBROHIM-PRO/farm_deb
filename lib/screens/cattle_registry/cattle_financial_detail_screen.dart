@@ -121,9 +121,40 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
 
     return Scaffold(
       appBar: AppBar(
-        -title: Text('№ ${cattle!.earTag} (${cattle!.earTagNumber ?? 'Номаълум'})'),
+        title: Text('№ ${cattle!.earTag} (${cattle!.earTagNumber ?? 'Номаълум'})'),
         backgroundColor: AppTheme.primaryIndigo,
         foregroundColor: Colors.white,
+        actions: [
+          if (sale == null)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.add),
+              onSelected: (value) {
+                // Handle menu item selection
+                if (value == 'expense') {
+                  _showAddExpenseDialog();
+                } else if (value == 'weight') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CattleWeightTrackingScreen(cattleId: cattle!.id!),
+                    ),
+                  ).then((_) => _loadData());
+                }
+              },
+              itemBuilder: (context) => [                
+                const PopupMenuItem(
+                  value: 'weight',
+                  child: Row(
+                    children: [
+                      Icon(Icons.monitor_weight, size: 20),
+                      SizedBox(width: 8),
+                      Text('Илова кардани вазн'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _loadData,
@@ -201,17 +232,7 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
                   ),
                 ),
               ],
-            ),
-            if (barn != null) ...[
-              const Divider(height: 24),
-              Row(
-                children: [
-                  Icon(Icons.home_work, size: 20, color: Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Text('Ховар: ${barn.name}'),
-                ],
-              ),
-            ],
+            ),            
             const Divider(height: 24),
             Row(
               children: [
@@ -341,75 +362,6 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
               '${purchase!.totalCost.toStringAsFixed(2)} ${purchase!.currency}',
               isBold: true,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExpensesCard() {
-    final totalExpenses = expenses.fold<double>(0, (sum, e) => sum + e.cost);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.receipt_long, color: Colors.orange[700]),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Хароҷоти шахсӣ',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                Text(
-                  '${totalExpenses.toStringAsFixed(2)} сомонӣ',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange,
-                  ),
-                ),
-              ],
-            ),
-            const Divider(height: 16),
-            if (expenses.isEmpty)
-              const Text('Ҳеҷ хароҷот бақайд нашудааст', style: TextStyle(color: Colors.grey))
-            else
-              ...expenses.map((expense) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                expense.itemName,
-                                style: const TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                              Text(
-                                expense.expenseTypeDisplay,
-                                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          '${expense.cost.toStringAsFixed(0)} сомонӣ',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  )),
           ],
         ),
       ),
@@ -584,5 +536,118 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
     total += barnExpenseShare;
 
     return total;
+  }
+
+  Future<void> _showAddExpenseDialog() async {
+    final itemNameController = TextEditingController();
+    final costController = TextEditingController();
+    ExpenseType? selectedExpenseType;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Илова кардани хароҷот'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: itemNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Номи хароҷот',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<ExpenseType>(
+                  value: selectedExpenseType,
+                  decoration: const InputDecoration(
+                    labelText: 'Навъи хароҷот',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ExpenseType.values.map((type) {
+                    return DropdownMenuItem(
+                      value: type,
+                      child: Text(_getExpenseTypeDisplay(type)),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setDialogState(() {
+                      selectedExpenseType = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: costController,
+                  decoration: const InputDecoration(
+                    labelText: 'Маблағ',
+                    border: OutlineInputBorder(),
+                    suffixText: 'сомонӣ',
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Бекор'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (itemNameController.text.isEmpty || 
+                    selectedExpenseType == null ||
+                    costController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Лутфан ҳамаи майдонҳоро пур кунед')),
+                  );
+                  return;
+                }
+
+                final cost = double.tryParse(costController.text);
+                if (cost == null || cost <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Маблағи дуруст ворид кунед')),
+                  );
+                  return;
+                }
+
+                final expense = CattleExpense(
+                  cattleId: cattle!.id!,
+                  expenseType: selectedExpenseType!,
+                  itemName: itemNameController.text,
+                  cost: cost,
+                  date: DateTime.now(),
+                );
+
+                await context.read<CattleRegistryProvider>().addCattleExpense(expense);
+                Navigator.pop(ctx, true);
+              },
+              child: const Text('Сабт'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == true) {
+      await _loadData();
+    }
+  }
+
+  String _getExpenseTypeDisplay(ExpenseType type) {
+    switch (type) {
+      case ExpenseType.feed:
+        return 'Озуқа';
+      case ExpenseType.medical:
+        return 'Тиббӣ';
+      case ExpenseType.maintenance:
+        return 'Нигоҳубин';
+      case ExpenseType.other:
+        return 'Дигар';
+    }
   }
 }
