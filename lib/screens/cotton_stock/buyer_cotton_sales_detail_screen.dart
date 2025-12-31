@@ -59,11 +59,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Фурӯши пахта', style: TextStyle(fontSize: 18)),
-            Text(
-              widget.buyerName,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-            ),
+            const Text('Фурӯши пахта', style: TextStyle(fontSize: 18)),            
           ],
         ),
         backgroundColor: Colors.blue[600],
@@ -99,117 +95,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
     final totalAmount = sales.fold<double>(0, (sum, sale) => sum + (sale.totalAmount ?? 0));
 
     return Column(
-      children: [
-        // Summary Card
-        Container(
-          margin: const EdgeInsets.all(16),
-          child: Card(
-            elevation: 4,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.person, color: Colors.blue, size: 28),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.buyerName,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (buyer?.phone != null) ...[
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(Icons.phone, size: 14, color: Colors.grey[600]),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    buyer!.phone!,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 32),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatItem(
-                          'Ҳамагӣ фурӯш',
-                          '${sales.length}',
-                          Icons.shopping_cart,
-                          Colors.blue,
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        width: 1,
-                        color: Colors.grey[300],
-                      ),
-                      Expanded(
-                        child: _buildStatItem(
-                          'Донаҳо',
-                          '$totalPieces шт',
-                          Icons.inventory_2,
-                          Colors.orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatItem(
-                          'Вазн',
-                          '${totalWeight.toStringAsFixed(1)} кг',
-                          Icons.scale,
-                          Colors.purple,
-                        ),
-                      ),
-                      Container(
-                        height: 40,
-                        width: 1,
-                        color: Colors.grey[300],
-                      ),
-                      Expanded(
-                        child: _buildStatItem(
-                          'Маблағ',
-                          '${totalAmount.toStringAsFixed(0)} с',
-                          Icons.attach_money,
-                          Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-
+      children: [        
         // Sales List
         Expanded(
           child: ListView(
@@ -259,7 +145,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => CottonSaleDetailScreen(sale: salesList.first),
+              builder: (context) => CottonSaleDetailScreen(sales: salesList),
             ),
           );
         },

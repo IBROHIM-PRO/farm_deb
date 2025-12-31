@@ -320,6 +320,11 @@ class _AddBarnExpenseScreenState extends State<AddBarnExpenseScreen> {
         }
       }
       
+      // Reload barn data to refresh all barn-related pages
+      if (mounted) {
+        await provider.loadBarns();
+      }
+      
       if (mounted) {
         Navigator.pop(context);
       }

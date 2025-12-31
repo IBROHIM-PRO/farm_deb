@@ -207,47 +207,24 @@ class _CattleWeightTrackingScreenState extends State<CattleWeightTrackingScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: TextFormField(
-                    controller: _weightController,
-                    decoration: const InputDecoration(
-                      labelText: 'Вазн (кг)',
-                      prefixIcon: Icon(Icons.monitor_weight),
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Вазн зарур аст';
-                      }
-                      final weight = double.tryParse(value);
-                      if (weight == null || weight <= 0) {
-                        return 'Вазни дуруст ворид кунед';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: InkWell(
-                    onTap: _selectDate,
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Сана',
-                        border: OutlineInputBorder(),
-                      ),
-                      child: Text(
-                        DateFormat('dd/MM').format(_measurementDate),
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            TextFormField(
+              controller: _weightController,
+              decoration: const InputDecoration(
+                labelText: 'Вазн (кг)',
+                prefixIcon: Icon(Icons.monitor_weight),
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Вазн зарур аст';
+                }
+                final weight = double.tryParse(value);
+                if (weight == null || weight <= 0) {
+                  return 'Вазни дуруст ворид кунед';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -277,18 +254,6 @@ class _CattleWeightTrackingScreenState extends State<CattleWeightTrackingScreen>
         ),
       ),
     );
-  }
-
-  Future<void> _selectDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _measurementDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-    );
-    if (date != null) {
-      setState(() => _measurementDate = date);
-    }
   }
 
   Future<void> _saveWeight() async {

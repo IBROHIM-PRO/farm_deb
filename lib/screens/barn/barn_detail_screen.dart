@@ -50,12 +50,14 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: _editBarn,
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: _deleteBarn,
+            icon: const Icon(Icons.add),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AddBarnExpenseScreen(barnId: widget.barnId),
+              ),
+            ),
+            tooltip: 'Харочот',
           ),
         ],
         bottom: TabBar(
@@ -84,17 +86,6 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
             ],
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AddBarnExpenseScreen(barnId: widget.barnId),
-          ),
-        ),
-        icon: const Icon(Icons.add),
-        label: const Text('Харочот'),
-        backgroundColor: AppTheme.primaryIndigo,
       ),
     );
   }

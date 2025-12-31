@@ -162,6 +162,11 @@ class _AddBarnScreenState extends State<AddBarnScreen> {
         }
       }
       
+      // Reload barn data to refresh all barn-related pages
+      if (mounted) {
+        await provider.loadBarns();
+      }
+      
       if (mounted) {
         Navigator.pop(context);
       }

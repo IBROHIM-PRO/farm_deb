@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/barn_provider.dart';
+import '../../providers/cattle_registry_provider.dart';
 import '../../models/barn.dart';
 import '../../theme/app_theme.dart';
 import 'add_barn_screen.dart';
@@ -15,6 +16,16 @@ class BarnListScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Ховарҳо'),
         elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AddBarnScreen()),
+            ),
+            icon: const Icon(Icons.add),
+            tooltip: 'Ховари нав',
+          ),
+        ],
       ),
       body: Consumer<BarnProvider>(
         builder: (context, provider, _) {
@@ -36,21 +47,18 @@ class BarnListScreen extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AddBarnScreen()),
-        ),
-        icon: const Icon(Icons.add),
-        label: const Text('Ховари нав'),
-        backgroundColor: AppTheme.primaryIndigo,
-      ),
     );
   }
 
   Widget _buildBarnCard(BuildContext context, Barn barn, BarnProvider provider) {
     final cattleCount = provider.getCattleCount(barn.id!);
     final isAtCapacity = provider.isAtCapacity(barn.id!);
+    
+    // Get sold cattle count for this barn
+    final cattleProvider = context.read<CattleRegistryProvider>();
+    final soldCattleCount = cattleProvider.soldCattle
+        .where((cattle) => cattle.barnId == barn.id)
+        .length;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -131,14 +139,13 @@ class BarnListScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  if (barn.capacity != null)
-                    Expanded(
-                      child: _buildInfoChip(
-                        Icons.business,
-                        'Ғунҷоиш: ${barn.capacity}',
-                        Colors.green,
-                      ),
+                  Expanded(
+                    child: _buildInfoChip(
+                      Icons.sell,
+                      'Фурӯхташуда: $soldCattleCount',
+                      Colors.orange,
                     ),
+                  ),
                 ],
               ),
             ],

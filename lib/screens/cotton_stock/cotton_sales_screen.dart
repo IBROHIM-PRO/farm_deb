@@ -5,6 +5,7 @@ import '../../database/database_helper.dart';
 import '../../models/buyer.dart';
 import '../../models/cotton_stock_sale.dart';
 import '../../providers/cotton_warehouse_provider.dart';
+import '../../providers/cotton_registry_provider.dart';
 import 'cotton_sale_detail_screen.dart';
 import 'buyer_cotton_sales_detail_screen.dart';
 
@@ -106,7 +107,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Фуруши пахтаи коркардшуда'),
+        title: const Text('Фуруши пахтаи'),
         backgroundColor: Colors.blue[600],
         foregroundColor: Colors.white,
         actions: [
@@ -114,11 +115,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
             onPressed: () => setState(() => showSaleForm = !showSaleForm),
             icon: Icon(showSaleForm ? Icons.remove : Icons.add),
             tooltip: showSaleForm ? 'Пӯшонидани форма' : 'Илова кардани фуруш',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadData,
-          ),
+          ),          
         ],
       ),
       body: isLoading
@@ -898,6 +895,10 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
           pieces: item.pieces,
         );
       }
+      
+      // Refresh all cotton-related providers
+      await context.read<CottonRegistryProvider>().loadAllData();
+      await warehouseProvider.loadAllData();
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

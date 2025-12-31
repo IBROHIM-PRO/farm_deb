@@ -5,11 +5,11 @@ import '../../models/buyer.dart';
 import '../../database/database_helper.dart';
 
 class CottonSaleDetailScreen extends StatefulWidget {
-  final CottonStockSale sale;
+  final List<CottonStockSale> sales;
 
   const CottonSaleDetailScreen({
     super.key,
-    required this.sale,
+    required this.sales,
   });
 
   @override
@@ -28,11 +28,15 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
 
   Future<void> _loadBuyerInfo() async {
     try {
-      final buyerData = await DatabaseHelper.instance.getBuyerById(widget.sale.buyerId);
-      setState(() {
-        buyer = buyerData;
-        isLoading = false;
-      });
+      if (widget.sales.isNotEmpty) {
+        final buyerData = await DatabaseHelper.instance.getBuyerById(widget.sales.first.buyerId);
+        setState(() {
+          buyer = buyerData;
+          isLoading = false;
+        });
+      } else {
+        setState(() => isLoading = false);
+      }
     } catch (e) {
       setState(() => isLoading = false);
     }
@@ -52,97 +56,33 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Buyer Info Card
-                  _buildBuyerCard(),
-                  const SizedBox(height: 16),
-                  
+                children: [                                    
                   // Sale Date Card
                   _buildInfoCard(
                     'Санаи фурӯш',
-                    DateFormat('dd.MM.yyyy').format(widget.sale.saleDate),
+                    DateFormat('dd.MM.yyyy').format(widget.sales.first.saleDate),
                     Icons.calendar_today,
                     Colors.blue,
                   ),
                   const SizedBox(height: 12),
                   
-                  // Weight Details Card
-                  _buildWeightDetailsCard(),
-                  const SizedBox(height: 12),
-                  
-                  // Price Details Card (if available)
-                  if (widget.sale.pricePerKg != null)
-                    _buildPriceDetailsCard(),
-                ],
-              ),
-            ),
-    );
-  }
-
-  Widget _buildBuyerCard() {
-    return Card(
-      elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.teal.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.person,
-                size: 32,
-                color: Colors.teal,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Харидор',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    buyer?.name ?? 'Номаълум',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (buyer?.phone != null) ...[
-                    const SizedBox(height: 4),
-                    Row(
+                  // All Sales List
+                  ...widget.sales.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final sale = entry.value;
+                    return Column(
                       children: [
-                        const Icon(Icons.phone, size: 14, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(
-                          buyer!.phone!,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[700],
-                          ),
-                        ),
+                        _buildSaleItemCard(sale, index + 1),
+                        const SizedBox(height: 12),
                       ],
-                    ),
-                  ],
+                    );
+                  }).toList(),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
     );
-  }
-
+  }  
+  
   Widget _buildInfoCard(String label, String value, IconData icon, Color color) {
     return Card(
       elevation: 2,
@@ -185,7 +125,7 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
     );
   }
 
-  Widget _buildWeightDetailsCard() {
+  Widget _buildSaleItemCard(CottonStockSale sale, int itemNumber) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -208,9 +148,9 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'Маълумоти вазн',
-                  style: TextStyle(
+                Text(
+                  'Дастаи фурӯш $itemNumber',
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -218,88 +158,21 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
               ],
             ),
             const Divider(height: 24),
-            _buildDetailRow('Донаҳо', '${widget.sale.units} дона'),
+            _buildDetailRow('Донаҳо', '${sale.units} дона'),
             const SizedBox(height: 12),
-            _buildDetailRow('Вазни як дона', '${widget.sale.unitWeight.toStringAsFixed(1)} кг'),
+            _buildDetailRow('Вазни як дона', '${sale.unitWeight.toStringAsFixed(1)} кг'),
             const SizedBox(height: 12),
             _buildDetailRow(
               'Ҳамагӣ вазн',
-              '${widget.sale.totalWeight.toStringAsFixed(1)} кг',
+              '${sale.totalWeight.toStringAsFixed(1)} кг',
               isHighlighted: true,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPriceDetailsCard() {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.attach_money,
-                    color: Colors.green,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Маълумоти нарх',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const Divider(height: 24),
-            if (widget.sale.pricePerKg != null)
-              _buildDetailRow('Нархи 1 кг', '${widget.sale.pricePerKg!.toStringAsFixed(2)} TJS'),
-            if (widget.sale.pricePerUnit != null) ...[
+            if (sale.totalAmount != null) ..[
               const SizedBox(height: 12),
-              _buildDetailRow('Нархи 1 дона', '${widget.sale.pricePerUnit!.toStringAsFixed(2)} TJS'),
-            ],
-            if (widget.sale.totalAmount != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Ҳамагӣ маблағ',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      '${widget.sale.totalAmount!.toStringAsFixed(2)} TJS',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
+              _buildDetailRow(
+                'Ҳамагӣ маблағ',
+                '${sale.totalAmount!.toStringAsFixed(0)} с',
+                isHighlighted: true,
               ),
             ],
           ],
@@ -307,6 +180,7 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
       ),
     );
   }
+
 
   Widget _buildDetailRow(String label, String value, {bool isHighlighted = false}) {
     return Row(

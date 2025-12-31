@@ -433,6 +433,8 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               filled: true,
               fillColor: Colors.grey[50],
             ),
+            isExpanded: true,
+            menuMaxHeight: 300,
             validator: (value) {
               if (value == null) {
                 return 'Ховарро интихоб кунед (ҳатмӣ)';
@@ -442,7 +444,11 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
             items: barns.map((barn) {
               return DropdownMenuItem<int>(
                 value: barn.id,
-                child: Text(barn.name),
+                child: Text(
+                  barn.name,
+                  style: const TextStyle(fontSize: 16),
+                  overflow: TextOverflow.ellipsis,
+                ),
               );
             }).toList(),
             onChanged: (value) {
@@ -711,6 +717,12 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
         if (_selectedBarnId != null && mounted) {
           debugPrint('🐄 Reloading barn data...');
           await context.read<BarnProvider>().loadBarns();
+        }
+        
+        // Reload cattle registry provider to refresh all cattle-related pages
+        if (mounted) {
+          debugPrint('🐄 Reloading cattle registry data...');
+          await provider.loadAllData();
         }
 
         debugPrint('🐄 Cattle registration completed successfully!');

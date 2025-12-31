@@ -21,7 +21,7 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Харидани пахта'),
+        title: const Text('Хариди пахта'),
         actions: [
           IconButton(
             onPressed: _showStatistics,
@@ -42,20 +42,7 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
             return const Center(child: CircularProgressIndicator());
           }
 
-          final filteredPurchases = _getFilteredPurchases(provider.purchaseRegistry);
-
-          return Column(
-            children: [
-              _buildSearchBar(),
-              _buildSummaryCards(provider),
-              const Divider(),
-              Expanded(
-                child: filteredPurchases.isEmpty
-                    ? _buildEmptyState()
-                    : _buildPurchaseList(provider, filteredPurchases),
-              ),
-            ],
-          );
+          final filteredPurchases = _getFilteredPurchases(provider.purchaseRegistry);          
         },
       ),
     );
@@ -79,33 +66,7 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
         },
       ),
     );
-  }
-
-  Widget _buildSummaryCards(CottonRegistryProvider provider) {
-    final stats = provider.overallStatistics;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildSummaryCard(
-              'Ҳамагӣ хариданӣ',
-              '${stats['totalPurchases']}',
-              Colors.blue,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _buildSummaryCard(
-              'Ҳамагӣ харч',
-              '${(stats['totalPurchaseCost'] as num?)?.toDouble()?.toStringAsFixed(0) ?? '0'} с',
-              Colors.green,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  } 
 
   Widget _buildSummaryCard(String label, String value, Color color) {
     return Container(

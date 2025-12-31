@@ -103,6 +103,18 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
       );
     }
 
+    // If cattle is sold, navigate back
+    if (cattle!.status == CattleStatus.sold) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Чорво фурӯхта шудааст')),
+          );
+        }
+      });
+    }
+
     final totalCosts = _calculateTotalCosts();
     final revenue = sale?.totalAmount ?? 0;
     final profitLoss = revenue - totalCosts;
@@ -112,21 +124,6 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
         title: Text('Тафсилот - ${cattle!.earTag}'),
         backgroundColor: AppTheme.primaryIndigo,
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.monitor_weight),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => CattleWeightTrackingScreen(
-                  cattleId: widget.cattleId,
-                  earTag: cattle!.earTag,
-                ),
-              ),
-            ).then((_) => _loadData()),
-            tooltip: 'Вазнкунӣ',
-          ),
-        ],
       ),
       body: RefreshIndicator(
         onRefresh: _loadData,
@@ -468,29 +465,12 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.monitor_weight, color: Colors.teal[700]),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Таърихи вазн',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                TextButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CattleWeightTrackingScreen(
-                        cattleId: widget.cattleId,
-                        earTag: cattle!.earTag,
-                      ),
-                    ),
-                  ).then((_) => _loadData()),
-                  child: const Text('Илова кардан'),
+                Icon(Icons.monitor_weight, color: Colors.teal[700]),
+                const SizedBox(width: 8),
+                const Text(
+                  'Таърихи вазн',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),

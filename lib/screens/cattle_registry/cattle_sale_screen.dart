@@ -87,8 +87,6 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeaderCard(),
-              const SizedBox(height: 24),
               _buildBarnSelection(),
               const SizedBox(height: 16),
               _buildCattleSelection(),
@@ -111,38 +109,7 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildHeaderCard() {
-    return Card(
-      color: Colors.green.withOpacity(0.1),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(Icons.sell, color: Colors.green[700], size: 32),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Сабти фурӯши чорво',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Аввал ховар ва чорворо интихоб кунед',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  }  
 
   Widget _buildBarnSelection() {
     return Consumer<BarnProvider>(
@@ -162,10 +129,16 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
                 hintText: 'Ховарро интихоб кунед',
                 border: OutlineInputBorder(),
               ),
+              isExpanded: true,
+              menuMaxHeight: 300,
               items: barnProvider.barns.map((barn) {
                 return DropdownMenuItem(
                   value: barn.id,
-                  child: Text(barn.name),
+                  child: Text(
+                    barn.name,
+                    style: const TextStyle(fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 );
               }).toList(),
               onChanged: _onBarnSelected,
@@ -196,18 +169,15 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
             hintText: 'Чорворо интихоб кунед',
             border: OutlineInputBorder(),
           ),
+          isExpanded: true,
+          menuMaxHeight: 300,
           items: filteredCattle.map((cattle) {
             return DropdownMenuItem(
               value: cattle.id,
-              child: Row(
-                children: [
-                  Text(cattle.earTag),
-                  const SizedBox(width: 8),
-                  Text(
-                    '(${cattle.genderDisplay})',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                ],
+              child: Text(
+                '${cattle.earTag}  (${cattle.genderDisplay}) - ${cattle.name}',
+                style: const TextStyle(fontSize: 16),
+                overflow: TextOverflow.ellipsis,
               ),
             );
           }).toList(),
@@ -306,23 +276,23 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
         ),
         const SizedBox(height: 12),
         if (_useWeighing) ...[
-          TextFormField(
-            controller: _liveWeightController,
-            decoration: const InputDecoration(
-              labelText: 'Вазни зинда (кг)',
-              prefixIcon: Icon(Icons.monitor_weight),
-              border: OutlineInputBorder(),
+          if (_saleType == CattleSaleType.alive)
+            TextFormField(
+              controller: _liveWeightController,
+              decoration: const InputDecoration(
+                labelText: 'Вазни зинда (кг)',
+                prefixIcon: Icon(Icons.monitor_weight),
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              validator: (value) {
+                if (_useWeighing && _saleType == CattleSaleType.alive && (value == null || value.trim().isEmpty)) {
+                  return 'Вазни зинда зарур аст';
+                }
+                return null;
+              },
             ),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            validator: (value) {
-              if (_useWeighing && (value == null || value.trim().isEmpty)) {
-                return 'Вазни зинда зарур аст';
-              }
-              return null;
-            },
-          ),
-          if (_saleType == CattleSaleType.slaughtered) ...[
-            const SizedBox(height: 16),
+          if (_saleType == CattleSaleType.slaughtered)
             TextFormField(
               controller: _meatWeightController,
               decoration: const InputDecoration(
@@ -339,7 +309,6 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
                 return null;
               },
             ),
-          ],
         ],
       ],
     );
@@ -532,7 +501,7 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
         ),
         child: _isLoading
             ? const CircularProgressIndicator(color: Colors.white)
-            : const Text('Нигоҳ доштан', style: TextStyle(fontSize: 16)),
+            : const Text('Ворид кардан', style: TextStyle(fontSize: 16)),
       ),
     );
   }
