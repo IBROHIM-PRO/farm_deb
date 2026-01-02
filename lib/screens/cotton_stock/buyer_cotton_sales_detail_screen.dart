@@ -187,9 +187,9 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
                   ),
                 ),
               ],
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -311,7 +311,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
                 ),
               ),
               Text(
-                '${sale.weightPerUnit.toStringAsFixed(1)} кг',
+                '${sale.unitWeight.toStringAsFixed(1)} кг',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -373,148 +373,41 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
                 ),
                 Text(
                   '${sale.pricePerKg!.toStringAsFixed(0)} с/кг',
-                  style: const TextStyle(
-                    fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blue[700],
-                    ),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.blue[700],
                   ),
                 ),
               ],
             ),
-            
-            const SizedBox(height: 16),
-            
-            // Details grid
-            Column(
+          ],
+          if (sale.totalAmount != null && sale.totalAmount! > 0) ...[
+            const SizedBox(height: 8),
+            Divider(height: 1, color: Colors.grey[300]),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildDetailGridRow(
-                  icon: Icons.format_list_numbered,
-                  label: 'Донаҳо',
-                  value: '${sale.units} дона',
-                  color: Colors.blue,
+                Text(
+                  'Маблағ:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                const SizedBox(height: 10),
-                _buildDetailGridRow(
-                  icon: Icons.scale,
-                  label: 'Вазни як дона',
-                  value: '${sale.unitWeight.toStringAsFixed(1)} кг',
-                  color: Colors.green,
-                ),
-                const SizedBox(height: 10),
-                _buildDetailGridRow(
-                  icon: Icons.monitor_weight,
-                  label: 'Ҳамагӣ вазн',
-                  value: '${sale.totalWeight.toStringAsFixed(1)} кг',
-                  color: Colors.orange,
-                  isHighlighted: true,
+                Text(
+                  '${sale.totalAmount!.toStringAsFixed(0)} с',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
                 ),
               ],
             ),
-            
-            // Amount if exists
-            if (sale.totalAmount != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.green.withOpacity(0.2)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.attach_money, size: 16, color: Colors.green),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Маблағи фурӯш',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${sale.totalAmount!.toStringAsFixed(0)} сомонӣ',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (sale.pricePerKg != null)
-                      Text(
-                        '(${sale.pricePerKg!.toStringAsFixed(2)} с/кг)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.green[700],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailGridRow({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-    bool isHighlighted = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 16, color: color),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isHighlighted ? 15 : 14,
-              fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
-              color: isHighlighted ? color : Colors.black87,
-            ),
-          ),
         ],
       ),
     );
@@ -538,8 +431,6 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
               ),
           ],
         ),
-        backgroundColor: Colors.blue[600],
-        foregroundColor: Colors.white,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())

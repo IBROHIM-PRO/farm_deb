@@ -109,7 +109,7 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
 
     return Scaffold(
   appBar: AppBar(
-    title: Text('№ ${cattle!.earTag} • ${cattle!fullName}'),
+    title: Text('№ ${cattle!.earTag}${cattle!.name != null ? " • ${cattle!.name}" : ""}'),
     backgroundColor: AppTheme.primaryIndigo,
     foregroundColor: Colors.white,
     actions: [
