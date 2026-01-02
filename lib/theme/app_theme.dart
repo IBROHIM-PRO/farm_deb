@@ -11,7 +11,7 @@ class AppTheme {
   static const Color infoTeal = Color(0xFF00ACC1);
   
   // Background colors
-  static const Color lightBackground = Color(0xFFF5F7FA);
+  static const Color lightBackground = Color(0xFFF5F5F5); // Silver/light gray background
   static const Color cardBackground = Color(0xFFFFFFFF);
   
   // Text colors

@@ -55,8 +55,6 @@ class _CottonPurchaseDetailScreenState extends State<CottonPurchaseDetailScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Тафсилоти харидан'),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             onPressed: _showPurchaseSummary,

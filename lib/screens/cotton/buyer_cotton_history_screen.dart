@@ -64,9 +64,6 @@ class _BuyerCottonHistoryScreenState extends State<BuyerCottonHistoryScreen> {
             ),
           ],
         ),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-        elevation: 2,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

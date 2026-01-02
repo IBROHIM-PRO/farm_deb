@@ -24,9 +24,6 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
     return Scaffold(
       appBar: AppBar(
         title: const Text('Коркарди пахта'),
-        elevation: 0,
-        backgroundColor: Colors.purple,
-        foregroundColor: Colors.white,
         actions: [          
           IconButton(
             onPressed: () => Navigator.push(

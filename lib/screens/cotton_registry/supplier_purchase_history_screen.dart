@@ -70,9 +70,6 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
               ),
           ],
         ),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-        elevation: 2,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

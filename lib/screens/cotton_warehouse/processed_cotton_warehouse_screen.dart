@@ -24,11 +24,7 @@ class _ProcessedCottonWarehouseScreenState extends State<ProcessedCottonWarehous
     return Scaffold(
       appBar: AppBar(
         title: const Text('Анбори пахтаи коркардшуда'),
-        centerTitle: true,
-        backgroundColor: Colors.blue[600],
-        foregroundColor: Colors.white,
       ),
-      backgroundColor: Colors.grey[50],
       body: RefreshIndicator(
         onRefresh: () async {
           await context.read<CottonWarehouseProvider>().loadAllData();

@@ -38,8 +38,6 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Харидании нави пахта'),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
       ),
       body: Form(
         key: _formKey,

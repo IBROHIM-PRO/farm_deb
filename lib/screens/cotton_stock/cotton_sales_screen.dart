@@ -108,8 +108,6 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Фуруши пахта'),
-        backgroundColor: Colors.blue[600],
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             onPressed: () => setState(() => showSaleForm = !showSaleForm),

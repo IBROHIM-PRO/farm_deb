@@ -55,8 +55,6 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Маълумоти фурӯш'),
-        backgroundColor: Colors.teal,
-        foregroundColor: Colors.white,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())

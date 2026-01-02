@@ -32,8 +32,6 @@ class _AddCattleWeightScreenState extends State<AddCattleWeightScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Андозагирии вазн'),
-        backgroundColor: Colors.purple,
-        foregroundColor: Colors.white,
       ),
       body: Consumer<CattleRegistryProvider>(
         builder: (context, provider, _) {

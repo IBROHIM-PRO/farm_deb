@@ -11,11 +11,7 @@ class RawCottonWarehouseScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Анбори пахтаи хом'),
-        centerTitle: true,
-        backgroundColor: Colors.green[600],
-        foregroundColor: Colors.white,
       ),
-      backgroundColor: Colors.grey[50],
       body: Consumer<CottonWarehouseProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {

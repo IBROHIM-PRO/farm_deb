@@ -121,8 +121,6 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Коркарди пахта'),
-        backgroundColor: Colors.purple,
-        foregroundColor: Colors.white,
       ),
       body: Form(
         key: _formKey,
