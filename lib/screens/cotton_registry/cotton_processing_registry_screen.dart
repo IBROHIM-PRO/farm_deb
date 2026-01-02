@@ -56,114 +56,23 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
     );
   }
 
-  Widget _buildSearchAndSummary(
-    BuildContext context,
-    CottonRegistryProvider provider,
-    List<CottonProcessingRegistry> processing,
-  ) {
-    final stats = provider.overallStatistics;
-    
-    return Container(
-      margin: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Search Bar
-          TextField(
-            decoration: InputDecoration(
-              hintText: 'Ҷустуҷӯи коркард...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              filled: true,
-              fillColor: Colors.grey[50],
-            ),
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value.toLowerCase();
-              });
-            },
-          ),
-          
-          const SizedBox(height: 12),
-          
-          // Summary Cards
-          Row(
-            children: [
-              Expanded(
-                child: _buildSummaryCard(
-                  'Ҳамагӣ коркард',
-                  '${stats['totalProcessed']}',
-                  Icons.precision_manufacturing,
-                  Colors.purple,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildSummaryCard(
-                  'Самаранокӣ',
-                  '${(stats['processingEfficiency'] as num?)?.toDouble()?.toStringAsFixed(1) ?? '0.0'}%',
-                  Icons.trending_up,
-                  Colors.green,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildProcessingList(
     BuildContext context,
     CottonRegistryProvider provider,
     List<CottonProcessingRegistry> processing,
   ) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: processing.length,
-      itemBuilder: (context, index) {
-        final proc = processing[index];
-        return _buildProcessingCard(context, provider, proc);
-      },
+    // Sort by date (newest first)
+    processing.sort((a, b) => b.processingDate?.compareTo(a.processingDate ?? DateTime.now()) ?? 0);
+    
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      children: [        
+        
+        const SizedBox(height: 16),
+        
+        // Processing List
+        ...processing.map((proc) => _buildProcessingCard(context, provider, proc)).toList(),
+      ],
     );
   }
 
@@ -180,147 +89,545 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
         .where((output) => output.processingId == processing.id)
         .toList();
 
-    final linkedPurchase = provider.purchaseRegistry
-        .where((p) => p.id == processing.linkedPurchaseId)
-        .firstOrNull;
-
     final totalInputWeight = inputs.fold(0.0, (sum, input) => sum + input.weightUsed);
     final totalOutputWeight = outputs.fold(0.0, (sum, output) => sum + output.totalWeight);
     final yieldPercentage = totalInputWeight > 0 
         ? (totalOutputWeight / totalInputWeight) * 100 
-        : 0;
+        : 0.0;
+    
+    final dateStr = processing.processingDate != null
+        ? DateFormat('dd.MM.yyyy').format(processing.processingDate!)
+        : 'Санаи номаълум';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => _showProcessingDetails(processing, inputs, outputs, linkedPurchase),
-        borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: () => _showProcessingDetailsModal(processing, inputs, outputs, provider),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Row
+              // Header Row - Date and status indicator
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  Row(
+                    children: [
+                      // Status indicator (colored circle like in the image)
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: _getProcessingStatusColor(yieldPercentage),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        dateStr,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.purple.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      processing.processingDate != null
-                          ? DateFormat('dd/MM/yyyy', 'en_US').format(processing.processingDate!)
-                          : 'Санаи нест',
-                      style: const TextStyle(
-                        color: Colors.purple,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  
-                  const Spacer(),
-                  
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getProcessingTypeColor(inputs).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _getProcessingTypeDisplay(inputs),
+                      '${inputs.length} навъ',
                       style: TextStyle(
-                        color: _getProcessingTypeColor(inputs),
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.purple[700],
                       ),
                     ),
                   ),
                 ],
-              ),                                                        
+              ),
               
               const SizedBox(height: 12),
               
-              const Divider(height: 1),
+              // Details Row - Like "Трек код" section in the image
+              Padding(
+                padding: const EdgeInsets.only(left: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Input weight
+                    Row(
+                      children: [
+                        Text(
+                          'Вазни дохилӣ:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${totalInputWeight.toStringAsFixed(1)} кг',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Output weight
+                    Row(
+                      children: [
+                        Text(
+                          'Вазни хориҷӣ:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${totalOutputWeight.toStringAsFixed(1)} кг',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Efficiency
+                    Row(
+                      children: [
+                        Text(
+                          'Самаранокӣ:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${yieldPercentage.toStringAsFixed(1)}%',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: _getEfficiencyColor(yieldPercentage),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
               
+              // Arrow at bottom
               const SizedBox(height: 8),
-              
-              // Summary Info
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Вазни дохилӣ:',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
-                      ),
-                      Text(
-                        '${totalInputWeight.toStringAsFixed(1)} кг',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Вазни хориҷӣ:',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
-                      ),
-                      Text(
-                        '${totalOutputWeight.toStringAsFixed(1)} кг',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Самаранокӣ:',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
-                      ),
-                      Text(
-                        '${yieldPercentage.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: yieldPercentage >= 70 ? Colors.green : Colors.orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),                            
+              Align(
+                alignment: Alignment.centerRight,
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey[500],
+                ),
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Color _getProcessingStatusColor(double yieldPercentage) {
+    if (yieldPercentage >= 70) return Colors.green;
+    if (yieldPercentage >= 50) return Colors.orange;
+    return Colors.red;
+  }
+
+  Color _getEfficiencyColor(double yieldPercentage) {
+    if (yieldPercentage >= 70) return Colors.green;
+    if (yieldPercentage >= 50) return Colors.orange;
+    return Colors.red;
+  }
+
+  void _showProcessingDetailsModal(
+    CottonProcessingRegistry processing,
+    List inputs,
+    List outputs,
+    CottonRegistryProvider provider,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            final totalInputWeight = inputs.fold(0.0, (sum, input) => sum + input.weightUsed);
+            final totalOutputWeight = outputs.fold(0.0, (sum, output) => sum + output.totalWeight);
+            final yieldPercentage = totalInputWeight > 0 
+                ? (totalOutputWeight / totalInputWeight) * 100 
+                : 0.0;
+            
+            final dateStr = processing.processingDate != null
+                ? DateFormat('dd.MM.yyyy').format(processing.processingDate!)
+                : 'Санаи номаълум';
+            
+            return Column(
+              children: [
+                // Drag handle
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 8, bottom: 8),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: _getProcessingStatusColor(yieldPercentage),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              dateStr,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Коркарди пахта',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close, size: 24),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const Divider(height: 1),
+                
+                // Content
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      // Summary section
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildModalRow('Вазни умумии дохилӣ:', '${totalInputWeight.toStringAsFixed(1)} кг'),
+                            const SizedBox(height: 12),
+                            _buildModalRow('Вазни умумии хориҷӣ:', '${totalOutputWeight.toStringAsFixed(1)} кг'),
+                            const SizedBox(height: 12),
+                            _buildModalRow(
+                              'Самаранокии коркард:',
+                              '${yieldPercentage.toStringAsFixed(1)}%',
+                              valueColor: _getEfficiencyColor(yieldPercentage),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Input Materials section
+                      Text(
+                        'Маводҳои дохилӣ:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      
+                      ...inputs.map((input) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                input.cottonTypeDisplay,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Вазн:',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  Text(
+                                    '${input.weightUsed.toStringAsFixed(1)} кг',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Донаҳо:',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  Text(
+                                    '${input.unitsUsed} дона',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Output Products section
+                      Text(
+                        'Маҳсулоти хориҷӣ:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      
+                      ...outputs.map((output) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Дастаи коркардшуда',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Адад:',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  Text(
+                                    '${output.numberOfUnits} дона',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Вазни як дона:',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  Text(
+                                    '${output.batchWeightPerUnit.toStringAsFixed(1)} кг',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Вазни умумӣ:',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  Text(
+                                    '${output.totalWeight.toStringAsFixed(1)} кг',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      
+                      // Notes section if exists
+                      if (processing.notes != null && processing.notes!.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        Text(
+                          'Эзоҳот:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: Text(
+                            processing.notes!,
+                            style: const TextStyle(
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                      
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModalRow(String label, String value, {Color? valueColor}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[700],
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: valueColor ?? Colors.black,
+          ),
+        ),
+      ],
     );
   }
 
@@ -373,115 +680,16 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
   }
 
   List<CottonProcessingRegistry> _getFilteredProcessing(List<CottonProcessingRegistry> processing) {
+    if (_searchQuery.isEmpty) {
+      return processing;
+    }
+    
     return processing.where((proc) {
-      if (_searchQuery.isNotEmpty) {
-        // Could add more search criteria here
-        return false;
-      }
-      return true;
+      final dateStr = proc.processingDate != null
+          ? DateFormat('dd.MM.yyyy').format(proc.processingDate!)
+          : '';
+      
+      return dateStr.toLowerCase().contains(_searchQuery);
     }).toList();
-  }
-
-  Color _getCottonTypeColor(cottonType) {
-    switch (cottonType.toString().split('.').last) {
-      case 'lint':
-        return Colors.green;
-      case 'uluk':
-        return Colors.blue;
-      case 'valakno':
-        return Colors.orange;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  Color _getProcessingTypeColor(List inputs) {
-    final types = inputs.map((input) => input.cottonType).toSet();
-    if (types.length == 3) return Colors.purple;
-    if (types.length == 2) return Colors.blue;
-    return Colors.green;
-  }
-
-  String _getProcessingTypeDisplay(List inputs) {
-    final types = inputs.map((input) => input.cottonType).toSet();
-    switch (types.length) {
-      case 3: return 'Се навъ';
-      case 2: return 'Ду навъ';
-      case 1: return 'Як навъ';
-      default: return 'Номаълум';
-    }
-  }
-
-  void _showProcessingDetails(
-    CottonProcessingRegistry processing,
-    List inputs,
-    List outputs,
-    linkedPurchase,
-  ) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Маълумоти пурра'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [              
-              if (processing.processingDate != null) ...[
-                Text('Санаи коркард: ${DateFormat('dd/MM/yyyy', 'en_US').format(processing.processingDate!)}'),
-                const SizedBox(height: 8),
-              ],
-              
-              const Text('Навъҳои истифодашуда:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              ...inputs.map((input) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Text('• ${input.cottonTypeDisplay}: ${input.weightUsedDisplay} (${input.unitsUsedDisplay})'),
-              )),
-              
-              const SizedBox(height: 12),
-              
-              const Text('Коркардшуда:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              ...outputs.map((output) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Text('• ${output.unitsDisplay} × ${output.batchWeightDisplay}'),
-              )),
-              
-              if (processing.notes != null) ...[
-                const SizedBox(height: 12),
-                const Text('Эзоҳот:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(processing.notes!),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Пӯшидан'),
-          ),
-        ],
-      ),
-    );
-  }  
-
-  Widget _buildStatRow(String label, String value, {Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

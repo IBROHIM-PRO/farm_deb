@@ -107,7 +107,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Фуруши пахтаи'),
+        title: const Text('Фуруши пахта'),
         backgroundColor: Colors.blue[600],
         foregroundColor: Colors.white,
         actions: [
@@ -168,20 +168,373 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
       groupedSales.putIfAbsent(buyerName, () => []).add(sale);
     }
     
+    // Calculate overall totals
+    final totalWeightAll = salesHistory.fold<double>(0, (sum, sale) => sum + sale.totalWeight);
+    final totalPiecesAll = salesHistory.fold<int>(0, (sum, sale) => sum + sale.units);
+    
     return RefreshIndicator(
       onRefresh: _loadData,
       child: groupedSales.isEmpty
           ? _buildEmptyHistoryState()
-          : ListView.builder(
+          : ListView(
               padding: const EdgeInsets.all(16),
-              itemCount: groupedSales.length,
-              itemBuilder: (context, index) {
-                final buyerName = groupedSales.keys.elementAt(index);
-                final buyerSales = groupedSales[buyerName]!;
-                return _buildBuyerSalesCard(buyerName, buyerSales);
-              },
+              children: [
+                // Overall summary card
+                _buildOverallSummaryCard(totalPiecesAll, totalWeightAll),
+                const SizedBox(height: 24),
+                
+                // List of buyers (like "Все товары" in the image)
+                ..._buildBuyersList(groupedSales),
+              ],
             ),
     );
+  }
+
+  Widget _buildOverallSummaryCard(int totalPieces, double totalWeight) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // Title
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.shopping_cart_checkout, color: Colors.blue),
+                SizedBox(width: 8),
+                Text(
+                  'Ҷамъбасти фурушҳо',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            
+            // Stats in two columns
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  children: [
+                    Text(
+                      '$totalPieces',
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Донаҳо',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Text(
+                      '${totalWeight.toStringAsFixed(1)}',
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Килограмм',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Number of sales
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'Ҳамагӣ: ${salesHistory.length} фурӯш',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blue[700],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildBuyersList(Map<String, List<CottonStockSale>> groupedSales) {
+    final List<Widget> widgets = [];
+    
+    // Title like "Все товары" in the image
+    widgets.add(
+      Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 4,
+              height: 20,
+              decoration: BoxDecoration(
+                color: Colors.blue[600],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Ҳамаи харидорҳо',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${groupedSales.length} харидор',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    
+    // Add buyer cards
+    groupedSales.forEach((buyerName, buyerSales) {
+      widgets.add(_buildBuyerCard(buyerName, buyerSales));
+      widgets.add(const SizedBox(height: 12));
+    });
+    
+    return widgets;
+  }
+
+  Widget _buildBuyerCard(String buyerName, List<CottonStockSale> sales) {
+    final totalWeight = sales.fold<double>(0, (sum, sale) => sum + sale.totalWeight);
+    final totalPieces = sales.fold<int>(0, (sum, sale) => sum + sale.units);
+    final latestDate = sales.map((s) => s.saleDate).reduce((a, b) => a.isAfter(b) ? a : b);
+    final buyerId = sales.first.buyerId;
+    
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BuyerCottonSalesDetailScreen(
+              buyerName: buyerName,
+              buyerId: buyerId,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row with buyer name and status indicator
+              Row(
+                children: [
+                  // Status indicator (like the colored circle in the image)
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(sales),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      buyerName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey[400],
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 12),
+              
+              // Date and sales count
+              Padding(
+                padding: const EdgeInsets.only(left: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
+                        const SizedBox(width: 6),
+                        Text(
+                          DateFormat('dd.MM.yyyy').format(latestDate),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Icon(Icons.shopping_cart, size: 14, color: Colors.grey[600]),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${sales.length} фурӯш',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Pieces and weight
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.format_list_numbered, size: 16, color: Colors.blue[600]),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '$totalPieces дона',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Донаҳо',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.scale, size: 16, color: Colors.green[600]),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${totalWeight.toStringAsFixed(1)} кг',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Вазн',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getStatusColor(List<CottonStockSale> sales) {
+    // Determine status color based on sales
+    if (sales.isEmpty) return Colors.grey;
+    
+    final now = DateTime.now();
+    final latestSaleDate = sales.map((s) => s.saleDate).reduce((a, b) => a.isAfter(b) ? a : b);
+    final daysSinceLastSale = now.difference(latestSaleDate).inDays;
+    
+    if (daysSinceLastSale <= 7) {
+      return Colors.green; // Recent sales
+    } else if (daysSinceLastSale <= 30) {
+      return Colors.orange; // Somewhat recent
+    } else {
+      return Colors.grey; // Old sales
+    }
   }
 
   Widget _buildSectionTitle(String title) {
@@ -656,9 +1009,6 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
     );
   }
 
-
-
-
   Widget _buildEmptyHistoryState() {
     return Center(
       child: Column(
@@ -671,14 +1021,14 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No Sales History',
+            'Ҳеҷ сабти фуруш',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: Colors.grey[600],
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Sales records will appear here',
+            'Сабтҳои фуруш дар инҷо намоиш дода мешаванд',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Colors.grey[500],
             ),
@@ -688,7 +1038,6 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
       ),
     );
   }
-
 
   void _addSaleItem() {
     setState(() {
@@ -839,7 +1188,14 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
         buyers.add(buyer);
       }
 
+      // Calculate total amount if price is set
+      double? salePricePerKg;
+      if (pricePerKg > 0) {
+        salePricePerKg = pricePerKg;
+      }
+
       // Save each sale item as separate sale record
+      final List<int> savedSaleIds = [];
       for (final item in saleItems) {
         final sale = CottonStockSale(
           buyerId: buyer.id!,
@@ -847,9 +1203,12 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
           unitWeight: item.weight,
           units: item.pieces,
           totalWeight: item.totalWeight,
+          pricePerKg: salePricePerKg,
+          totalAmount: salePricePerKg != null ? item.totalWeight * salePricePerKg : null,
         );
 
-        await DatabaseHelper.instance.insertCottonStockSale(sale);
+        final saleId = await DatabaseHelper.instance.insertCottonStockSale(sale);
+        savedSaleIds.add(saleId);
         
         // Remove sold items from warehouse inventory
         await warehouseProvider.removeFromProcessedWarehouse(
@@ -859,136 +1218,227 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
       }
       
       // Refresh all cotton-related providers
-      await context.read<CottonRegistryProvider>().loadAllData();
-      await warehouseProvider.loadAllData();
+      await Future.wait([
+        context.read<CottonRegistryProvider>().loadAllData(),
+        warehouseProvider.loadAllData(),
+      ]);
+      
+      // Refresh sales history
+      final updatedSalesData = await DatabaseHelper.instance.getAllCottonStockSales();
       
       if (mounted) {
+        setState(() {
+          salesHistory = updatedSalesData as List<CottonStockSale>;
+        });
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Фуруш бомуваффақият сабт шуд'),
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${savedSaleIds.length} фурӯш бомуваффақият сабт шуд',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
         
+        // Reset form and show success message
         _cancelSaleForm();
-        _loadData();
+        
+        // Optional: Show summary dialog
+        await _showSaleSummaryDialog(savedSaleIds.length, saleItems);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Хато ҳангоми сабт: $e')),
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Хато ҳангоми сабт: ${e.toString()}',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
         );
       }
+      
+      // Log error for debugging
+      debugPrint('Error saving sale: $e');
     }
   }
 
-  Widget _buildBuyerSalesCard(String buyerName, List<CottonStockSale> sales) {
-    final totalWeight = sales.fold<double>(0, (sum, sale) => sum + sale.totalWeight);
-    final totalPieces = sales.fold<int>(0, (sum, sale) => sum + sale.units);
-    final latestDate = sales.map((s) => s.saleDate).reduce((a, b) => a.isAfter(b) ? a : b);
-    final buyerId = sales.first.buyerId;
+  Future<void> _showSaleSummaryDialog(int numberOfSales, List<SaleItem> items) async {
+    final totalPieces = items.fold<int>(0, (sum, item) => sum + item.pieces);
+    final totalWeight = items.fold<double>(0, (sum, item) => sum + item.totalWeight);
+    final totalAmount = pricePerKg > 0 ? totalWeight * pricePerKg : 0;
     
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => BuyerCottonSalesDetailScreen(
-                buyerName: buyerName,
-                buyerId: buyerId,
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.check_circle, color: Colors.green),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Фуруш сабт шуд',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.person, color: Colors.blue, size: 20),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Фуруш бомуваффақият сабт шуд:',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      buyerName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Охирин харид: ${DateFormat('dd/MM/yyyy').format(latestDate)}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${sales.length} фуруш',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '•',
-                          style: TextStyle(color: Colors.grey[400]),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '$totalPieces дона',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '•',
-                          style: TextStyle(color: Colors.grey[400]),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${totalWeight.toStringAsFixed(1)} кг',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Summary items
+            _buildDialogSummaryRow(
+              'Шумораи дастаҳо:',
+              '$numberOfSales даста',
+              Icons.format_list_bulleted,
+              Colors.blue,
+            ),
+            const SizedBox(height: 12),
+            
+            _buildDialogSummaryRow(
+              'Ҷамъи донаҳо:',
+              '$totalPieces дона',
+              Icons.format_list_numbered,
+              Colors.blue,
+            ),
+            const SizedBox(height: 12),
+            
+            _buildDialogSummaryRow(
+              'Ҷамъи вазн:',
+              '${totalWeight.toStringAsFixed(1)} кг',
+              Icons.scale,
+              Colors.green,
+            ),
+            
+            if (pricePerKg > 0) ...[
+              const SizedBox(height: 12),
+              _buildDialogSummaryRow(
+                'Нархи 1 кг:',
+                '${pricePerKg.toStringAsFixed(2)} с',
+                Icons.attach_money,
+                Colors.orange,
               ),
-              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+              const SizedBox(height: 12),
+              _buildDialogSummaryRow(
+                'Ҷамъи маблағ:',
+                '${totalAmount.toStringAsFixed(2)} с',
+                Icons.account_balance_wallet,
+                Colors.purple,
+                isTotal: true,
+              ),
             ],
+            
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 12),
+            
+            Text(
+              'Сана: ${DateFormat('dd.MM.yyyy').format(selectedDate)}',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Харидор: ${selectedBuyerName ?? "Номаълум"}',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('ХУБ'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDialogSummaryRow(String label, String value, IconData icon, Color color, {bool isTotal = false}) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 18, color: color),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: isTotal ? 15 : 14,
+              color: Colors.grey[700],
+            ),
           ),
         ),
-      ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isTotal ? 16 : 15,
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
+            color: isTotal ? color : Colors.black87,
+          ),
+        ),
+      ],
     );
   }
 
@@ -1125,5 +1575,4 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
       ),
     );
   }
-
 }

@@ -103,25 +103,13 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
       );
     }
 
-    // If cattle is sold, navigate back
-    if (cattle!.status == CattleStatus.sold) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Чорво фурӯхта шудааст')),
-          );
-        }
-      });
-    }
-
     final totalCosts = _calculateTotalCosts();
     final revenue = sale?.totalAmount ?? 0;
     final profitLoss = revenue - totalCosts;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('№ ${cattle!.earTag} (${cattle!.earTagNumber ?? 'Номаълум'})'),
+        title: Text('№ ${cattle!.earTag}'),
         backgroundColor: AppTheme.primaryIndigo,
         foregroundColor: Colors.white,
         actions: [
@@ -136,7 +124,10 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CattleWeightTrackingScreen(cattleId: cattle!.id!),
+                      builder: (context) => CattleWeightTrackingScreen(
+                        cattleId: cattle!.id!,
+                        earTag: cattle!.earTag,
+                      ),
                     ),
                   ).then((_) => _loadData());
                 }
@@ -166,8 +157,6 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
             _buildFinancialSummaryCard(totalCosts, revenue, profitLoss),
             const SizedBox(height: 16),
             _buildPurchaseCard(),
-            const SizedBox(height: 16),
-            _buildExpensesCard(),
             const SizedBox(height: 16),
             _buildBarnExpenseCard(),
             const SizedBox(height: 16),
@@ -619,8 +608,10 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
                   cattleId: cattle!.id!,
                   expenseType: selectedExpenseType!,
                   itemName: itemNameController.text,
+                  quantity: 1.0,
+                  quantityUnit: 'дона',
                   cost: cost,
-                  date: DateTime.now(),
+                  expenseDate: DateTime.now(),
                 );
 
                 await context.read<CattleRegistryProvider>().addCattleExpense(expense);
@@ -642,10 +633,8 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
     switch (type) {
       case ExpenseType.feed:
         return 'Озуқа';
-      case ExpenseType.medical:
+      case ExpenseType.medication:
         return 'Тиббӣ';
-      case ExpenseType.maintenance:
-        return 'Нигоҳубин';
       case ExpenseType.other:
         return 'Дигар';
     }

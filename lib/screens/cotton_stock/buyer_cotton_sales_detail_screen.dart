@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import '../../models/cotton_stock_sale.dart';
 import '../../models/buyer.dart';
 import '../../database/database_helper.dart';
-import 'cotton_sale_detail_screen.dart';
 
 class BuyerCottonSalesDetailScreen extends StatefulWidget {
   final String buyerName;
@@ -52,6 +51,446 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
     }
   }
 
+  void _showSalesDetailsModal(List<CottonStockSale> salesList) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+        minHeight: MediaQuery.of(context).size.height * 0.5,
+      ),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                // Drag handle
+                Padding(
+                  padding: const EdgeInsets.only(top: 16, bottom: 8),
+                  child: Center(
+                    child: Container(
+                      width: 40,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[400],
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // Header with close button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.calendar_today, color: Colors.blue, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              DateFormat('dd.MM.yyyy').format(salesList.first.saleDate),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '${salesList.length} дастаи фурӯш',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.close, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Divider
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Divider(color: Colors.grey[300], height: 1),
+                ),
+                
+                // Summary card
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: _buildModalSummaryCard(salesList),
+                ),
+                
+                // Title for details
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.list, color: Colors.blue, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Тафсилоти дастаҳо',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Sales details list
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      ...salesList.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final sale = entry.value;
+                        
+                        return _buildModalSaleItem(sale, index);
+                      }).toList(),
+                      
+                      const SizedBox(height: 30), // Bottom padding
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildModalSummaryCard(List<CottonStockSale> salesList) {
+    final totalWeight = salesList.fold<double>(0, (sum, sale) => sum + sale.totalWeight);
+    final totalPieces = salesList.fold<int>(0, (sum, sale) => sum + sale.units);
+    final totalAmount = salesList.fold<double>(0, (sum, sale) => sum + (sale.totalAmount ?? 0));
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blue[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blue[100]!),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Summary title
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.blue[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.summarize, size: 18, color: Colors.blue),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Ҷамъбасти ин рӯз',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Summary stats in row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildSummaryStat('Донаҳо', '$totalPieces', Icons.format_list_numbered, Colors.blue),
+              _buildSummaryStat('Вазн', '${totalWeight.toStringAsFixed(1)} кг', Icons.scale, Colors.green),
+              if (totalAmount > 0)
+                _buildSummaryStat('Маблағ', '${totalAmount.toStringAsFixed(0)} с', Icons.attach_money, Colors.orange),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryStat(String label, String value, IconData icon, Color color) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModalSaleItem(CottonStockSale sale, int index) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey[200]!, width: 1),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with batch number
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.inventory_2,
+                    color: Colors.orange,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Дастаи ${index + 1}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '#${sale.id ?? index + 1}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue[700],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Details grid
+            Column(
+              children: [
+                _buildDetailGridRow(
+                  icon: Icons.format_list_numbered,
+                  label: 'Донаҳо',
+                  value: '${sale.units} дона',
+                  color: Colors.blue,
+                ),
+                const SizedBox(height: 10),
+                _buildDetailGridRow(
+                  icon: Icons.scale,
+                  label: 'Вазни як дона',
+                  value: '${sale.unitWeight.toStringAsFixed(1)} кг',
+                  color: Colors.green,
+                ),
+                const SizedBox(height: 10),
+                _buildDetailGridRow(
+                  icon: Icons.monitor_weight,
+                  label: 'Ҳамагӣ вазн',
+                  value: '${sale.totalWeight.toStringAsFixed(1)} кг',
+                  color: Colors.orange,
+                  isHighlighted: true,
+                ),
+              ],
+            ),
+            
+            // Amount if exists
+            if (sale.totalAmount != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.green.withOpacity(0.2)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.attach_money, size: 16, color: Colors.green),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Маблағи фурӯш',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${sale.totalAmount!.toStringAsFixed(0)} сомонӣ',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (sale.pricePerKg != null)
+                      Text(
+                        '(${sale.pricePerKg!.toStringAsFixed(2)} с/кг)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailGridRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    bool isHighlighted = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[700],
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: isHighlighted ? 15 : 14,
+              fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
+              color: isHighlighted ? color : Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,9 +499,14 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-        widget.buyerName,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      ),
+              widget.buyerName,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            if (!isLoading)
+              Text(
+                '${sales.length} фурӯш',
+                style: const TextStyle(fontSize: 12),
+              ),
           ],
         ),
         backgroundColor: Colors.blue[600],
@@ -93,13 +537,108 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
   }
 
   Widget _buildSalesList() {
+    // Calculate overall totals
     final totalWeight = sales.fold<double>(0, (sum, sale) => sum + sale.totalWeight);
     final totalPieces = sales.fold<int>(0, (sum, sale) => sum + sale.units);
-    final totalAmount = sales.fold<double>(0, (sum, sale) => sum + (sale.totalAmount ?? 0));
 
     return Column(
-      children: [        
-        // Sales List
+      children: [
+        // Overall Summary Card - Like in first image
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  // Total pieces and weight
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$totalPieces дона',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Ҷамъи донаҳо',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${totalWeight.toStringAsFixed(1)} кг',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Ҷамъи вазн',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Divider
+                  Divider(color: Colors.grey[300], height: 1),
+                  const SizedBox(height: 16),
+                  
+                  // Number of sales
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.shopping_cart, color: Colors.orange[700]),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Ҳамагӣ: ${sales.length} фурӯш',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        
+        // Sales List by Date - Like second image design
         Expanded(
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -124,10 +663,16 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
     
     // Build widgets for each date group
     final List<Widget> widgets = [];
-    groupedSales.forEach((dateKey, salesList) {
+    
+    // Sort dates in descending order (newest first)
+    final sortedDates = groupedSales.keys.toList()
+      ..sort((a, b) => b.compareTo(a));
+    
+    for (var dateKey in sortedDates) {
+      final salesList = groupedSales[dateKey]!;
       widgets.add(_buildDateGroup(dateKey, salesList));
-      widgets.add(const SizedBox(height: 16));
-    });
+      widgets.add(const SizedBox(height: 12));
+    }
     
     return widgets;
   }
@@ -135,185 +680,143 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
   Widget _buildDateGroup(String dateKey, List<CottonStockSale> salesList) {
     final totalWeight = salesList.fold<double>(0, (sum, sale) => sum + sale.totalWeight);
     final totalPieces = salesList.fold<int>(0, (sum, sale) => sum + sale.units);
-    final totalAmount = salesList.fold<double>(0, (sum, sale) => sum + (sale.totalAmount ?? 0));
     
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        onTap: () {
-          // Navigate to detail screen showing all sales for this date
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CottonSaleDetailScreen(sales: salesList),
+    return GestureDetector(
+      onTap: () => _showSalesDetailsModal(salesList),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.blue[700]!, Colors.blue[500]!],
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.calendar_today, color: Colors.white, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      dateKey,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      '${salesList.length} фурӯш',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              // Date and status indicator
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '$totalPieces дона',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  Row(
+                    children: [
+                      // Status indicator like in second image
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        dateKey,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    '${totalWeight.toStringAsFixed(1)} кг',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${salesList.length} фурӯш',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blue[700],
+                      ),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSaleCard(CottonStockSale sale) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: 1,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CottonSaleDetailScreen(sales: [sale]),
-            ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.inventory_2, color: Colors.orange, size: 20),
+              
+              const SizedBox(height: 12),
+              
+              // Details row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Left side - Pieces
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.format_list_numbered, size: 18, color: Colors.grey[600]),
+                          const SizedBox(width: 6),
+                          Text(
+                            '$totalPieces дона',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Донаҳо',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  // Right side - Weight
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.scale, size: 18, color: Colors.grey[600]),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${totalWeight.toStringAsFixed(1)} кг',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Вазн',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${sale.units} дона × ${sale.unitWeight.toStringAsFixed(1)} кг',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${sale.totalWeight.toStringAsFixed(1)} кг',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
+              
+              // Arrow indicator at bottom
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: Colors.grey[500],
                 ),
               ),
-              if (sale.totalAmount != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${sale.totalAmount!.toStringAsFixed(0)} с',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.green[700],
-                    ),
-                  ),
-                ),
-              const SizedBox(width: 8),
-              Icon(Icons.chevron_right, color: Colors.grey[400]),
             ],
           ),
         ),

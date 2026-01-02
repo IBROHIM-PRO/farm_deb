@@ -298,7 +298,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               child: _buildAgeCategoryCard(
                 AgeCategory.calf,
                 'Гӯсола',
-                '< 1 сол',                
+                '< 1 сол',
                 Colors.green,
               ),
             ),
@@ -307,7 +307,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               child: _buildAgeCategoryCard(
                 AgeCategory.young,
                 'Ҷавон',
-                '1-2 сол',                
+                '1-2 сол',
                 Colors.orange,
               ),
             ),
@@ -316,7 +316,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               child: _buildAgeCategoryCard(
                 AgeCategory.adult,
                 'Калон',
-                '> 2 сол',                
+                '> 2 сол',
                 Colors.purple,
               ),
             ),
@@ -330,7 +330,6 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
     AgeCategory category,
     String label,
     String description,
-    IconData icon,
     Color color,
   ) {
     final isSelected = _selectedAgeCategory == category;
@@ -353,12 +352,6 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              color: isSelected ? color : Colors.grey,
-              size: 24,
-            ),
-            const SizedBox(height: 6),
             Text(
               label,
               style: TextStyle(

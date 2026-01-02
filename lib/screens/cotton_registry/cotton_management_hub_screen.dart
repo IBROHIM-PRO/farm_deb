@@ -111,7 +111,8 @@ class CottonManagementHubScreen extends StatelessWidget {
                 // Raw Cotton Storage Button
                 _buildActionCard(
                   context: context,
-                  title: 'Анбори пахтаи хом',                  
+                  title: 'Анбори пахтаи хом',
+                  subtitle: 'Пахтаи хомро дида баромадед',
                   icon: Icons.warehouse,
                   color: Colors.brown,
                   onTap: () {

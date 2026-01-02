@@ -84,7 +84,7 @@
 
       return Scaffold(
         appBar: AppBar(
-          title: const Text(_person.name),
+          title: Text(_person.fullName),
           backgroundColor: color,
           foregroundColor: Colors.white,
           centerTitle: true,
