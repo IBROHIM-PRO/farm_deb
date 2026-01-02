@@ -51,7 +51,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path, 
-      version: 5,  // Updated to version 5 to add name field to cattle_registry
+      version: 6,  // Updated to version 6 to add feedType field to barn_expenses
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -132,6 +132,11 @@ class DatabaseHelper {
     if (oldVersion < 5) {
       // Add name field to cattle_registry table
       await db.execute('ALTER TABLE cattle_registry ADD COLUMN name TEXT');
+    }
+    
+    if (oldVersion < 6) {
+      // Add feedType field to barn_expenses table
+      await db.execute('ALTER TABLE barn_expenses ADD COLUMN feedType TEXT');
     }
   }
 
@@ -596,6 +601,7 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         barnId INTEGER NOT NULL,
         expenseType TEXT NOT NULL,
+        feedType TEXT,
         itemName TEXT NOT NULL,
         quantity REAL NOT NULL,
         quantityUnit TEXT NOT NULL,

@@ -79,115 +79,121 @@ class _CattleWeightTrackingScreenState extends State<CattleWeightTrackingScreen>
   }
 
   Widget _buildWeightHistory() {
-    if (weights.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.monitor_weight_outlined, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'Ҳеҷ вазн бақайд нашудааст',
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Вазни чорворо дар поён ворид кунед',
-              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-            ),
-          ],
-        ),
-      );
-    }
+  if (weights.isEmpty) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.monitor_weight_outlined, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            'Ҳеҷ вазн бақайд нашудааст',
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Вазни чорворо дар поён ворид кунед',
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+          ),
+        ],
+      ),
+    );
+  }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: weights.length,
-      itemBuilder: (context, index) {
-        final weight = weights[index];
-        final previousWeight = index < weights.length - 1 ? weights[index + 1].weight : null;
-        
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.calendar_today, size: 20, color: AppTheme.primaryIndigo),
-                    const SizedBox(width: 8),
-                    Text(
-                      DateFormat('dd/MM/yyyy').format(weight.measurementDate),
+  // ҲАТМИАН: weights-ро тартиб диҳед аз навтарин ба кӯҳнатарин
+  weights.sort((a, b) => b.measurementDate.compareTo(a.measurementDate));
+
+  return ListView.builder(
+    padding: const EdgeInsets.all(16),
+    itemCount: weights.length,
+    itemBuilder: (context, index) {
+      final weight = weights[index];
+      
+      // ИСЛОҲ ШУДА: Барои навтарин сабт (index = 0) previousWeight = null.
+      // Барои дигар сабтҳо, previousWeight = weights[index - 1].weight (яъне навтарин сабт пеш аз ин)
+      final previousWeight = index > 0 ? weights[index - 1].weight : null;
+      
+      return Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 20, color: AppTheme.primaryIndigo),
+                  const SizedBox(width: 8),
+                  Text(
+                    DateFormat('dd/MM/yyyy').format(weight.measurementDate),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${weight.weight} кг',
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: Colors.blue,
                       ),
                     ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
+                  ),
+                ],
+              ),
+              if (previousWeight != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      weight.weight > previousWeight ? Icons.trending_up : Icons.trending_down,
+                      size: 16,
+                      color: weight.weight > previousWeight ? Colors.green : Colors.red,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      weight.weightDifference(previousWeight) > 0
+                          ? '+${weight.weightDifference(previousWeight).toStringAsFixed(1)} кг'
+                          : '${weight.weightDifference(previousWeight).toStringAsFixed(1)} кг',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: weight.weight > previousWeight ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.w500,
                       ),
-                      child: Text(
-                        '${weight.weight} кг',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '${weight.weightGainPercentage(previousWeight).toStringAsFixed(1)}%',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
                       ),
                     ),
                   ],
                 ),
-                if (previousWeight != null) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(
-                        weight.weight > previousWeight ? Icons.trending_up : Icons.trending_down,
-                        size: 16,
-                        color: weight.weight > previousWeight ? Colors.green : Colors.red,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        weight.weightDifference(previousWeight) > 0
-                            ? '+${weight.weightDifference(previousWeight).toStringAsFixed(1)} кг'
-                            : '${weight.weightDifference(previousWeight).toStringAsFixed(1)} кг',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: weight.weight > previousWeight ? Colors.green : Colors.red,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        '${weight.weightGainPercentage(previousWeight).toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                if (weight.notes != null && weight.notes!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    weight.notes!,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  ),
-                ],
               ],
-            ),
+              if (weight.notes != null && weight.notes!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  weight.notes!,
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+              ],
+            ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildAddWeightForm() {
     return Container(
