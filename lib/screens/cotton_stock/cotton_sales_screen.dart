@@ -367,13 +367,15 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
         );
       },
       child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 6,
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
               offset: const Offset(0, 2),
             ),
           ],

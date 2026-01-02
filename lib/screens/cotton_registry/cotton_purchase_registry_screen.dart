@@ -114,151 +114,148 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
     final items = provider.getItemsForPurchase(latestPurchase.id!);
     final totalWeight = items.fold(0.0, (sum, item) => sum + item.weight);
     final totalUnits = items.fold(0, (sum, item) => sum + item.units);
-    final itemsTotal = items.fold(0.0, (sum, item) => sum + item.totalPrice);
-    final totalAmount = itemsTotal + latestPurchase.transportationCost;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () => _navigateToSupplierHistory(supplierName),
-        borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: () => _navigateToSupplierHistory(supplierName),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
+                        width: 12,
+                        height: 12,
+                        decoration: const BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.person, color: Colors.green, size: 20),
                       ),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            supplierName,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'Охирин харид: ${DateFormat('dd/MM/yyyy').format(latestDate)}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
+                      Text(
+                        supplierName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: Colors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       '${purchases.length} харид',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.blue,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green[700],
                       ),
                     ),
                   ),
                 ],
               ),
+              
               const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+              
+              // Details Section
+              Padding(
+                padding: const EdgeInsets.only(left: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
+                    Row(
                       children: [
                         Text(
-                          '${totalWeight.toStringAsFixed(1)}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange,
+                          'Охирин харид:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
-                          'кг',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                          DateFormat('dd.MM.yyyy').format(latestDate),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
-                    Container(
-                      height: 30,
-                      width: 1,
-                      color: Colors.grey[300],
-                    ),
-                    Column(
+                    const SizedBox(height: 8),
+                    Row(
                       children: [
                         Text(
-                          '$totalUnits',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
+                          'Вазн:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
-                          'шт',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                          '${totalWeight.toStringAsFixed(1)} кг',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
-                    Container(
-                      height: 30,
-                      width: 1,
-                      color: Colors.grey[300],
-                    ),
-                    Column(
+                    const SizedBox(height: 8),
+                    Row(
                       children: [
                         Text(
-                          '${totalAmount.toStringAsFixed(0)}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
+                          'Донаҳо:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
-                          'с',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                          '$totalUnits шт',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
                   ],
+                ),
+              ),
+              
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey[500],
                 ),
               ),
             ],

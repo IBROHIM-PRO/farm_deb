@@ -108,45 +108,28 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
     final profitLoss = revenue - totalCosts;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('№ ${cattle!.earTag}'),
-        backgroundColor: AppTheme.primaryIndigo,
-        foregroundColor: Colors.white,
-        actions: [
-          if (sale == null)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.add),
-              onSelected: (value) {
-                // Handle menu item selection
-                if (value == 'expense') {
-                  _showAddExpenseDialog();
-                } else if (value == 'weight') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CattleWeightTrackingScreen(
-                        cattleId: cattle!.id!,
-                        earTag: cattle!.earTag,
-                      ),
-                    ),
-                  ).then((_) => _loadData());
-                }
-              },
-              itemBuilder: (context) => [                
-                const PopupMenuItem(
-                  value: 'weight',
-                  child: Row(
-                    children: [
-                      Icon(Icons.monitor_weight, size: 20),
-                      SizedBox(width: 8),
-                      Text('Илова кардани вазн'),
-                    ],
-                  ),
+  appBar: AppBar(
+    title: Text('№ ${cattle!.earTag} • ${cattle!fullName}'),
+    backgroundColor: AppTheme.primaryIndigo,
+    foregroundColor: Colors.white,
+    actions: [
+      if (sale == null)
+        IconButton(
+          icon: const Icon(Icons.monitor_weight),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CattleWeightTrackingScreen(
+                  cattleId: cattle!.id!,
+                  earTag: cattle!.earTag,
                 ),
-              ],
-            ),
-        ],
-      ),
+              ),
+            ).then((_) => _loadData());
+          },
+        ),
+    ],
+  ),
       body: RefreshIndicator(
         onRefresh: _loadData,
         child: ListView(
