@@ -47,7 +47,7 @@ class _AddBarnScreenState extends State<AddBarnScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Таҳрири ховар' : 'Ховари нав'),
+        title: Text(_isEditing ? 'Таҳрири оғул' : 'Оғули нав'),
         elevation: 0,
       ),
       body: Form(
@@ -58,13 +58,13 @@ class _AddBarnScreenState extends State<AddBarnScreen> {
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(
-                labelText: 'Номи ховар *',
-                hintText: 'Номи ховарро ворид кунед',
+                labelText: 'Номи оғул *',
+                hintText: 'Номи оғулро ворид кунед',
                 prefixIcon: Icon(Icons.home_work),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Номи ховар зарур аст';
+                  return 'Номи оғул зарур аст';
                 }
                 return null;
               },
@@ -74,7 +74,7 @@ class _AddBarnScreenState extends State<AddBarnScreen> {
               controller: _locationController,
               decoration: const InputDecoration(
                 labelText: 'Мавқеият (ихтиёрӣ)',
-                hintText: 'Мавқеияти ховарро ворид кунед',
+                hintText: 'Мавқеияти оғулро ворид кунед',
                 prefixIcon: Icon(Icons.location_on),
               ),
             ),
@@ -150,14 +150,14 @@ class _AddBarnScreenState extends State<AddBarnScreen> {
         await provider.updateBarn(barn);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ховар бомуваффақият таҳрир шуд')),
+            const SnackBar(content: Text('Оғул бомуваффақият таҳрир шуд')),
           );
         }
       } else {
         await provider.addBarn(barn);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ховар бомуваффақият илова шуд')),
+            const SnackBar(content: Text('Оғул бомуваффақият илова шуд')),
           );
         }
       }

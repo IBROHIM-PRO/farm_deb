@@ -46,7 +46,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Тафсилоти ховар'),
+        title: const Text('Тафсилоти оғул'),
         elevation: 0,
         actions: [
           IconButton(
@@ -74,7 +74,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
           final barn = provider.getBarnById(widget.barnId);
           
           if (barn == null) {
-            return const Center(child: Text('Ховар ёфт нашуд'));
+            return const Center(child: Text('Оғул ёфт нашуд'));
           }
 
           return TabBarView(
@@ -233,7 +233,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
                 Icon(Icons.pets_outlined, size: 64, color: Colors.grey[400]),
                 const SizedBox(height: 16),
                 Text(
-                  'Дар ин ховар чорвои фаъол нест',
+                  'Дар ин оғул чорвои фаъол нест',
                   style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 8),
@@ -272,7 +272,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
                 Icon(Icons.sell_outlined, size: 64, color: Colors.grey[400]),
                 const SizedBox(height: 16),
                 Text(
-                  'Дар ин ховар чорво фурӯхта нашудааст',
+                  'Дар ин оғул чорво фурӯхта нашудааст',
                   style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 ),
               ],
@@ -297,140 +297,199 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
         : null;
     final weights = provider.getCattleWeights(cattle.id!);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CattleFinancialDetailScreen(cattleId: cattle.id!),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CattleFinancialDetailScreen(cattleId: cattle.id!),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
+          ],
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header Row with status dot and ear tag
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    width: 12,
+                    height: 12,
                     decoration: BoxDecoration(
-                      color: cattle.gender == CattleGender.male
-                          ? Colors.blue.withOpacity(0.1)
-                          : Colors.pink.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      cattle.gender == CattleGender.male ? Icons.male : Icons.female,
-                      color: cattle.gender == CattleGender.male ? Colors.blue : Colors.pink,
-                      size: 20,
+                      color: cattle.status == CattleStatus.active ? Colors.green : Colors.grey,
+                      shape: BoxShape.circle,
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          cattle.earTag,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (cattle.name != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            cattle.name!,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[700],
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                cattle.ageCategoryDisplay,
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              cattle.genderDisplay,
-                              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                            ),
-                          ],
-                        ),
-                      ],
+                  Text(
+                    cattle.earTag,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
                 ],
               ),
               
-              if (purchase != null || weights.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-              ],
+              const SizedBox(height: 12),
               
-              // Purchase Info
-              if (purchase != null)
-                Row(
+              // Details section with left padding
+              Padding(
+                padding: const EdgeInsets.only(left: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.shopping_cart, size: 14, color: Colors.grey[600]),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Харид: ${purchase.weightAtPurchase.toStringAsFixed(0)} кг',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                    ),
-                    if (purchase.totalPrice != null) ...[
-                      const SizedBox(width: 10),
-                      Text(
-                        '•',
-                        style: TextStyle(color: Colors.grey[400]),
+                    if (cattle.name != null) ...[
+                      Row(
+                        children: [
+                          Text(
+                            'Ном:',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            cattle.name!,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 10),
-                      Text(
-                        '${purchase.totalPrice!.toStringAsFixed(0)} ${purchase.currency}',
-                        style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.w600),
+                      const SizedBox(height: 8),
+                    ],
+                    Row(
+                      children: [
+                        Text(
+                          'Ҷинс:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          cattle.gender == CattleGender.male ? Icons.male : Icons.female,
+                          size: 16,
+                          color: cattle.gender == CattleGender.male ? Colors.blue : Colors.pink,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          cattle.genderDisplay,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            cattle.ageCategoryDisplay,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (purchase != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            'Харид:',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${purchase.weightAtPurchase.toStringAsFixed(0)} кг',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (purchase.totalPrice != null) ...[
+                            const SizedBox(width: 12),
+                            Text(
+                              '${purchase.totalPrice!.toStringAsFixed(0)} ${purchase.currency}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                    if (weights.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            'Вазни охирин:',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${weights.last.weight.toStringAsFixed(0)} кг',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '(${DateFormat('dd.MM').format(weights.last.measurementDate)})',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],
                 ),
+              ),
               
-              // Latest Weight
-              if (weights.isNotEmpty) ...[
-                if (purchase != null) const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Icon(Icons.scale, size: 14, color: Colors.grey[600]),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Вазни охирин: ${weights.last.weight.toStringAsFixed(0)} кг',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '(${DateFormat('dd.MM.yyyy').format(weights.last.measurementDate)})',
-                      style: TextStyle(fontSize: 10, color: Colors.grey[500]),
-                    ),
-                  ],
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey[500],
                 ),
-              ],
+              ),
             ],
           ),
         ),
@@ -468,81 +527,399 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
   }
 
   Widget _buildExpenseCard(BarnExpense expense) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return GestureDetector(
+      onTap: () => _showExpenseDetailsModal(expense),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+            // Header Row with status dot and item name
             Row(
               children: [
-                Icon(
-                  _getExpenseIcon(expense.expenseType),
-                  color: _getExpenseColor(expense.expenseType),
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: _getExpenseColor(expense.expenseType),
+                    shape: BoxShape.circle,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Text(
+                    expense.itemName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${expense.totalCost.toStringAsFixed(0)} ${expense.currency}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red[700],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 12),
+            
+            // Details section with left padding
+            Padding(
+              padding: const EdgeInsets.only(left: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
                       Text(
-                        expense.itemName,
+                        'Навъ:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        expense.expenseTypeDisplay,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
                       Text(
-                        expense.expenseTypeDisplay,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        'Миқдор:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        expense.quantityDisplay,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        'Сана:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        DateFormat('dd.MM.yyyy').format(expense.expenseDate),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (expense.supplier != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          'Таъминкунанда:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          expense.supplier!,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+    );
+  }
+
+  void _showExpenseDetailsModal(BarnExpense expense) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Column(
+              children: [
+                // Drag handle
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 8, bottom: 8),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: _getExpenseColor(expense.expenseType),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              expense.itemName,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Тафсилоти харочот',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.close, size: 20),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                Text(
-                  '${expense.totalCost.toStringAsFixed(0)} ${expense.currency}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red,
+                
+                // Divider
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Divider(color: Colors.grey[300], height: 1),
+                ),
+                
+                // Content
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      // Summary Card
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.red.withOpacity(0.2)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Маблағи умумӣ',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${expense.totalCost.toStringAsFixed(2)} ${expense.currency}',
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Icon(
+                              _getExpenseIcon(expense.expenseType),
+                              color: _getExpenseColor(expense.expenseType),
+                              size: 36,
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Details Section
+                      _buildModalDetailRow('Навъи харочот', expense.expenseTypeDisplay),
+                      if (expense.feedType != null)
+                        _buildModalDetailRow('Навъи хӯрок', expense.feedTypeDisplay),
+                      _buildModalDetailRow('Номи мол', expense.itemName),
+                      _buildModalDetailRow('Миқдор', expense.quantityDisplay),
+                      _buildModalDetailRow('Нархи як воҳид', '${expense.pricePerUnit.toStringAsFixed(2)} ${expense.currency}/${expense.quantityUnit}'),
+                      _buildModalDetailRow('Сана', DateFormat('dd.MM.yyyy').format(expense.expenseDate)),
+                      if (expense.supplier != null)
+                        _buildModalDetailRow('Таъминкунанда', expense.supplier!),
+                      if (expense.notes != null && expense.notes!.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Қайдҳо:',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                expense.notes!,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[800],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      
+                      const SizedBox(height: 30),
+                    ],
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.scale, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 4),
-                Text(
-                  expense.quantityDisplay,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                ),
-                const SizedBox(width: 16),
-                Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 4),
-                Text(
-                  DateFormat('dd/MM/yyyy').format(expense.expenseDate),
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-            if (expense.supplier != null) ...[
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(Icons.store, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    expense.supplier!,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            ],
-          ],
+            );
+          },
         ),
+      ),
+    );
+  }
+
+  Widget _buildModalDetailRow(String label, String value) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -627,7 +1004,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Тасдиқ кунед'),
-        content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин ховарро нест кунед?'),
+        content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин оғулро нест кунед?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -648,7 +1025,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ховар бомуваффақият нест карда шуд')),
+            const SnackBar(content: Text('Оғул бомуваффақият нест карда шуд')),
           );
         }
       } catch (e) {

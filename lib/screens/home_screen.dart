@@ -10,7 +10,6 @@ import '../theme/app_theme.dart';
 import 'debt/simple_debts_screen.dart';
 import 'cotton_warehouse/raw_cotton_warehouse_screen.dart';
 import 'cotton_warehouse/processed_cotton_warehouse_screen.dart';
-import 'cattle_registry/cattle_registry_screen.dart';
 import 'cattle_registry/cattle_management_hub_screen.dart';
 import 'cattle_registry/cattle_sale_screen.dart';
 import 'cotton_registry/cotton_management_hub_screen.dart';
@@ -122,9 +121,9 @@ class _DashboardView extends StatelessWidget {
       ('Коркарди пахта', 'Реестри коркарди пахта', Icons.precision_manufacturing, 'cotton_processing', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonProcessingRegistryScreen()))),
       ('Сабти фурӯш', 'Сабти фурӯши пахта', Icons.point_of_sale, 'cotton_stock_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonSalesScreen()))),
       ('Идоракунии захираи пахта', 'Нигаҳдорӣ ва идораи пахта', Icons.inventory, 'cotton_stock', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonStockMainScreen()))),
-      ('Идоракунии ховарҳо', 'Ҷойгиркунӣ ва харочоти ховар', Icons.home_work, 'barn', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BarnListScreen()))),
+      ('Идоракунии оғулҳо', 'Ҷойгиркунӣ ва харочоти оғул', Icons.home_work, 'barn', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BarnListScreen()))),
       ('Фурӯши чорво', 'Сабти фурӯши чорво', Icons.sell_outlined, 'cattle_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleSaleScreen()))),
-      ('Чорво', 'Сабт ва пайгирии чорво', Icons.pets, 'cattle', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleRegistryScreen()))),
+      ('Чорво', 'Сабт ва пайгирии чорво', Icons.pets, 'cattle', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleManagementHubScreen()))),
       ('Идоракунии корбарон', 'Ашхос ва контактҳо', Icons.people, 'users', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonsScreen()))),
       ('Ҳисоботҳо ва таҳлил', 'Маълумоти молиявӣ', Icons.bar_chart, 'report', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()))),
     ];
@@ -140,101 +139,80 @@ class _DashboardView extends StatelessWidget {
         builder: (context, provider, _) {
           if (provider.isLoading) return const Center(child: CircularProgressIndicator());
 
-          return SingleChildScrollView(
-            child: Column(
-              children: [
-                
-                // Portfolio grid
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 0.95,
-                    ),
-                    itemCount: dashboardItems.length,
-                    itemBuilder: (context, index) {
-                      final item = dashboardItems[index];
-                      return _buildModernPortfolioCard(context, item.$1, item.$2, item.$3, item.$4, item.$5);
-                    },
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-              ],
-            ),
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: dashboardItems.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final item = dashboardItems[index];
+              return _buildModernListItem(context, item.$1, item.$2, item.$3, item.$4, item.$5);
+            },
           );
         },
       ),
     );
   }
 
-  Widget _buildModernPortfolioCard(BuildContext context, String title, String subtitle, IconData icon, String category, VoidCallback onTap) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+  Widget _buildModernListItem(BuildContext context, String title, String subtitle, IconData icon, String category, VoidCallback onTap) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200, width: 1),
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
                 // Icon with colored background
                 Container(
-                  width: 56,
-                  height: 56,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
-                    color: AppTheme.getIconBackgroundColor(category),
-                    borderRadius: BorderRadius.circular(12),
+                    color: _getCategoryColor(category).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     icon,
-                    color: AppTheme.getIconColor(category),
-                    size: 28,
+                    color: _getCategoryColor(category),
+                    size: 24,
                   ),
                 ),
-                const Spacer(),
-                // Title
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                    height: 1.2,
+                const SizedBox(width: 16),
+                // Text content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
-                // Subtitle
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textSecondary,
-                    height: 1.3,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                // Chevron icon
+                Icon(
+                  Icons.chevron_right,
+                  color: Colors.grey.shade400,
+                  size: 24,
                 ),
               ],
             ),
@@ -242,5 +220,34 @@ class _DashboardView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case 'debt':
+        return Colors.blue;
+      case 'raw_warehouse':
+        return Colors.green;
+      case 'processed_warehouse':
+        return Colors.orange;
+      case 'cotton_processing':
+        return Colors.purple;
+      case 'cotton_stock_sale':
+        return Colors.red;
+      case 'cotton_stock':
+        return Colors.teal;
+      case 'barn':
+        return Colors.brown;
+      case 'cattle_sale':
+        return Colors.pink;
+      case 'cattle':
+        return Colors.indigo;
+      case 'users':
+        return Colors.cyan;
+      case 'report':
+        return Colors.amber;
+      default:
+        return Colors.grey;
+    }
   }
 }

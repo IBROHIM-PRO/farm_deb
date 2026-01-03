@@ -14,7 +14,7 @@ class BarnListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ховарҳо'),
+        title: const Text('Оғулҳо'),
         elevation: 0,
         actions: [
           IconButton(
@@ -23,7 +23,7 @@ class BarnListScreen extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const AddBarnScreen()),
             ),
             icon: const Icon(Icons.add),
-            tooltip: 'Ховари нав',
+            tooltip: 'Оғули нав',
           ),
         ],
       ),
@@ -257,7 +257,7 @@ class BarnListScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Ҳеҷ ховар бақайд нашудааст',
+            'Ҳеҷ оғул бақайд нашудааст',
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey[600],
@@ -266,7 +266,7 @@ class BarnListScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Барои бақайдгирии ховари нав тугмаи зеринро пахш кунед',
+            'Барои бақайдгирии оғули нав тугмаи зеринро пахш кунед',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[500],

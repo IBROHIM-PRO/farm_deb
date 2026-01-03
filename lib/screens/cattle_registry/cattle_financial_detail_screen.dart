@@ -357,7 +357,7 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
                     Icon(Icons.home_work, color: Colors.purple[700]),
                     const SizedBox(width: 8),
                     const Text(
-                      'Хароҷоти ховар (ҳиссаи як сар)',
+                      'Хароҷоти оғул (ҳиссаи як сар)',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -366,12 +366,12 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
             ),
             const Divider(height: 16),
             Text(
-              'Ин хароҷотҳо ба таври баробар байни ҳамаи чорвоҳои ховар тақсим карда шудаанд.',
+              'Ин хароҷотҳо ба таври баробар байни ҳамаи чорвоҳои оғул тақсим карда шудаанд.',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),
             _buildInfoRow(
-              'Хароҷоти ховар',
+              'Хароҷоти оғул',
               '${barnExpenseShare.toStringAsFixed(2)} сомонӣ',
               isBold: true,
             ),

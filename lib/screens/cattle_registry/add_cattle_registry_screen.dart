@@ -384,7 +384,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
           Row(
             children: const [
               Text(
-                'Ховар',
+                'Оғул',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -405,7 +405,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
           DropdownButtonFormField<int>(
             value: _selectedBarnId,
             decoration: InputDecoration(
-              hintText: 'Ховарро интихоб кунед',
+              hintText: 'Оғулро интихоб кунед',
               prefixIcon: const Icon(Icons.home_work),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -417,7 +417,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
             menuMaxHeight: 300,
             validator: (value) {
               if (value == null) {
-                return 'Ховарро интихоб кунед (ҳатмӣ)';
+                return 'Оғулро интихоб кунед (ҳатмӣ)';
               }
               return null;
             },
@@ -439,7 +439,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Интихоби ховар ҳатмӣ аст - чорвор бояд дар ховар бошад',
+            'Интихоби оғул ҳатмӣ аст - чорвор бояд дар оғул бошад',
             style: TextStyle(
               fontSize: 12,
               color: Colors.grey,

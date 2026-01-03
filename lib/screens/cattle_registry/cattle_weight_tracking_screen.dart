@@ -109,9 +109,9 @@ class _CattleWeightTrackingScreenState extends State<CattleWeightTrackingScreen>
     itemBuilder: (context, index) {
       final weight = weights[index];
       
-      // ИСЛОҲ ШУДА: Барои навтарин сабт (index = 0) previousWeight = null.
-      // Барои дигар сабтҳо, previousWeight = weights[index - 1].weight (яъне навтарин сабт пеш аз ин)
-      final previousWeight = index > 0 ? weights[index - 1].weight : null;
+      // Муқоисаи вазн бо вазни пештар (аз ҷиҳати хронологӣ)
+      // Чунки рӯйхат аз нав ба кӯҳна тартиб дода шудааст, вазни пештар дар index + 1 аст
+      final previousWeight = index < weights.length - 1 ? weights[index + 1].weight : null;
       
       return Card(
         margin: const EdgeInsets.only(bottom: 12),

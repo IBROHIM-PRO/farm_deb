@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../providers/cattle_registry_provider.dart';
 import '../../theme/app_theme.dart';
 import 'add_cattle_registry_screen.dart';
-import 'cattle_registry_screen.dart';
 import 'cattle_sale_screen.dart';
 import '../debt/persons_screen.dart';
 import '../barn/barn_list_screen.dart';
@@ -80,8 +79,8 @@ class CattleManagementHubScreen extends StatelessWidget {
                 // Barns Button
                 _buildActionCard(
                   context: context,
-                  title: 'Ховарҳо',
-                  subtitle: 'Идоракунии ховарҳо ва ҷойгирии чорво',
+                  title: 'Оғулҳо',
+                  subtitle: 'Идоракунии оғулҳо ва ҷойгирии чорво',
                   icon: Icons.home_work,
                   color: Colors.brown,
                   onTap: () {

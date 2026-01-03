@@ -118,7 +118,7 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Интихоби ховар',
+              'Интихоби оғул',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -126,7 +126,7 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
               value: _selectedBarnId,
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.home_work),
-                hintText: 'Ховарро интихоб кунед',
+                hintText: 'Оғулро интихоб кунед',
                 border: OutlineInputBorder(),
               ),
               isExpanded: true,
@@ -143,7 +143,7 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
               }).toList(),
               onChanged: _onBarnSelected,
               validator: (value) {
-                if (value == null) return 'Ховарро интихоб кунед';
+                if (value == null) return 'Оғулро интихоб кунед';
                 return null;
               },
             ),

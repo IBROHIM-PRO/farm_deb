@@ -61,7 +61,7 @@ class Barn {
 
   /// Validates barn data
   static String? validate({required String name}) {
-    if (name.trim().isEmpty) return 'Номи ховар зарур аст';
+    if (name.trim().isEmpty) return 'Номи оғул зарур аст';
     return null;
   }
 }
