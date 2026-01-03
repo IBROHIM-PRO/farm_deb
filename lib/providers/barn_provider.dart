@@ -182,6 +182,10 @@ class BarnProvider with ChangeNotifier {
     };
   }
 
+  Future<int> getTotalCattleCountInBarn(int barnId) async {
+    return await _dbHelper.getTotalCattleCountInBarn(barnId);
+  }
+
   Map<String, dynamic> get overallStatistics {
     final totalBarns = _barns.length;
     final totalCattle = _cattleCountPerBarn.values.fold<int>(0, (sum, count) => sum + count);

@@ -1355,6 +1355,14 @@ class DatabaseHelper {
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
+  Future<int> getTotalCattleCountInBarn(int barnId) async {
+    final result = await (await database).rawQuery(
+      'SELECT COUNT(*) as count FROM cattle_registry WHERE barnId = ?',
+      [barnId],
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
   // Barn Expense CRUD Operations
   Future<int> insertBarnExpense(BarnExpense expense) async {
     return (await database).insert('barn_expenses', expense.toMap());

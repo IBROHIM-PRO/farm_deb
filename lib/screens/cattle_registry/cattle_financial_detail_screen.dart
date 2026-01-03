@@ -70,16 +70,16 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
     }
   }
 
-  void _calculateBarnExpenseShare() {
+  Future<void> _calculateBarnExpenseShare() async {
     if (cattle?.barnId == null) return;
     
     final barnProvider = context.read<BarnProvider>();
     final barnSummary = barnProvider.getBarnSummary(cattle!.barnId!);
-    final cattleCount = barnSummary['cattleCount'] as int;
+    final totalCattleCount = await barnProvider.getTotalCattleCountInBarn(cattle!.barnId!);
     
-    if (cattleCount > 0) {
+    if (totalCattleCount > 0) {
       final totalBarnExpenses = barnSummary['totalExpenses'] as double;
-      barnExpenseShare = totalBarnExpenses / cattleCount;
+      barnExpenseShare = totalBarnExpenses / totalCattleCount;
     }
   }
 
@@ -372,7 +372,7 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
             const SizedBox(height: 8),
             _buildInfoRow(
               'Хароҷоти оғул',
-              '${barnExpenseShare.toStringAsFixed(2)} сомонӣ',
+              '${barnExpenseShare.toStringAsFixed(2)} с',
               isBold: true,
             ),
           ],

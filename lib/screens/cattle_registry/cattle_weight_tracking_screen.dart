@@ -231,17 +231,7 @@ class _CattleWeightTrackingScreenState extends State<CattleWeightTrackingScreen>
                 }
                 return null;
               },
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Қайдҳо (ихтиёрӣ)',
-                prefixIcon: Icon(Icons.notes),
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-            ),
+            ),            
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,

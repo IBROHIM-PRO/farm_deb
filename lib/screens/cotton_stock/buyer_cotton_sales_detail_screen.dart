@@ -208,28 +208,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Summary title
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.blue[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.summarize, size: 18, color: Colors.blue),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Ҷамъбасти ин рӯз',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
-              ),
-            ],
-          ),
+          // Summary title          
           
           const SizedBox(height: 16),
           
@@ -250,15 +229,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
 
   Widget _buildSummaryStat(String label, String value, IconData icon, Color color) {
     return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
+      children: [        
         const SizedBox(height: 8),
         Text(
           value,
@@ -293,32 +264,12 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Дастаи ${index + 1}',
+            '${sale.unitWeight.toStringAsFixed(1)} кг',
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Вазни як дона:',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey[600],
-                ),
-              ),
-              Text(
-                '${sale.unitWeight.toStringAsFixed(1)} кг',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
+          ),                    
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
