@@ -176,111 +176,13 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
           ? _buildEmptyHistoryState()
           : ListView(
               padding: const EdgeInsets.all(16),
-              children: [
-                // Overall summary card
-                _buildOverallSummaryCard(totalPiecesAll, totalWeightAll),
-                const SizedBox(height: 24),
-                
+              children: [                                
                 // List of buyers
                 ..._buildBuyersList(groupedSales),
               ],
             ),
     );
-  }
-
-  Widget _buildOverallSummaryCard(int totalPieces, double totalWeight) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: const BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Хулосаи умумӣ',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.format_list_numbered, size: 16, color: Colors.blue[600]),
-                      const SizedBox(width: 6),
-                      Text(
-                        '$totalPieces дона',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Донаҳо',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.scale, size: 16, color: Colors.green[600]),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${totalWeight.toStringAsFixed(1)} кг',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Вазн',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  }  
 
   List<Widget> _buildBuyersList(Map<String, List<CottonStockSale>> groupedSales) {
     return groupedSales.entries.map((entry) {
@@ -387,69 +289,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
                           ),
                         ),
                       ],
-                    ),
-                    
-                    const SizedBox(height: 12),
-                    
-                    // Pieces and weight
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.format_list_numbered, size: 16, color: Colors.blue[600]),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '$totalPieces дона',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Донаҳо',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.scale, size: 16, color: Colors.green[600]),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '${totalWeight.toStringAsFixed(1)} кг',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Вазн',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                    ),                                      
                   ],
                 ),
               ),
@@ -1195,10 +1035,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
         );
         
         // Reset form and show success message
-        _cancelSaleForm();
-        
-        // Optional: Show summary dialog
-        await _showSaleSummaryDialog(savedSaleIds.length, saleItems);
+        _cancelSaleForm();                
       }
     } catch (e) {
       if (mounted) {

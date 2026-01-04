@@ -382,6 +382,10 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
   }
 
   Widget _buildWeightHistoryCard() {
+    // Sort weights by date (newest first)
+    final sortedWeights = List<CattleWeight>.from(weights)
+      ..sort((a, b) => b.measurementDate.compareTo(a.measurementDate));
+    
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -399,30 +403,41 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
               ],
             ),
             const Divider(height: 16),
-            if (weights.isEmpty)
+            if (sortedWeights.isEmpty)
               const Text('Ҳеҷ вазн бақайд нашудааст', style: TextStyle(color: Colors.grey))
             else
-              ...weights.take(3).map((weight) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(DateFormat('dd/MM/yyyy').format(weight.measurementDate)),
-                        Text(
-                          '${weight.weight} кг',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+              ...sortedWeights.asMap().entries.map((entry) {
+                final index = entry.key;
+                final weight = entry.value;
+                
+                // Calculate interval from previous measurement
+                int? intervalDays;
+                if (index < sortedWeights.length - 1) {
+                  final previousWeight = sortedWeights[index + 1];
+                  intervalDays = weight.measurementDate.difference(previousWeight.measurementDate).inDays;
+                }
+                
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(DateFormat('dd/MM/yyyy').format(weight.measurementDate)),                            
+                          ],
                         ),
-                      ],
-                    ),
-                  )),
-            if (weights.length > 3)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  '+ ${weights.length - 3} дигар',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ),
+                      ),
+                      Text(
+                        '${weight.weight.toStringAsFixed(1)} кг',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                );
+              }),
           ],
         ),
       ),

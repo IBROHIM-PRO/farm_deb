@@ -154,31 +154,34 @@
     Widget _buildTimelineView() {
       if (_timeline.isEmpty) return const Center(child: Text('Маълумот нест'));
 
-      return ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _timeline.length,
-        itemBuilder: (context, index) {
-          final entry = _timeline[index];
+      return RefreshIndicator(
+        onRefresh: _loadData,
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: _timeline.length,
+          itemBuilder: (context, index) {
+            final entry = _timeline[index];
 
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              leading: Icon(
-                entry.isPayment ? Icons.payment : Icons.assignment,
-                color: entry.isPayment ? Colors.red : Colors.green,
-              ),
-              title: Text(entry.description),
-              subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(entry.date)),
-              trailing: Text(
-                '${entry.isPayment ? '-' : '+'}${entry.amount.toStringAsFixed(3)} ${entry.currency}',
-                style: TextStyle(
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                leading: Icon(
+                  entry.isPayment ? Icons.payment : Icons.assignment,
                   color: entry.isPayment ? Colors.red : Colors.green,
-                  fontWeight: FontWeight.bold,
+                ),
+                title: Text(entry.description),
+                subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(entry.date)),
+                trailing: Text(
+                  '${entry.isPayment ? '-' : '+'}${entry.amount.toStringAsFixed(3)} ${entry.currency}',
+                  style: TextStyle(
+                    color: entry.isPayment ? Colors.red : Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       );
     }
 

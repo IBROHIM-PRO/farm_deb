@@ -94,14 +94,19 @@ class _CottonPurchaseRegistryScreenState extends State<CottonPurchaseRegistryScr
 
     final supplierNames = groupedPurchases.keys.toList()..sort();
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      itemCount: supplierNames.length,
-      itemBuilder: (context, index) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        await provider.loadAllData();
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        itemCount: supplierNames.length,
+        itemBuilder: (context, index) {
         final supplierName = supplierNames[index];
         final supplierPurchases = groupedPurchases[supplierName]!;
         return _buildSupplierCard(provider, supplierName, supplierPurchases);
       },
+      ),      
     );
   }
 

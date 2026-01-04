@@ -155,7 +155,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
                       const Icon(Icons.list, color: Colors.blue, size: 18),
                       const SizedBox(width: 8),
                       Text(
-                        'Тафсилоти дастаҳо',
+                        'Тафсилоти дастаҳо (${salesList.first.pricePerKg != null ? salesList.first.pricePerKg!.toStringAsFixed(0) : "0"} с/кг)',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -205,7 +205,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.blue[100]!),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8),
       child: Column(
         children: [
           // Summary title          
@@ -310,29 +310,6 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
               ),
             ],
           ),
-          if (sale.pricePerKg != null && sale.pricePerKg! > 0) ...[
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Нарх:',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                Text(
-                  '${sale.pricePerKg!.toStringAsFixed(0)} с/кг',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.blue[700],
-                  ),
-                ),
-              ],
-            ),
-          ],
           if (sale.totalAmount != null && sale.totalAmount! > 0) ...[
             const SizedBox(height: 8),
             Divider(height: 1, color: Colors.grey[300]),

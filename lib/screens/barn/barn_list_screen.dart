@@ -37,13 +37,18 @@ class BarnListScreen extends StatelessWidget {
             return _buildEmptyState(context);
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: provider.barns.length,
-            itemBuilder: (context, index) {
-              final barn = provider.barns[index];
-              return _buildBarnCard(context, barn, provider);
+          return RefreshIndicator(
+            onRefresh: () async {
+              await provider.loadBarns();
             },
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: provider.barns.length,
+              itemBuilder: (context, index) {
+                final barn = provider.barns[index];
+                return _buildBarnCard(context, barn, provider);
+              },
+            ),
           );
         },
       ),

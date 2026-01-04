@@ -156,13 +156,16 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
 
         // Debts List
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _debts.length,
-            itemBuilder: (context, index) {
-              final debt = _debts[index];
-              return _buildDebtCard(debt);
-            },
+          child: RefreshIndicator(
+            onRefresh: _loadPersonDebts,
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _debts.length,
+              itemBuilder: (context, index) {
+                final debt = _debts[index];
+                return _buildDebtCard(debt);
+              },
+            ),
           ),
         ),
       ],

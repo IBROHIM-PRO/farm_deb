@@ -135,13 +135,16 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
         
         // Purchases List
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              const SizedBox(height: 8),
-              ..._buildGroupedPurchases(),
-              const SizedBox(height: 20),
-            ],
+          child: RefreshIndicator(
+            onRefresh: _loadSupplierPurchases,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                const SizedBox(height: 8),
+                ..._buildGroupedPurchases(),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ],

@@ -61,15 +61,20 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
     // Sort by date (newest first)
     processing.sort((a, b) => b.processingDate?.compareTo(a.processingDate ?? DateTime.now()) ?? 0);
     
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      children: [        
-        
-        const SizedBox(height: 16),
-        
-        // Processing List
-        ...processing.map((proc) => _buildProcessingCard(context, provider, proc)).toList(),
-      ],
+    return RefreshIndicator(
+      onRefresh: () async {
+        await provider.loadAllData();
+      },
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        children: [        
+          
+          const SizedBox(height: 16),
+          
+          // Processing List
+          ...processing.map((proc) => _buildProcessingCard(context, provider, proc)).toList(),
+        ],
+      ),
     );
   }
 
@@ -494,7 +499,7 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Дастаи коркардшуда',
+                                '${output.batchWeightPerUnit.toStringAsFixed(1)} кг',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -519,27 +524,7 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
                                     ),
                                   ),
                                 ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Вазни як дона:',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                  Text(
-                                    '${output.batchWeightPerUnit.toStringAsFixed(1)} кг',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              ),                              
                               const SizedBox(height: 4),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

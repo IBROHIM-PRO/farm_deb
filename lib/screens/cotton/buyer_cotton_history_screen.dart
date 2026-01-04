@@ -240,13 +240,16 @@ class _BuyerCottonHistoryScreenState extends State<BuyerCottonHistoryScreen> {
 
         // Sales List
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _sales.length,
-            itemBuilder: (context, index) {
-              final sale = _sales[index];
-              return _buildSaleCard(sale);
-            },
+          child: RefreshIndicator(
+            onRefresh: _loadBuyerSales,
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _sales.length,
+              itemBuilder: (context, index) {
+                final sale = _sales[index];
+                return _buildSaleCard(sale);
+              },
+            ),
           ),
         ),
       ],

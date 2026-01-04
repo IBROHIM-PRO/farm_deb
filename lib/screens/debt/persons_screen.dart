@@ -28,25 +28,30 @@ class PersonsScreen extends StatelessWidget {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: provider.persons.length,
-            itemBuilder: (context, index) {
-              final person = provider.persons[index];
-              final debts = person.id != null ? provider.getDebtsForPerson(person.id!) : <Debt>[];
-              final activeCount = debts.where((d) => d.status.name == 'active').length;
-
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: CircleAvatar(backgroundColor: Theme.of(context).colorScheme.primaryContainer, child: Text(person.fullName[0].toUpperCase(), style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold))),
-                  title: Text(person.fullName),
-                  subtitle: Text(person.phone ?? 'Рақами телефон нест'),
-                  trailing: activeCount > 0 ? Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer, borderRadius: BorderRadius.circular(12)), child: Text('$activeCount фаъол', style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer, fontSize: 12))) : null,
-                  onLongPress: () => _showPersonOptions(context, person),
-                ),
-              );
+          return RefreshIndicator(
+            onRefresh: () async {
+              await provider.loadAllData();
             },
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: provider.persons.length,
+              itemBuilder: (context, index) {
+                final person = provider.persons[index];
+                final debts = person.id != null ? provider.getDebtsForPerson(person.id!) : <Debt>[];
+                final activeCount = debts.where((d) => d.status.name == 'active').length;
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(backgroundColor: Theme.of(context).colorScheme.primaryContainer, child: Text(person.fullName[0].toUpperCase(), style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold))),
+                    title: Text(person.fullName),
+                    subtitle: Text(person.phone ?? 'Рақами телефон нест'),
+                    trailing: activeCount > 0 ? Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer, borderRadius: BorderRadius.circular(12)), child: Text('$activeCount фаъол', style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer, fontSize: 12))) : null,
+                    onLongPress: () => _showPersonOptions(context, person),
+                  ),
+                );
+              },
+            ),
           );
         },
       ),

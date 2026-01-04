@@ -256,7 +256,7 @@ class _ProcessedCottonWarehouseScreenState extends State<ProcessedCottonWarehous
                     ),
                     child: Center(
                       child: Text(
-                        '#${weight.toInt()} кг',
+                        '${weight.toInt()} кг',
                         style: TextStyle(
                           color: Colors.green[800],
                           fontSize: 16,
