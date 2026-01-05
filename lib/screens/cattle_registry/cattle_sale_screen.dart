@@ -131,7 +131,7 @@ class _CattleSaleScreenState extends State<CattleSaleScreen> {
               ),
               isExpanded: true,
               menuMaxHeight: 300,
-              items: barnProvider.barns.map((barn) {
+              items: barnProvider.activeBarns.map((barn) {
                 return DropdownMenuItem(
                   value: barn.id,
                   child: Text(

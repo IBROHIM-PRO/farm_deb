@@ -181,6 +181,10 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
                   '${summary['expenseCount']}',
                   Colors.blue,
                 ),
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 16),
+                _buildActiveToggle(barn, provider),
               ],
             ),
           ),
@@ -996,6 +1000,70 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
           builder: (_) => AddBarnScreen(barn: barn),
         ),
       );
+    }
+  }
+
+  Widget _buildActiveToggle(Barn barn, BarnProvider provider) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ҳолати оғул',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              barn.isActive ? 'Фаъол' : 'Ғайрифаъол',
+              style: TextStyle(
+                fontSize: 14,
+                color: barn.isActive ? Colors.green : Colors.grey,
+              ),
+            ),
+          ],
+        ),
+        Switch(
+          value: barn.isActive,
+          onChanged: (value) async {
+            await _toggleBarnStatus(barn, value, provider);
+          },
+          activeColor: Colors.green,
+        ),
+      ],
+    );
+  }
+
+  Future<void> _toggleBarnStatus(Barn barn, bool newStatus, BarnProvider provider) async {
+    try {
+      final updatedBarn = barn.copyWith(isActive: newStatus);
+      await provider.updateBarn(updatedBarn);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newStatus 
+                  ? 'Оғул фаъол карда шуд' 
+                  : 'Оғул ғайрифаъол карда шуд',
+            ),
+            backgroundColor: newStatus ? Colors.green : Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Хато: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

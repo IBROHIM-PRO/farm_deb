@@ -508,7 +508,8 @@ class DatabaseHelper {
         location TEXT,
         capacity INTEGER,
         createdDate TEXT NOT NULL,
-        notes TEXT
+        notes TEXT,
+        isActive INTEGER DEFAULT 1
       )
     ''');
     

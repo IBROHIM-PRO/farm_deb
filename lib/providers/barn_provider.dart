@@ -13,6 +13,7 @@ class BarnProvider with ChangeNotifier {
   String? _error;
 
   List<Barn> get barns => _barns;
+  List<Barn> get activeBarns => _barns.where((barn) => barn.isActive).toList();
   bool get isLoading => _isLoading;
   String? get error => _error;
 

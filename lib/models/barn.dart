@@ -7,6 +7,7 @@ class Barn {
   final int? capacity;            // Maximum number of cattle
   final DateTime createdDate;
   final String? notes;
+  final bool isActive;            // Active/Inactive status
 
   Barn({
     this.id,
@@ -15,6 +16,7 @@ class Barn {
     this.capacity,
     DateTime? createdDate,
     this.notes,
+    this.isActive = true,
   }) : createdDate = createdDate ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
@@ -25,6 +27,7 @@ class Barn {
       'capacity': capacity,
       'createdDate': createdDate.toIso8601String(),
       'notes': notes,
+      'isActive': isActive ? 1 : 0,
     };
   }
 
@@ -38,6 +41,7 @@ class Barn {
           ? DateTime.parse(map['createdDate'] as String) 
           : DateTime.now(),
       notes: map['notes'] as String?,
+      isActive: map['isActive'] == 1 || map['isActive'] == true,
     );
   }
 
@@ -48,6 +52,7 @@ class Barn {
     int? capacity,
     DateTime? createdDate,
     String? notes,
+    bool? isActive,
   }) {
     return Barn(
       id: id ?? this.id,
@@ -56,6 +61,7 @@ class Barn {
       capacity: capacity ?? this.capacity,
       createdDate: createdDate ?? this.createdDate,
       notes: notes ?? this.notes,
+      isActive: isActive ?? this.isActive,
     );
   }
 

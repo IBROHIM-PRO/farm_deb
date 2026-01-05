@@ -421,7 +421,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
               }
               return null;
             },
-            items: barns.map((barn) {
+            items: barnProvider.activeBarns.map((barn) {
               return DropdownMenuItem<int>(
                 value: barn.id,
                 child: Text(
