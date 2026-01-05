@@ -12,7 +12,11 @@ class AllExpensesScreen extends StatefulWidget {
   State<AllExpensesScreen> createState() => _AllExpensesScreenState();
 }
 
+enum ExpenseFilter { week, month, sixMonths, year }
+
 class _AllExpensesScreenState extends State<AllExpensesScreen> {
+  ExpenseFilter _selectedFilter = ExpenseFilter.week;
+
   @override
   void initState() {
     super.initState();
@@ -35,13 +39,20 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              await provider.loadExpenses();
-            },
-            child: provider.expenses.isEmpty
-                ? _buildEmptyState()
-                : _buildExpensesList(provider),
+          return Column(
+            children: [
+              _buildFilterButtons(),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    await provider.loadExpenses();
+                  },
+                  child: provider.expenses.isEmpty
+                      ? _buildEmptyState()
+                      : _buildExpensesList(provider),
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -72,8 +83,132 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
     );
   }
 
+  Widget _buildFilterButtons() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildFilterButton(
+              'Ҳафта',
+              ExpenseFilter.week,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildFilterButton(
+              'Моҳ',
+              ExpenseFilter.month,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildFilterButton(
+              '6 моҳ',
+              ExpenseFilter.sixMonths,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildFilterButton(
+              'Сол',
+              ExpenseFilter.year,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterButton(String label, ExpenseFilter filter) {
+    final isSelected = _selectedFilter == filter;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedFilter = filter;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryIndigo : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            color: isSelected ? Colors.white : Colors.grey[700],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<DailyExpense> _getFilteredExpenses(List<DailyExpense> allExpenses) {
+    final now = DateTime.now();
+    DateTime startDate;
+
+    switch (_selectedFilter) {
+      case ExpenseFilter.week:
+        startDate = now.subtract(const Duration(days: 7));
+        break;
+      case ExpenseFilter.month:
+        startDate = DateTime(now.year, now.month - 1, now.day);
+        break;
+      case ExpenseFilter.sixMonths:
+        startDate = DateTime(now.year, now.month - 6, now.day);
+        break;
+      case ExpenseFilter.year:
+        startDate = DateTime(now.year - 1, now.month, now.day);
+        break;
+    }
+
+    return allExpenses.where((expense) {
+      return expense.expenseDate.isAfter(startDate) || 
+             expense.expenseDate.isAtSameMomentAs(startDate);
+    }).toList();
+  }
+
   Widget _buildExpensesList(DailyExpenseProvider provider) {
-    final groupedExpenses = _groupExpensesByDate(provider.expenses);
+    final filteredExpenses = _getFilteredExpenses(provider.expenses);
+    final groupedExpenses = _groupExpensesByDate(filteredExpenses);
+    
+    if (filteredExpenses.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.all(32),
+        children: [
+          const SizedBox(height: 60),
+          Icon(
+            Icons.receipt_long,
+            size: 100,
+            color: Colors.grey[300],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Дар ин давра харочоте нест',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      );
+    }
     
     return ListView.builder(
       padding: const EdgeInsets.all(16),
