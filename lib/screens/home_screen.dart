@@ -70,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SimpleDebtsScreen(),
           const CottonManagementHubScreen(),
           const CattleManagementHubScreen(),
+          const TodayExpensesScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -103,6 +104,12 @@ class _HomeScreenState extends State<HomeScreen> {
             selectedIcon: const Icon(Icons.pets, size: 26), 
             label: 'Чорво',
             tooltip: 'Чорво',
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.receipt_long_outlined, size: 26), 
+            selectedIcon: const Icon(Icons.receipt_long, size: 26), 
+            label: 'Харочот',
+            tooltip: 'ҳаррӯза',
           ),
         ],
       ),

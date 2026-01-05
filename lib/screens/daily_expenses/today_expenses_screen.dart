@@ -31,6 +31,11 @@ class _TodayExpensesScreenState extends State<TodayExpensesScreen> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => _showAddExpenseForm(context),
+            tooltip: 'Харочот илова кунед',
+          ),
+          IconButton(
             icon: const Icon(Icons.history),
             onPressed: () {
               Navigator.push(
@@ -57,12 +62,6 @@ class _TodayExpensesScreenState extends State<TodayExpensesScreen> {
                 : _buildExpensesList(provider),
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddExpenseForm(context),
-        backgroundColor: AppTheme.primaryIndigo,
-        icon: const Icon(Icons.add),
-        label: const Text('Харочот илова кунед'),
       ),
     );
   }
