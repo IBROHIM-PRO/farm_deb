@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../providers/daily_expense_provider.dart';
 import '../../models/daily_expense.dart';
 import '../../theme/app_theme.dart';
@@ -42,6 +43,7 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
           return Column(
             children: [
               _buildFilterButtons(),
+              _buildExpenseChart(provider),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async {
@@ -155,6 +157,210 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildExpenseChart(DailyExpenseProvider provider) {
+    final filteredExpenses = _getFilteredExpenses(provider.expenses);
+    if (filteredExpenses.isEmpty) return const SizedBox.shrink();
+    
+    final chartData = _getChartData(filteredExpenses);
+    if (chartData.isEmpty) return const SizedBox.shrink();
+    
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Харочоти моҳона',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 180,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: chartData.values.isEmpty ? 100 : chartData.values.reduce((a, b) => a > b ? a : b) * 1.2,
+                barTouchData: BarTouchData(
+                  enabled: true,
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      return BarTooltipItem(
+                        '${_getChartLabel(group.x.toInt())}\n${rod.toY.toStringAsFixed(0)} TJS',
+                        const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                      );
+                    },
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            _getChartLabel(value.toInt()),
+                            style: TextStyle(fontSize: 9, color: Colors.grey[600]),
+                          ),
+                        );
+                      },
+                      reservedSize: 24,
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 35,
+                      getTitlesWidget: (value, meta) {
+                        return Text(
+                          value.toInt().toString(),
+                          style: TextStyle(fontSize: 9, color: Colors.grey[600]),
+                        );
+                      },
+                    ),
+                  ),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(color: Colors.grey[200]!, strokeWidth: 1);
+                  },
+                ),
+                borderData: FlBorderData(show: false),
+                barGroups: chartData.entries.map((entry) {
+                  return BarChartGroupData(
+                    x: entry.key,
+                    barRods: [
+                      BarChartRodData(
+                        toY: entry.value,
+                        color: Colors.blue,
+                        width: _selectedFilter == ExpenseFilter.week ? 24 : (_selectedFilter == ExpenseFilter.month ? 8 : 12),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(4),
+                          topRight: Radius.circular(4),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Map<int, double> _getChartData(List<DailyExpense> expenses) {
+    final Map<int, double> data = {};
+    
+    switch (_selectedFilter) {
+      case ExpenseFilter.week:
+        // Last 7 days
+        for (int i = 0; i < 7; i++) {
+          data[i] = 0;
+        }
+        final now = DateTime.now();
+        for (var expense in expenses) {
+          final diff = now.difference(expense.expenseDate).inDays;
+          if (diff >= 0 && diff < 7) {
+            final index = 6 - diff;
+            data[index] = (data[index] ?? 0) + expense.amount;
+          }
+        }
+        break;
+        
+      case ExpenseFilter.month:
+        // Last 30 days (grouped by ~4-5 day periods to fit in chart)
+        for (int i = 0; i < 7; i++) {
+          data[i] = 0;
+        }
+        final now = DateTime.now();
+        for (var expense in expenses) {
+          final diff = now.difference(expense.expenseDate).inDays;
+          if (diff >= 0 && diff < 30) {
+            final index = 6 - (diff ~/ 4);
+            data[index] = (data[index] ?? 0) + expense.amount;
+          }
+        }
+        break;
+        
+      case ExpenseFilter.sixMonths:
+        // Last 6 months
+        for (int i = 0; i < 6; i++) {
+          data[i] = 0;
+        }
+        final now = DateTime.now();
+        for (var expense in expenses) {
+          final monthDiff = (now.year - expense.expenseDate.year) * 12 + (now.month - expense.expenseDate.month);
+          if (monthDiff >= 0 && monthDiff < 6) {
+            final index = 5 - monthDiff;
+            data[index] = (data[index] ?? 0) + expense.amount;
+          }
+        }
+        break;
+        
+      case ExpenseFilter.year:
+        // Last 12 months
+        for (int i = 0; i < 12; i++) {
+          data[i] = 0;
+        }
+        final now = DateTime.now();
+        for (var expense in expenses) {
+          final monthDiff = (now.year - expense.expenseDate.year) * 12 + (now.month - expense.expenseDate.month);
+          if (monthDiff >= 0 && monthDiff < 12) {
+            final index = 11 - monthDiff;
+            data[index] = (data[index] ?? 0) + expense.amount;
+          }
+        }
+        break;
+    }
+    
+    return data;
+  }
+
+  String _getChartLabel(int index) {
+    switch (_selectedFilter) {
+      case ExpenseFilter.week:
+        final date = DateTime.now().subtract(Duration(days: 6 - index));
+        return DateFormat('dd').format(date);
+        
+      case ExpenseFilter.month:
+        final daysAgo = (6 - index) * 4;
+        return '${daysAgo}-${daysAgo + 4}';
+        
+      case ExpenseFilter.sixMonths:
+        final monthsAgo = 5 - index;
+        final date = DateTime(DateTime.now().year, DateTime.now().month - monthsAgo);
+        return DateFormat('MMM', 'ru').format(date).substring(0, 3);
+        
+      case ExpenseFilter.year:
+        final monthsAgo = 11 - index;
+        final date = DateTime(DateTime.now().year, DateTime.now().month - monthsAgo);
+        const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+        return monthNames[date.month - 1];
+    }
   }
 
   List<DailyExpense> _getFilteredExpenses(List<DailyExpense> allExpenses) {
