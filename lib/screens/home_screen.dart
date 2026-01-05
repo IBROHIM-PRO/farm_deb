@@ -20,6 +20,7 @@ import 'reports/reports_screen.dart';
 import 'history_screen.dart';
 import 'debt/persons_screen.dart';
 import 'barn/barn_list_screen.dart';
+import 'daily_expenses/today_expenses_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -125,6 +126,7 @@ class _DashboardView extends StatelessWidget {
       ('Фурӯши чорво', 'Сабти фурӯши чорво', Icons.sell_outlined, 'cattle_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleSaleScreen()))),
       ('Чорво', 'Сабт ва пайгирии чорво', Icons.pets, 'cattle', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleManagementHubScreen()))),
       ('Идоракунии корбарон', 'Ашхос ва контактҳо', Icons.people, 'users', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonsScreen()))),
+      ('Харочоти ҳаррӯза', 'Сабти харочоти рӯзона', Icons.receipt_long, 'daily_expense', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TodayExpensesScreen()))),
       ('Ҳисоботҳо ва таҳлил', 'Маълумоти молиявӣ', Icons.bar_chart, 'report', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()))),
     ];
   }
@@ -244,6 +246,8 @@ class _DashboardView extends StatelessWidget {
         return Colors.indigo;
       case 'users':
         return Colors.cyan;
+      case 'daily_expense':
+        return Colors.deepOrange;
       case 'report':
         return Colors.amber;
       default:

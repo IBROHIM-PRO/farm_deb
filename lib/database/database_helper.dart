@@ -606,6 +606,21 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX idx_cotton_inventory_type_batch ON cotton_inventory (cottonType, batchSize)');
     await db.execute('CREATE INDEX idx_cotton_traceability_code ON cotton_traceability (traceabilityCode)');
     await db.execute('CREATE INDEX idx_cotton_traceability_status ON cotton_traceability (status)');
+
+    // Daily Expenses Table
+    await db.execute('''
+      CREATE TABLE daily_expenses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category TEXT NOT NULL,
+        itemName TEXT NOT NULL,
+        amount REAL NOT NULL,
+        currency TEXT NOT NULL,
+        expenseDate TEXT NOT NULL,
+        notes TEXT
+      )
+    ''');
+
+    await db.execute('CREATE INDEX idx_daily_expenses_date ON daily_expenses (expenseDate DESC)');
   }
 
   // Person CRUD
@@ -1313,7 +1328,55 @@ class DatabaseHelper {
   }
 
   Future<int> deleteBarnExpense(int id) async {
-    return (await database).delete('barn_expenses', where: 'id = ?', whereArgs: [id]);
+    return (await database).delete(
+      'barn_expenses',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // Daily Expenses CRUD
+  Future<int> insertDailyExpense(Map<String, dynamic> expense) async {
+    return (await database).insert('daily_expenses', expense);
+  }
+
+  Future<List<Map<String, dynamic>>> getAllDailyExpenses() async {
+    return (await database).query('daily_expenses', orderBy: 'expenseDate DESC, id DESC');
+  }
+
+  Future<List<Map<String, dynamic>>> getDailyExpensesByDate(String date) async {
+    return (await database).query(
+      'daily_expenses',
+      where: 'expenseDate = ?',
+      whereArgs: [date],
+      orderBy: 'id DESC',
+    );
+  }
+
+  Future<Map<String, dynamic>?> getDailyExpenseById(int id) async {
+    final result = await (await database).query(
+      'daily_expenses',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return result.isNotEmpty ? result.first : null;
+  }
+
+  Future<int> updateDailyExpense(int id, Map<String, dynamic> expense) async {
+    return (await database).update(
+      'daily_expenses',
+      expense,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> deleteDailyExpense(int id) async {
+    return (await database).delete(
+      'daily_expenses',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<double> getTotalBarnExpenses(int barnId) async {

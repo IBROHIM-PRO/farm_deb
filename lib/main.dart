@@ -7,6 +7,7 @@ import 'providers/cattle_registry_provider.dart';
 import 'providers/cotton_registry_provider.dart';
 import 'providers/cotton_warehouse_provider.dart';
 import 'providers/barn_provider.dart';
+import 'providers/daily_expense_provider.dart';
 import 'screens/home_screen.dart';
 import 'database/database_helper.dart';
 import 'theme/app_theme.dart';
@@ -45,6 +46,7 @@ class FarmDebtManagerApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CattleRegistryProvider()),
         ChangeNotifierProvider(create: (_) => CottonRegistryProvider()),
         ChangeNotifierProvider(create: (_) => CottonWarehouseProvider()),
+        ChangeNotifierProvider(create: (_) => DailyExpenseProvider()),
       ],
       child: MaterialApp(
         locale: const Locale('tg', ''),

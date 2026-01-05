@@ -136,7 +136,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
           validator: (value) {
             if (value?.trim().isEmpty == true) {
               return 'Рамзи гӯш зарур аст';
-            }
+            }            
             return null;
           },
         ),
@@ -587,16 +587,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
       // Check if ear tag already exists
       final provider = context.read<CattleRegistryProvider>();
       final earTag = _earTagController.text.trim();
-      
-      if (provider.isEarTagExists(earTag)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Рақами гӯш "$earTag" аллакай вуҷуд дорад. Лутфан рақами дигар ворид кунед.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
+            
       
       // Validate: if purchase price is entered, weight must also be entered
       if (_purchasePriceController.text.trim().isNotEmpty && 
