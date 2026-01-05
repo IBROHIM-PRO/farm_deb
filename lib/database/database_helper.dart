@@ -51,93 +51,9 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path, 
-      version: 6,  // Updated to version 6 to add feedType field to barn_expenses
+      version: 1,
       onCreate: _createDB,
-      onUpgrade: _upgradeDB,
     );
-  }
-
-  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      // Remove UNIQUE constraint from cotton_types.name field
-      // SQLite doesn't support ALTER TABLE DROP CONSTRAINT, so we need to recreate the table
-      
-      // Create temporary table without UNIQUE constraint
-      await db.execute('''
-        CREATE TABLE cotton_types_temp (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          pricePerKg REAL NOT NULL
-        )
-      ''');
-      
-      // Copy data from old table to new table
-      await db.execute('''
-        INSERT INTO cotton_types_temp (id, name, pricePerKg)
-        SELECT id, name, pricePerKg FROM cotton_types
-      ''');
-      
-      // Drop old table
-      await db.execute('DROP TABLE cotton_types');
-      
-      // Rename temp table to original name
-      await db.execute('ALTER TABLE cotton_types_temp RENAME TO cotton_types');
-    }
-    
-    if (oldVersion < 3) {
-      // Add barn support - Create barns table
-      await db.execute('''
-        CREATE TABLE barns (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          location TEXT,
-          capacity INTEGER,
-          createdDate TEXT NOT NULL,
-          notes TEXT
-        )
-      ''');
-      
-      // Create barn_expenses table
-      await db.execute('''
-        CREATE TABLE barn_expenses (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          barnId INTEGER NOT NULL,
-          expenseType TEXT NOT NULL,
-          itemName TEXT NOT NULL,
-          quantity REAL NOT NULL,
-          quantityUnit TEXT NOT NULL,
-          pricePerUnit REAL NOT NULL,
-          totalCost REAL NOT NULL,
-          currency TEXT NOT NULL,
-          supplier TEXT,
-          expenseDate TEXT NOT NULL,
-          notes TEXT,
-          FOREIGN KEY (barnId) REFERENCES barns (id) ON DELETE CASCADE
-        )
-      ''');
-      
-      // Add barnId column to cattle_registry table
-      await db.execute('ALTER TABLE cattle_registry ADD COLUMN barnId INTEGER');
-      
-      // Create indexes for barn tables
-      await db.execute('CREATE INDEX idx_barn_expenses_barn ON barn_expenses (barnId, expenseDate DESC)');
-      await db.execute('CREATE INDEX idx_cattle_registry_barn ON cattle_registry (barnId)');
-    }
-    
-    if (oldVersion < 4) {
-      // Add breeder support - Add breederId column to cattle_registry table
-      await db.execute('ALTER TABLE cattle_registry ADD COLUMN breederId INTEGER');
-    }
-    
-    if (oldVersion < 5) {
-      // Add name field to cattle_registry table
-      await db.execute('ALTER TABLE cattle_registry ADD COLUMN name TEXT');
-    }
-    
-    if (oldVersion < 6) {
-      // Add feedType field to barn_expenses table
-      await db.execute('ALTER TABLE barn_expenses ADD COLUMN feedType TEXT');
-    }
   }
 
   Future<void> _createDB(Database db, int version) async {
