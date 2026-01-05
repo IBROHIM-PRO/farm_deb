@@ -4,21 +4,21 @@
     <!-- Gradient background -->
     <item android:drawable="@drawable/splash_gradient" />
 
-    <!-- White circular background for icon -->
+    <!-- Blue circular background for icon -->
+    <item
+        android:gravity="center"
+        android:width="200dp"
+        android:height="200dp">
+        <shape android:shape="oval">
+            <solid android:color="#2196F3" />
+        </shape>
+    </item>
+
+    <!-- App icon centered on blue circle -->
     <item
         android:gravity="center"
         android:width="180dp"
         android:height="180dp">
-        <shape android:shape="oval">
-            <solid android:color="#FFFFFF" />
-        </shape>
-    </item>
-
-    <!-- App icon centered on white circle -->
-    <item
-        android:gravity="center"
-        android:width="120dp"
-        android:height="120dp">
         <bitmap
             android:gravity="center"
             android:src="@mipmap/ic_launcher" />
