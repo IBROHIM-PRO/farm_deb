@@ -30,7 +30,7 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ҳамаи харочотҳо'),
+        title: const Text('Ҳамаи хароҷотҳо'),
         backgroundColor: AppTheme.primaryIndigo,
         foregroundColor: Colors.white,
       ),

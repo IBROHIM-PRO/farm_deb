@@ -26,14 +26,14 @@ class _TodayExpensesScreenState extends State<TodayExpensesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Харочоти имрӯза'),
+        title: const Text('Хароҷоти имрӯза'),
         backgroundColor: AppTheme.primaryIndigo,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _showAddExpenseForm(context),
-            tooltip: 'Харочот илова кунед',
+            tooltip: 'Хароҷот илова кунед',
           ),
           IconButton(
             icon: const Icon(Icons.history),

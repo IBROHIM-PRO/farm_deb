@@ -36,7 +36,7 @@ class _AddCattleExpenseScreenState extends State<AddCattleExpenseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Сабти харочот'),
+        title: const Text('Сабти хароҷот'),
         backgroundColor: AppTheme.primaryIndigo,
         foregroundColor: Colors.white,
       ),

@@ -57,7 +57,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
                 builder: (_) => AddBarnExpenseScreen(barnId: widget.barnId),
               ),
             ),
-            tooltip: 'Харочот',
+            tooltip: 'Хароҷот',
           ),
         ],
         bottom: TabBar(

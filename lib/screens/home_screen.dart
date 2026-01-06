@@ -101,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(
             icon: const Icon(Icons.receipt_long_outlined, size: 26), 
             selectedIcon: const Icon(Icons.receipt_long, size: 26), 
-            label: 'Харочот',
+            label: 'Хароҷот',
             tooltip: 'ҳаррӯза',
           ),
         ],
@@ -121,11 +121,11 @@ class _DashboardView extends StatelessWidget {
       ('Анбори пахтаи коркардшуда', 'Пахтаи тайёр дар қуттиҳо', Icons.inventory_2, 'processed_warehouse', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProcessedCottonWarehouseScreen()))),      
       ('Коркарди пахта', 'Реестри коркарди пахта', Icons.precision_manufacturing, 'cotton_processing', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonProcessingRegistryScreen()))),
       ('Сабти фурӯш', 'Сабти фурӯши пахта', Icons.point_of_sale, 'cotton_stock_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonSalesScreen()))),      
-      ('Идоракунии оғулҳо', 'Ҷойгиркунӣ ва харочоти оғул', Icons.home_work, 'barn', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BarnListScreen()))),
+      ('Идоракунии оғулҳо', 'Ҷойгиркунӣ ва хароҷоти оғул', Icons.home_work, 'barn', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BarnListScreen()))),
       ('Фурӯши чорво', 'Сабти фурӯши чорво', Icons.sell_outlined, 'cattle_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleSaleScreen()))),
       ('Чорво', 'Сабт ва пайгирии чорво', Icons.pets, 'cattle', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleManagementHubScreen()))),
       ('Идоракунии корбарон', 'Ашхос ва контактҳо', Icons.people, 'users', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonsScreen()))),
-      ('Харочоти ҳаррӯза', 'Сабти харочоти рӯзона', Icons.receipt_long, 'daily_expense', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TodayExpensesScreen()))),      
+      ('Хароҷоти ҳаррӯза', 'Сабти хароҷоти рӯзона', Icons.receipt_long, 'daily_expense', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TodayExpensesScreen()))),      
     ];
   }
 
