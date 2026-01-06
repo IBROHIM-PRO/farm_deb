@@ -81,17 +81,7 @@ class SimpleDebtsScreen extends StatelessWidget {
           Text(
             'Ҳанӯз ҳеҷ қарз сабт нашудааст',
             style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AddDebtScreen()),
-              );
-            },
-            child: const Icon(Icons.add),
-          ),
+          ),          
         ],
       ),
     );

@@ -631,31 +631,7 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Барои коркарди пахтаи харидашуда тугмаи зеринро пахш кунед',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const AddCottonProcessingScreen(),
-              ),
-            ),
-            icon: const Icon(Icons.precision_manufacturing),
-            label: const Text('Коркарди нав'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.purple,
-              foregroundColor: Colors.white,
-            ),
-          ),
+          ),        
         ],
       ),
     );

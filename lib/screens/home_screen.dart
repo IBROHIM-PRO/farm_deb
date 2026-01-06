@@ -30,7 +30,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 3;
 
   @override
   void initState() {
@@ -66,7 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          _DashboardView(),
           const SimpleDebtsScreen(),
           const CottonManagementHubScreen(),
           const CattleManagementHubScreen(),
@@ -81,12 +80,6 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.white,
         elevation: 8,
         destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.home_outlined, size: 26), 
-            selectedIcon: const Icon(Icons.home, size: 26), 
-            label: 'Асосӣ',
-            tooltip: 'Асосӣ',
-          ),
           NavigationDestination(
             icon: const Icon(Icons.account_balance_wallet_outlined, size: 26), 
             selectedIcon: const Icon(Icons.account_balance_wallet, size: 26), 
@@ -127,8 +120,7 @@ class _DashboardView extends StatelessWidget {
       ('Анбори пахтаи хом', 'Линт, слайвер ва дигар', Icons.warehouse, 'raw_warehouse', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RawCottonWarehouseScreen()))),
       ('Анбори пахтаи коркардшуда', 'Пахтаи тайёр дар қуттиҳо', Icons.inventory_2, 'processed_warehouse', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProcessedCottonWarehouseScreen()))),      
       ('Коркарди пахта', 'Реестри коркарди пахта', Icons.precision_manufacturing, 'cotton_processing', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonProcessingRegistryScreen()))),
-      ('Сабти фурӯш', 'Сабти фурӯши пахта', Icons.point_of_sale, 'cotton_stock_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonSalesScreen()))),
-      ('Идоракунии захираи пахта', 'Нигаҳдорӣ ва идораи пахта', Icons.inventory, 'cotton_stock', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonStockMainScreen()))),
+      ('Сабти фурӯш', 'Сабти фурӯши пахта', Icons.point_of_sale, 'cotton_stock_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CottonSalesScreen()))),      
       ('Идоракунии оғулҳо', 'Ҷойгиркунӣ ва харочоти оғул', Icons.home_work, 'barn', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BarnListScreen()))),
       ('Фурӯши чорво', 'Сабти фурӯши чорво', Icons.sell_outlined, 'cattle_sale', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleSaleScreen()))),
       ('Чорво', 'Сабт ва пайгирии чорво', Icons.pets, 'cattle', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CattleManagementHubScreen()))),

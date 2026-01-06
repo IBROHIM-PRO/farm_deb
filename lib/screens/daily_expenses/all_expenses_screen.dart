@@ -356,14 +356,22 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
         
       case ExpenseFilter.sixMonths:
         final monthsAgo = 5 - index;
-        final date = DateTime(DateTime.now().year, DateTime.now().month - monthsAgo);
+        final now = DateTime.now();
+        final targetMonth = now.month - monthsAgo;
+        final targetYear = now.year + (targetMonth - 1) ~/ 12;
+        final normalizedMonth = ((targetMonth - 1) % 12) + 1;
+        final date = DateTime(targetYear, normalizedMonth);
         return DateFormat('MMM', 'ru').format(date).substring(0, 3);
         
       case ExpenseFilter.year:
         final monthsAgo = 11 - index;
-        final date = DateTime(DateTime.now().year, DateTime.now().month - monthsAgo);
+        final now = DateTime.now();
+        final targetMonth = now.month - monthsAgo;
+        final targetYear = now.year + (targetMonth - 1) ~/ 12;
+        final normalizedMonth = ((targetMonth - 1) % 12) + 1;
+        final date = DateTime(targetYear, normalizedMonth);
         const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
-        return monthNames[date.month - 1];
+        return monthNames[normalizedMonth - 1];
     }
   }
 
@@ -401,22 +409,28 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
         
       case ExpenseFilter.sixMonths:
         final monthsAgo = 5 - index;
-        final date = DateTime(DateTime.now().year, DateTime.now().month - monthsAgo);
+        final now = DateTime.now();
+        final targetMonth = now.month - monthsAgo;
+        final targetYear = now.year + (targetMonth - 1) ~/ 12;
+        final normalizedMonth = ((targetMonth - 1) % 12) + 1;
         const monthNames = ['Январ', 'Феврал', 'Март', 'Апрел', 'Май', 'Июн', 'Июл', 'Август', 'Сентябр', 'Октябр', 'Ноябр', 'Декабр'];
         
         return {
-          'title': monthNames[date.month - 1],
-          'subtitle': date.year.toString(),
+          'title': monthNames[normalizedMonth - 1],
+          'subtitle': targetYear.toString(),
         };
         
       case ExpenseFilter.year:
         final monthsAgo = 11 - index;
-        final date = DateTime(DateTime.now().year, DateTime.now().month - monthsAgo);
+        final now = DateTime.now();
+        final targetMonth = now.month - monthsAgo;
+        final targetYear = now.year + (targetMonth - 1) ~/ 12;
+        final normalizedMonth = ((targetMonth - 1) % 12) + 1;
         const monthNames = ['Январ', 'Феврал', 'Март', 'Апрел', 'Май', 'Июн', 'Июл', 'Август', 'Сентябр', 'Октябр', 'Ноябр', 'Декабр'];
         
         return {
-          'title': monthNames[date.month - 1],
-          'subtitle': '${date.year}',
+          'title': monthNames[normalizedMonth - 1],
+          'subtitle': '$targetYear',
         };
     }
   }
