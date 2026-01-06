@@ -200,10 +200,14 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
                 barTouchData: BarTouchData(
                   enabled: true,
                   touchTooltipData: BarTouchTooltipData(
+                    tooltipBorder: const BorderSide(color: Colors.transparent),
+                    tooltipRoundedRadius: 8,
+                    tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final dateTimeInfo = _getDetailedDateInfo(group.x.toInt());
                       return BarTooltipItem(
-                        '${_getChartLabel(group.x.toInt())}\n${rod.toY.toStringAsFixed(0)} TJS',
-                        const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                        '${dateTimeInfo['title']}\n${dateTimeInfo['subtitle']}\n${rod.toY.toStringAsFixed(2)} TJS',
+                        const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 11),
                       );
                     },
                   ),
@@ -360,6 +364,60 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
         final date = DateTime(DateTime.now().year, DateTime.now().month - monthsAgo);
         const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
         return monthNames[date.month - 1];
+    }
+  }
+
+  Map<String, String> _getDetailedDateInfo(int index) {
+    switch (_selectedFilter) {
+      case ExpenseFilter.week:
+        final date = DateTime.now().subtract(Duration(days: 6 - index));
+        final today = DateTime.now();
+        final yesterday = today.subtract(const Duration(days: 1));
+        
+        String dayLabel;
+        if (DateFormat('yyyy-MM-dd').format(date) == DateFormat('yyyy-MM-dd').format(today)) {
+          dayLabel = 'Имрӯз';
+        } else if (DateFormat('yyyy-MM-dd').format(date) == DateFormat('yyyy-MM-dd').format(yesterday)) {
+          dayLabel = 'Дирӯз';
+        } else {
+          const weekDays = ['Якшанбе', 'Душанбе', 'Сешанбе', 'Чоршанбе', 'Панҷшанбе', 'Ҷумъа', 'Шанбе'];
+          dayLabel = weekDays[date.weekday % 7];
+        }
+        
+        return {
+          'title': dayLabel,
+          'subtitle': DateFormat('dd.MM.yyyy').format(date),
+        };
+        
+      case ExpenseFilter.month:
+        final daysAgo = (6 - index) * 4;
+        final endDate = DateTime.now().subtract(Duration(days: daysAgo));
+        final startDate = DateTime.now().subtract(Duration(days: daysAgo + 4));
+        
+        return {
+          'title': '${DateFormat('dd.MM').format(startDate)} - ${DateFormat('dd.MM').format(endDate)}',
+          'subtitle': 'Давраи 4 рӯза',
+        };
+        
+      case ExpenseFilter.sixMonths:
+        final monthsAgo = 5 - index;
+        final date = DateTime(DateTime.now().year, DateTime.now().month - monthsAgo);
+        const monthNames = ['Январ', 'Феврал', 'Март', 'Апрел', 'Май', 'Июн', 'Июл', 'Август', 'Сентябр', 'Октябр', 'Ноябр', 'Декабр'];
+        
+        return {
+          'title': monthNames[date.month - 1],
+          'subtitle': date.year.toString(),
+        };
+        
+      case ExpenseFilter.year:
+        final monthsAgo = 11 - index;
+        final date = DateTime(DateTime.now().year, DateTime.now().month - monthsAgo);
+        const monthNames = ['Январ', 'Феврал', 'Март', 'Апрел', 'Май', 'Июн', 'Июл', 'Август', 'Сентябр', 'Октябр', 'Ноябр', 'Декабр'];
+        
+        return {
+          'title': monthNames[date.month - 1],
+          'subtitle': '${date.year}',
+        };
     }
   }
 
