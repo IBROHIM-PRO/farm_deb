@@ -300,7 +300,7 @@ class _ProcessedCottonWarehouseScreenState extends State<ProcessedCottonWarehous
                 child: _buildDetailItem(
                   Icons.scale,
                   'Вазни умумӣ',
-                  '${totalWeight.toStringAsFixed(0)} кг',
+                  '${totalWeight.toStringAsFixed(1)} кг',
                   Colors.green,
                 ),
               ),

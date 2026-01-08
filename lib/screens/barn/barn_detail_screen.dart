@@ -173,7 +173,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
                 const SizedBox(height: 16),
                 _buildStatRow(
                   'Ҳамагӣ харочот',
-                  '${summary['totalExpenses'].toStringAsFixed(0)} TJS',
+                  '${summary['totalExpenses'].toStringAsFixed(2)} TJS',
                   Colors.red,
                 ),
                 _buildStatRow(
@@ -431,16 +431,17 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '${purchase.weightAtPurchase.toStringAsFixed(0)} кг',
+                            '${purchase.weightAtPurchase.toStringAsFixed(2)} кг',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
+                              color: Colors.blue,
                             ),
                           ),
                           if (purchase.totalPrice != null) ...[
                             const SizedBox(width: 12),
                             Text(
-                              '${purchase.totalPrice!.toStringAsFixed(0)} ${purchase.currency}',
+                              '${purchase.totalPrice!.toStringAsFixed(2)} ${purchase.currency}',
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
@@ -464,10 +465,11 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '${weights.last.weight.toStringAsFixed(0)} кг',
+                            '${weights.last.weight.toStringAsFixed(2)} кг',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
+                              color: Colors.orange,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -580,7 +582,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${expense.totalCost.toStringAsFixed(0)} ${expense.currency}',
+                    '${expense.totalCost.toStringAsFixed(2)} ${expense.currency}',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

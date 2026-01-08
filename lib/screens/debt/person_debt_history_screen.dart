@@ -128,7 +128,7 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
                         Expanded(
                           child: _buildStatItem(
                             'Додашуда',
-                            '${remainingGiven.toStringAsFixed(0)} TJS',
+                            '${remainingGiven.toStringAsFixed(2)} TJS',
                             Icons.arrow_upward,
                             Colors.green,
                           ),
@@ -141,7 +141,7 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
                         Expanded(
                           child: _buildStatItem(
                             'Гирифташуда',
-                            '${remainingTaken.toStringAsFixed(0)} TJS',
+                            '${remainingTaken.toStringAsFixed(2)} TJS',
                             Icons.arrow_downward,
                             Colors.red,
                           ),
@@ -296,7 +296,7 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
                         style: TextStyle(fontSize: 14),
                       ),
                       Text(
-                        '${debt.totalAmount.toStringAsFixed(0)} ${debt.currency}',
+                        '${debt.totalAmount.toStringAsFixed(2)} ${debt.currency}',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -313,7 +313,7 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                       ),
                       Text(
-                        '${debt.remainingAmount.toStringAsFixed(0)} ${debt.currency}',
+                        '${debt.remainingAmount.toStringAsFixed(2)} ${debt.currency}',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -356,7 +356,7 @@ class _PersonDebtHistoryScreenState extends State<PersonDebtHistoryScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Боқимонда: ${debt.remainingAmount.toStringAsFixed(0)} ${debt.currency}',
+                'Боқимонда: ${debt.remainingAmount.toStringAsFixed(2)} ${debt.currency}',
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 16),

@@ -535,7 +535,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                     // Amount
                     if (history.amount != null)
                       Text(
-                        '${history.amount!.toStringAsFixed(0)} ${history.currency ?? ''}',
+                        '${history.amount!.toStringAsFixed(2)} ${history.currency ?? ''}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
@@ -702,7 +702,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              totalAmount.toStringAsFixed(0),
+                              totalAmount.toStringAsFixed(2),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -741,7 +741,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                           runSpacing: 2,
                           children: currencyBreakdown.entries.map((entry) =>
                             Text(
-                              '${entry.key}: ${entry.value.toStringAsFixed(0)}',
+                              '${entry.key}: ${entry.value.toStringAsFixed(2)}',
                               style: const TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,

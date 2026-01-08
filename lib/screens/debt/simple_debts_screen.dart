@@ -242,7 +242,7 @@ class SimpleDebtsScreen extends StatelessWidget {
                       Column(
                         children: [
                           Text(
-                            '${remainingGiven.toStringAsFixed(0)}',
+                            '${remainingGiven.toStringAsFixed(2)}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -265,7 +265,7 @@ class SimpleDebtsScreen extends StatelessWidget {
                       Column(
                         children: [
                           Text(
-                            '${remainingTaken.toStringAsFixed(0)}',
+                            '${remainingTaken.toStringAsFixed(2)}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

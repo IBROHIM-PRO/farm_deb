@@ -161,7 +161,7 @@ class _BuyerCottonHistoryScreenState extends State<BuyerCottonHistoryScreen> {
                       Expanded(
                         child: _buildStatItem(
                           'Ҳамагӣ',
-                          '${totalAmount.toStringAsFixed(0)} с',
+                          '${totalAmount.toStringAsFixed(2)} с',
                           Icons.attach_money,
                           Colors.green,
                         ),
@@ -218,11 +218,11 @@ class _BuyerCottonHistoryScreenState extends State<BuyerCottonHistoryScreen> {
                                   ),
                                 ),
                                 Text(
-                                  '${totalRemaining.toStringAsFixed(0)} с боқимонда',
+                                  '${totalRemaining.toStringAsFixed(2)} с боқимонда',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.red,
+                                    color: Colors.orange,
                                   ),
                                 ),
                               ],
@@ -406,7 +406,7 @@ class _BuyerCottonHistoryScreenState extends State<BuyerCottonHistoryScreen> {
                         style: TextStyle(fontSize: 14),
                       ),
                       Text(
-                        '${sale.pricePerUnit.toStringAsFixed(0)} ${sale.currency}/${sale.saleType == SaleType.byWeight ? 'кг' : 'в.'}',
+                        '${sale.pricePerUnit.toStringAsFixed(2)} ${sale.currency}/${sale.saleType == SaleType.byWeight ? 'кг' : 'в.'}',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -423,7 +423,7 @@ class _BuyerCottonHistoryScreenState extends State<BuyerCottonHistoryScreen> {
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                       ),
                       Text(
-                        '${sale.totalAmount.toStringAsFixed(0)} ${sale.currency}',
+                        '${sale.totalAmount.toStringAsFixed(2)} ${sale.currency}',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -442,7 +442,7 @@ class _BuyerCottonHistoryScreenState extends State<BuyerCottonHistoryScreen> {
                           style: TextStyle(fontSize: 14),
                         ),
                         Text(
-                          '${sale.paidAmount.toStringAsFixed(0)} ${sale.currency}',
+                          '${sale.paidAmount.toStringAsFixed(2)} ${sale.currency}',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -459,11 +459,11 @@ class _BuyerCottonHistoryScreenState extends State<BuyerCottonHistoryScreen> {
                           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                         ),
                         Text(
-                          '${sale.remainingAmount.toStringAsFixed(0)} ${sale.currency}',
+                          '${sale.remainingAmount.toStringAsFixed(2)} ${sale.currency}',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Colors.red,
+                            color: Colors.orange,
                           ),
                         ),
                       ],

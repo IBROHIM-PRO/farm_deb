@@ -326,7 +326,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
                   ),
                 ),
                 Text(
-                  '${sale.totalAmount!.toStringAsFixed(0)} с',
+                  '${sale.totalAmount!.toStringAsFixed(2)} с',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,

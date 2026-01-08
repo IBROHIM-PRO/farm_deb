@@ -327,7 +327,7 @@ class _AddCattlePurchaseScreenState extends State<AddCattlePurchaseScreen> {
                     const SizedBox(width: 8),
                     const Text('Нархи умумӣ: '),
                     Text(
-                      '${_getCalculatedTotal().toStringAsFixed(0)} $_currency',
+                      '${_getCalculatedTotal().toStringAsFixed(2)} $_currency',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.green,
