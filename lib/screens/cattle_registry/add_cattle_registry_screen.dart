@@ -142,7 +142,7 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Рамзи якто барои шиносоии чорво',
+          'Рамзи гӯш барои шиносоии чорво',
           style: TextStyle(
             fontSize: 12,
             color: Colors.grey[600],

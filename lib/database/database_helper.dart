@@ -51,8 +51,9 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path, 
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -536,7 +537,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE cattle_registry (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        earTag TEXT NOT NULL UNIQUE,
+        earTag TEXT NOT NULL,
         name TEXT,
         gender TEXT NOT NULL,
         ageCategory TEXT NOT NULL,
@@ -622,6 +623,48 @@ class DatabaseHelper {
     ''');
 
     await db.execute('CREATE INDEX idx_daily_expenses_date ON daily_expenses (expenseDate DESC)');
+  }
+
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Remove UNIQUE constraint from earTag in cattle_registry table
+      // SQLite doesn't support ALTER TABLE to modify constraints, so we need to recreate the table
+      
+      // Step 1: Create temporary table with new schema (without UNIQUE constraint)
+      await db.execute('''
+        CREATE TABLE cattle_registry_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          earTag TEXT NOT NULL,
+          name TEXT,
+          gender TEXT NOT NULL,
+          ageCategory TEXT NOT NULL,
+          barnId INTEGER,
+          breederId INTEGER,
+          registrationDate TEXT NOT NULL,
+          status TEXT NOT NULL,
+          FOREIGN KEY (barnId) REFERENCES barns (id) ON DELETE SET NULL,
+          FOREIGN KEY (breederId) REFERENCES persons (id) ON DELETE SET NULL
+        )
+      ''');
+      
+      // Step 2: Copy data from old table to new table
+      await db.execute('''
+        INSERT INTO cattle_registry_new (id, earTag, name, gender, ageCategory, barnId, breederId, registrationDate, status)
+        SELECT id, earTag, name, gender, ageCategory, barnId, breederId, registrationDate, status
+        FROM cattle_registry
+      ''');
+      
+      // Step 3: Drop old table
+      await db.execute('DROP TABLE cattle_registry');
+      
+      // Step 4: Rename new table to original name
+      await db.execute('ALTER TABLE cattle_registry_new RENAME TO cattle_registry');
+      
+      // Step 5: Recreate indexes
+      await db.execute('CREATE INDEX idx_cattle_registry_barn ON cattle_registry (barnId)');
+      await db.execute('CREATE INDEX idx_cattle_registry_eartag ON cattle_registry (earTag)');
+      await db.execute('CREATE INDEX idx_cattle_registry_status ON cattle_registry (status)');
+    }
   }
 
   // Person CRUD
