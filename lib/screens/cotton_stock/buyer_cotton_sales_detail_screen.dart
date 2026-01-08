@@ -155,7 +155,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
                       const Icon(Icons.list, color: Colors.blue, size: 18),
                       const SizedBox(width: 8),
                       Text(
-                        'Тафсилоти дастаҳо (${salesList.first.pricePerKg != null ? salesList.first.pricePerKg!.toStringAsFixed(0) : "0"} с/кг)',
+                        'Тафсилоти дастаҳо (${salesList.first.pricePerKg != null ? salesList.first.pricePerKg!.toStringAsFixed(2) : "0"} с/кг)',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -219,7 +219,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
               _buildSummaryStat('Донаҳо', '$totalPieces', Icons.format_list_numbered, Colors.blue),
               _buildSummaryStat('Вазн', '${totalWeight.toStringAsFixed(1)} кг', Icons.scale, Colors.green),
               if (totalAmount > 0)
-                _buildSummaryStat('Маблағ', '${totalAmount.toStringAsFixed(0)} с', Icons.attach_money, Colors.orange),
+                _buildSummaryStat('Маблағ', '${totalAmount.toStringAsFixed(2)} с', Icons.attach_money, Colors.orange),
             ],
           ),
         ],

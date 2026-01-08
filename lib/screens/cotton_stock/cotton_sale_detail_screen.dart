@@ -391,7 +391,7 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
                       children: [
                         const Text('Маблағ:', style: TextStyle(color: Colors.grey)),
                         Text(
-                          '${sale.totalAmount!.toStringAsFixed(0)} с',
+                          '${sale.totalAmount!.toStringAsFixed(2)} с',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.green,
