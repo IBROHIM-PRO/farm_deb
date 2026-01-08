@@ -578,6 +578,40 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
                         ),
                       ],
                       
+                      // Freight cost if exists
+                      if (purchase.freightCost > 0) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.orange[200]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.local_shipping, size: 16, color: Colors.orange[700]),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Хароҷоти грузчик',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.orange[700],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              _buildItemRow('Маблағ:', '${purchase.freightCost.toStringAsFixed(2)} сомонӣ'),
+                            ],
+                          ),
+                        ),
+                      ],
+                      
                       const SizedBox(height: 40),
                     ],
                   ),

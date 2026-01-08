@@ -376,36 +376,7 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
                 ),
               ],
             ),
-          ],
-          if (sale.freightCost > 0) ...[
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.local_shipping, size: 12, color: Colors.orange[700]),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Хароҷоти грузчик:',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  '${sale.freightCost.toStringAsFixed(2)} с',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange[700],
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ],          
         ],
       ),
     );

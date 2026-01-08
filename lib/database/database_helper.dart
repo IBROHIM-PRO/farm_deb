@@ -51,7 +51,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path, 
-      version: 4,
+      version: 2,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -350,6 +350,7 @@ class DatabaseHelper {
         pricePerKg REAL,
         pricePerUnit REAL,
         totalAmount REAL,
+        freightCost REAL NOT NULL DEFAULT 0,
         FOREIGN KEY (buyerId) REFERENCES buyers (id) ON DELETE CASCADE
       )
     ''');
@@ -665,17 +666,13 @@ class DatabaseHelper {
       await db.execute('CREATE INDEX idx_cattle_registry_barn ON cattle_registry (barnId)');
       await db.execute('CREATE INDEX idx_cattle_registry_eartag ON cattle_registry (earTag)');
       await db.execute('CREATE INDEX idx_cattle_registry_status ON cattle_registry (status)');
-    }
-    
-    if (oldVersion < 3) {
+      
       // Add freightCost column to cotton_purchase_registry table
       await db.execute('ALTER TABLE cotton_purchase_registry ADD COLUMN freightCost REAL NOT NULL DEFAULT 0');
       
       // Add freightCost column to cotton_stock_sales table
       await db.execute('ALTER TABLE cotton_stock_sales ADD COLUMN freightCost REAL NOT NULL DEFAULT 0');
-    }
-    
-    if (oldVersion < 4) {
+      
       // Ensure freightCost columns exist (for databases that might have issues)
       try {
         // Check if columns exist, if not add them
