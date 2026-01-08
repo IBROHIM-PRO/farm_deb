@@ -51,7 +51,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path, 
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -673,6 +673,32 @@ class DatabaseHelper {
       
       // Add freightCost column to cotton_stock_sales table
       await db.execute('ALTER TABLE cotton_stock_sales ADD COLUMN freightCost REAL NOT NULL DEFAULT 0');
+    }
+    
+    if (oldVersion < 4) {
+      // Ensure freightCost columns exist (for databases that might have issues)
+      try {
+        // Check if columns exist, if not add them
+        final registryInfo = await db.rawQuery('PRAGMA table_info(cotton_purchase_registry)');
+        final hasFreightCost = registryInfo.any((col) => col['name'] == 'freightCost');
+        
+        if (!hasFreightCost) {
+          await db.execute('ALTER TABLE cotton_purchase_registry ADD COLUMN freightCost REAL NOT NULL DEFAULT 0');
+        }
+      } catch (e) {
+        // Column might already exist, ignore
+      }
+      
+      try {
+        final salesInfo = await db.rawQuery('PRAGMA table_info(cotton_stock_sales)');
+        final hasFreightCost = salesInfo.any((col) => col['name'] == 'freightCost');
+        
+        if (!hasFreightCost) {
+          await db.execute('ALTER TABLE cotton_stock_sales ADD COLUMN freightCost REAL NOT NULL DEFAULT 0');
+        }
+      } catch (e) {
+        // Column might already exist, ignore
+      }
     }
   }
 

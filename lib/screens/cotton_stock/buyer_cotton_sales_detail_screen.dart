@@ -197,7 +197,9 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
   Widget _buildModalSummaryCard(List<CottonStockSale> salesList) {
     final totalWeight = salesList.fold<double>(0, (sum, sale) => sum + sale.totalWeight);
     final totalPieces = salesList.fold<int>(0, (sum, sale) => sum + sale.units);
-    final totalAmount = salesList.fold<double>(0, (sum, sale) => sum + (sale.totalAmount ?? 0));
+    final totalFreightCost = salesList.fold<double>(0, (sum, sale) => sum + sale.freightCost);
+    final cottonAmount = salesList.fold<double>(0, (sum, sale) => sum + (sale.totalAmount ?? 0));
+    final totalAmount = cottonAmount;
     
     return Container(
       decoration: BoxDecoration(
@@ -222,6 +224,45 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
                 _buildSummaryStat('Маблағ', '${totalAmount.toStringAsFixed(2)} с', Icons.attach_money, Colors.orange),
             ],
           ),
+          
+          // Show freight cost if exists
+          if (totalFreightCost > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange[200]!),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.local_shipping, size: 16, color: Colors.orange[700]),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Хароҷоти грузчик',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '${totalFreightCost.toStringAsFixed(2)} с',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -331,6 +372,35 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (sale.freightCost > 0) ...[
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.local_shipping, size: 12, color: Colors.orange[700]),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Хароҷоти грузчик:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '${sale.freightCost.toStringAsFixed(2)} с',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange[700],
                   ),
                 ),
               ],
