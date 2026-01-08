@@ -241,6 +241,15 @@ class AppProvider with ChangeNotifier {
 
   Future<List<Payment>> getPaymentsForDebt(int debtId) async => await _db.getPaymentsByDebtId(debtId);
   List<Debt> getDebtsForPerson(int personId) => _debts.where((d) => d.personId == personId).toList();
+  
+  /// Get a specific debt by ID from database
+  Future<Debt?> getDebtById(int debtId) async {
+    final db = await _db.database;
+    final maps = await db.query('debts', where: 'id = ?', whereArgs: [debtId]);
+    if (maps.isEmpty) return null;
+    return Debt.fromMap(maps.first);
+  }
+  
   Future<void> deleteDebt(int id) async { await _db.deleteDebt(id); await loadAllData(); }
 
   Map<String, Map<String, double>> getDebtTotalsByCurrency() {

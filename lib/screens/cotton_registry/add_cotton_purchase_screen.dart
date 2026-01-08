@@ -357,7 +357,7 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Ҳамагӣ нарх:', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                        Text('${item.totalPrice.toStringAsFixed(0)} с',
+                        Text('${item.totalPrice.toStringAsFixed(2)} с',
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green)),
                       ],
                     ),
@@ -428,19 +428,19 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
             const SizedBox(height: 8),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               const Text('Нархи пахта:'),
-              Text('${subtotal.toStringAsFixed(0)} с', style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text('${subtotal.toStringAsFixed(2)} с', style: const TextStyle(fontWeight: FontWeight.bold)),
             ]),
             if (transportCost > 0) ...[
               const SizedBox(height: 8),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 const Text('Харҷи интиқол:'),
-                Text('${transportCost.toStringAsFixed(0)} с', style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text('${transportCost.toStringAsFixed(2)} с', style: const TextStyle(fontWeight: FontWeight.bold)),
               ]),
             ],
             const Divider(),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               const Text('Ҳамагӣ харҷ:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              Text('${grandTotal.toStringAsFixed(0)} с', 
+              Text('${grandTotal.toStringAsFixed(2)} с', 
                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
             ]),
           ],

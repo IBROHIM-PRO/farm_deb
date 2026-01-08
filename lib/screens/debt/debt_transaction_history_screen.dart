@@ -20,6 +20,7 @@
   class _DebtTransactionHistoryScreenState
       extends State<DebtTransactionHistoryScreen> {
     late Person _person;
+    late Debt _currentDebt;
     List<Payment> _payments = [];
     List<_TransactionEntry> _timeline = [];
 
@@ -33,6 +34,15 @@
       final provider = context.read<AppProvider>();
 
       _person = provider.getPersonById(widget.debt.personId)!;
+      
+      // Reload debt from database to get updated amounts
+      final updatedDebt = await provider.getDebtById(widget.debt.id!);
+      if (updatedDebt != null) {
+        _currentDebt = updatedDebt;
+      } else {
+        _currentDebt = widget.debt;
+      }
+      
       _payments = await provider.getPaymentsByDebtId(widget.debt.id!);
 
       _buildTimeline();
@@ -46,16 +56,16 @@
       _timeline.add(
         _TransactionEntry(
           type: _TransactionType.debtCreated,
-          date: widget.debt.date,
-          amount: widget.debt.totalAmount,
-          currency: widget.debt.currency,
-          runningBalance: widget.debt.totalAmount,
-          debtType: widget.debt.type,
+          date: _currentDebt.date,
+          amount: _currentDebt.totalAmount,
+          currency: _currentDebt.currency,
+          runningBalance: _currentDebt.totalAmount,
+          debtType: _currentDebt.type,
           description: 'Қарз сабт шуд',
         ),
       );
 
-      double runningBalance = widget.debt.totalAmount;
+      double runningBalance = _currentDebt.totalAmount;
 
       for (final payment in _payments.reversed) {
         runningBalance -= payment.amount;
@@ -65,9 +75,9 @@
             type: _TransactionType.payment,
             date: payment.date,
             amount: payment.amount,
-            currency: widget.debt.currency,
+            currency: _currentDebt.currency,
             runningBalance: runningBalance,
-            debtType: widget.debt.type,
+            debtType: _currentDebt.type,
             description: 'Пардохт',
             isPayment: true,
           ),
@@ -80,7 +90,7 @@
     @override
     Widget build(BuildContext context) {
       final color =
-          widget.debt.type == DebtType.given ? Colors.green : Colors.blue;
+          _currentDebt.type == DebtType.given ? Colors.green : Colors.blue;
 
       return Scaffold(
         appBar: AppBar(
@@ -89,7 +99,7 @@
           foregroundColor: Colors.white,
           centerTitle: true,
           actions: [
-            if (widget.debt.remainingAmount > 0)
+            if (_currentDebt.remainingAmount > 0)
               IconButton(
                 onPressed: () => _showPaymentDialog(context), 
                 icon: const Icon(Icons.add),
@@ -98,21 +108,30 @@
           ],
         ),
         backgroundColor: Colors.grey[100],
-        body: Column(
-          children: [        
-            _buildDebtSummary(),
-            Expanded(child: _buildTimelineView()),
-          ],
+        body: RefreshIndicator(
+          onRefresh: _loadData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              children: [        
+                _buildDebtSummary(),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height - 250,
+                  child: _buildTimelineView(),
+                ),
+              ],
+            ),
+          ),
         ),
       );
     }  
 
     Widget _buildDebtSummary() {
       return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
+        margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: widget.debt.type == DebtType.given ? Colors.green : Colors.blue,
+          color: _currentDebt.type == DebtType.given ? Colors.green : Colors.blue,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -120,15 +139,15 @@
           children: [
             _summaryItem(
               'Умумӣ',
-              '${widget.debt.totalAmount.toStringAsFixed(2)} ${widget.debt.currency}',
+              '${_currentDebt.totalAmount.toStringAsFixed(2)} ${_currentDebt.currency}',
             ),
             _summaryItem(
               'Боқимонда',
-              '${widget.debt.remainingAmount.toStringAsFixed(2)} ${widget.debt.currency}',
+              '${_currentDebt.remainingAmount.toStringAsFixed(2)} ${_currentDebt.currency}',
             ),
             _summaryItem(
               'Пардохт',
-              '${(widget.debt.totalAmount - widget.debt.remainingAmount).toStringAsFixed(2)} ${widget.debt.currency}',
+              '${(_currentDebt.totalAmount - _currentDebt.remainingAmount).toStringAsFixed(2)} ${_currentDebt.currency}',
             ),
           ],
         ),
@@ -154,12 +173,12 @@
     Widget _buildTimelineView() {
       if (_timeline.isEmpty) return const Center(child: Text('Маълумот нест'));
 
-      return RefreshIndicator(
-        onRefresh: _loadData,
-        child: ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: _timeline.length,
-          itemBuilder: (context, index) {
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: _timeline.length,
+        itemBuilder: (context, index) {
             final entry = _timeline[index];
 
             return Card(
@@ -181,8 +200,7 @@
               ),
             );
           },
-        ),
-      );
+        );
     }
 
     Future<void> _showPaymentDialog(BuildContext context) async {
@@ -199,7 +217,7 @@
                 children: [
                   Expanded(
                     child: Text(
-                      'Боқимонда: ${widget.debt.remainingAmount.toStringAsFixed(2)} ${widget.debt.currency}',
+                      'Боқимонда: ${_currentDebt.remainingAmount.toStringAsFixed(2)} ${_currentDebt.currency}',
                     ),
                   ),                
                 ],
@@ -214,7 +232,7 @@
                     onPressed: () {
                       // Боқимондаро ба TextField ворид мекунад
                       amountController.text =
-                          widget.debt.remainingAmount.toStringAsFixed(2);
+                          _currentDebt.remainingAmount.toStringAsFixed(2);
                     },
                     child: const Text('Ворид кардан'),
                   ),
@@ -230,10 +248,10 @@
                 final amount = double.tryParse(amountController.text);
                 if (amount == null ||
                     amount <= 0 ||
-                    amount > widget.debt.remainingAmount) return;
+                    amount > _currentDebt.remainingAmount) return;
 
                 await ctx.read<AppProvider>().makePayment(
-                      debt: widget.debt,
+                      debt: _currentDebt,
                       amount: amount,
                     );
 
