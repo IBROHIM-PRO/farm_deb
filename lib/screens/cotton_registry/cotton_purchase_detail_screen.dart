@@ -100,7 +100,7 @@ class _CottonPurchaseDetailScreenState extends State<CottonPurchaseDetailScreen>
     final totalWeight = items.fold(0.0, (sum, item) => sum + item.weight);
     final totalUnits = items.fold(0, (sum, item) => sum + item.units);
     final totalPrice = items.fold(0.0, (sum, item) => sum + item.totalPrice);
-    final grandTotal = totalPrice + purchase!.transportationCost;
+    final grandTotal = totalPrice + purchase!.transportationCost + purchase!.freightCost;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -122,7 +122,7 @@ class _CottonPurchaseDetailScreenState extends State<CottonPurchaseDetailScreen>
           // Summary
           _buildSectionTitle('Хулосаи умумӣ'),
           const SizedBox(height: 12),
-          _buildSummaryCard(totalWeight, totalUnits, totalPrice, grandTotal),
+          _buildSummaryCard(totalWeight, totalUnits, totalPrice, grandTotal, purchase!.transportationCost, purchase!.freightCost),
           
           const SizedBox(height: 24),
           
@@ -304,7 +304,7 @@ class _CottonPurchaseDetailScreenState extends State<CottonPurchaseDetailScreen>
     );
   }
 
-  Widget _buildSummaryCard(double totalWeight, int totalUnits, double totalPrice, double grandTotal) {
+  Widget _buildSummaryCard(double totalWeight, int totalUnits, double totalPrice, double grandTotal, double transportCost, double freightCost) {
     return Card(
       color: Colors.grey[50],
       child: Padding(
@@ -323,10 +323,19 @@ class _CottonPurchaseDetailScreenState extends State<CottonPurchaseDetailScreen>
             Row(
               children: [
                 Expanded(child: _buildSummaryItem('Нархи пахта', '${totalPrice.toStringAsFixed(2)} TJS')),
-                if (purchase!.transportationCost > 0)
-                  Expanded(child: _buildSummaryItem('Интиқол', '${purchase!.transportationCost.toStringAsFixed(2)} TJS')),
+                if (transportCost > 0)
+                  Expanded(child: _buildSummaryItem('Интиқол', '${transportCost.toStringAsFixed(2)} TJS')),
               ],
             ),
+            
+            if (freightCost > 0) ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: _buildSummaryItem('Хароҷоти грузчик', '${freightCost.toStringAsFixed(2)} TJS')),
+                ],
+              ),
+            ],
             
             const Divider(height: 32),
             
@@ -414,7 +423,7 @@ class _CottonPurchaseDetailScreenState extends State<CottonPurchaseDetailScreen>
     final totalWeight = items.fold(0.0, (sum, item) => sum + item.weight);
     final totalUnits = items.fold(0, (sum, item) => sum + item.units);
     final totalPrice = items.fold(0.0, (sum, item) => sum + item.totalPrice);
-    final grandTotal = totalPrice + purchase!.transportationCost;
+    final grandTotal = totalPrice + purchase!.transportationCost + purchase!.freightCost;
 
     showDialog(
       context: context,
@@ -435,6 +444,8 @@ class _CottonPurchaseDetailScreenState extends State<CottonPurchaseDetailScreen>
               Text('Нархи пахта: ${totalPrice.toStringAsFixed(2)} TJS'),
               if (purchase!.transportationCost > 0)
                 Text('Интиқол: ${purchase!.transportationCost.toStringAsFixed(2)} TJS'),
+              if (purchase!.freightCost > 0)
+                Text('Хароҷоти грузчик: ${purchase!.freightCost.toStringAsFixed(2)} TJS'),
               const Divider(),
               Text(
                 'ҲАМАГӢ: ${grandTotal.toStringAsFixed(2)} TJS',

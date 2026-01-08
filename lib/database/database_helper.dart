@@ -51,7 +51,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path, 
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -391,6 +391,7 @@ class DatabaseHelper {
         purchaseDate TEXT NOT NULL,
         supplierName TEXT NOT NULL,
         transportationCost REAL NOT NULL,
+        freightCost REAL NOT NULL DEFAULT 0,
         notes TEXT
       )
     ''');
@@ -664,6 +665,14 @@ class DatabaseHelper {
       await db.execute('CREATE INDEX idx_cattle_registry_barn ON cattle_registry (barnId)');
       await db.execute('CREATE INDEX idx_cattle_registry_eartag ON cattle_registry (earTag)');
       await db.execute('CREATE INDEX idx_cattle_registry_status ON cattle_registry (status)');
+    }
+    
+    if (oldVersion < 3) {
+      // Add freightCost column to cotton_purchase_registry table
+      await db.execute('ALTER TABLE cotton_purchase_registry ADD COLUMN freightCost REAL NOT NULL DEFAULT 0');
+      
+      // Add freightCost column to cotton_stock_sales table
+      await db.execute('ALTER TABLE cotton_stock_sales ADD COLUMN freightCost REAL NOT NULL DEFAULT 0');
     }
   }
 

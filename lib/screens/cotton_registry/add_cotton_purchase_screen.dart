@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../providers/cotton_registry_provider.dart';
 import '../../models/cotton_purchase_registry.dart';
 import '../../models/cotton_purchase_item.dart';
@@ -18,6 +19,7 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
   final _formKey = GlobalKey<FormState>();
   final _supplierController = TextEditingController();
   final _transportationCostController = TextEditingController();
+  final _freightCostController = TextEditingController();
   final _notesController = TextEditingController();
 
   DateTime _purchaseDate = DateTime.now();
@@ -56,6 +58,50 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
 
               const SizedBox(height: 24),
 
+              // Purchase Date Selector
+              InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _purchaseDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null) {
+                    setState(() => _purchaseDate = picked);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[300]!),
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.grey[50],
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today, color: Colors.green),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Санаи харид', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                            const SizedBox(height: 4),
+                            Text(
+                              DateFormat('dd/MM/yyyy').format(_purchaseDate),
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_drop_down, color: Colors.green),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
               // Transportation Cost
               TextFormField(
                 controller: _transportationCostController,
@@ -71,7 +117,42 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
                   hintText: 'Хароҷоти нақлиётро дарҷ кунед',
                 ),
                 keyboardType: TextInputType.number,
-              ),              
+              ),
+              const SizedBox(height: 16),
+
+              // Freight/Loading Cost
+              TextFormField(
+                controller: _freightCostController,
+                decoration: InputDecoration(
+                  labelText: 'Хароҷоти грузчик',
+                  suffixText: 'с',
+                  prefixIcon: const Icon(Icons.inventory_2, color: Colors.green),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],                  
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 16),
+
+              // Notes/Description Field
+              TextFormField(
+                controller: _notesController,
+                decoration: InputDecoration(
+                  labelText: 'Эзоҳ ё тавсиф (ихтиёрӣ)',
+                  hintText: 'Тавсифи харидориро дарҷ кунед',
+                  prefixIcon: const Icon(Icons.description, color: Colors.green),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+                maxLines: 3,
+                textCapitalization: TextCapitalization.sentences,
+              ),
               const SizedBox(height: 24),
 
               // Purchase Summary
@@ -405,7 +486,8 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
     final totalUnits = _cottonItems.fold(0, (sum, item) => sum + (int.tryParse(item.unitsController.text) ?? 0));
     final subtotal = _cottonItems.fold(0.0, (sum, item) => sum + item.totalPrice);
     final transportCost = double.tryParse(_transportationCostController.text) ?? 0;
-    final grandTotal = subtotal + transportCost;
+    final freightCost = double.tryParse(_freightCostController.text) ?? 0;
+    final grandTotal = subtotal + transportCost + freightCost;
 
     return Card(
       color: Colors.blue.withOpacity(0.1),
@@ -433,8 +515,15 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
             if (transportCost > 0) ...[
               const SizedBox(height: 8),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                const Text('Харҷи интиқол:'),
+                const Text('Харҷи нақлиёт:'),
                 Text('${transportCost.toStringAsFixed(2)} с', style: const TextStyle(fontWeight: FontWeight.bold)),
+              ]),
+            ],
+            if (freightCost > 0) ...[
+              const SizedBox(height: 8),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                const Text('Харҷи боркунӣ (фрахт):'),
+                Text('${freightCost.toStringAsFixed(2)} с', style: const TextStyle(fontWeight: FontWeight.bold)),
               ]),
             ],
             const Divider(),
@@ -523,10 +612,12 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
       setState(() => _isLoading = true);
 
       try {
-        final registry = CottonPurchaseRegistry(
-          purchaseDate: DateTime.now(),
+        final purchase = CottonPurchaseRegistry(
+          id: null,
+          purchaseDate: _purchaseDate,
           supplierName: _supplierController.text.trim(),
           transportationCost: double.tryParse(_transportationCostController.text) ?? 0,
+          freightCost: double.tryParse(_freightCostController.text) ?? 0,
           notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
         );
 
@@ -544,7 +635,7 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
           );
         }).toList();
 
-        await context.read<CottonRegistryProvider>().addCottonPurchase(registry: registry, items: items);
+        await context.read<CottonRegistryProvider>().addCottonPurchase(registry: purchase, items: items);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -568,6 +659,7 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
   void dispose() {
     _supplierController.dispose();
     _transportationCostController.dispose();
+    _freightCostController.dispose();
     _notesController.dispose();
     for (final item in _cottonItems) {
       item.dispose();

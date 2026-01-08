@@ -8,6 +8,7 @@ class CottonStockSale {
   final double? pricePerKg;
   final double? pricePerUnit;
   final double? totalAmount;
+  final double freightCost;
 
   CottonStockSale({
     this.id,
@@ -19,6 +20,7 @@ class CottonStockSale {
     this.pricePerKg,
     this.pricePerUnit,
     this.totalAmount,
+    this.freightCost = 0,
   });
 
   Map<String, dynamic> toMap() {
@@ -32,6 +34,7 @@ class CottonStockSale {
       'pricePerKg': pricePerKg,
       'pricePerUnit': pricePerUnit,
       'totalAmount': totalAmount,
+      'freightCost': freightCost,
     };
   }
 
@@ -46,6 +49,7 @@ class CottonStockSale {
       pricePerKg: map['pricePerKg']?.toDouble(),
       pricePerUnit: map['pricePerUnit']?.toDouble(),
       totalAmount: map['totalAmount']?.toDouble(),
+      freightCost: map['freightCost']?.toDouble() ?? 0,
     );
   }
 
@@ -59,6 +63,7 @@ class CottonStockSale {
     double? pricePerKg,
     double? pricePerUnit,
     double? totalAmount,
+    double? freightCost,
   }) {
     return CottonStockSale(
       id: id ?? this.id,
@@ -70,6 +75,7 @@ class CottonStockSale {
       pricePerKg: pricePerKg ?? this.pricePerKg,
       pricePerUnit: pricePerUnit ?? this.pricePerUnit,
       totalAmount: totalAmount ?? this.totalAmount,
+      freightCost: freightCost ?? this.freightCost,
     );
   }
 }

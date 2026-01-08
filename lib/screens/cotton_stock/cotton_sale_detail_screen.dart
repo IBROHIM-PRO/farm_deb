@@ -51,6 +51,7 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
       0, 
       (sum, sale) => sum + (sale.totalAmount ?? 0)
     );
+    final totalFreightCost = widget.sales.fold<double>(0, (sum, sale) => sum + sale.freightCost);
 
     return Scaffold(
       appBar: AppBar(
@@ -72,7 +73,7 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
                   const SizedBox(height: 16),
                   
                   // Ҷамъбасти умумӣ карт
-                  _buildSummaryCard(totalPieces, totalWeight, totalAmount),
+                  _buildSummaryCard(totalPieces, totalWeight, totalAmount, totalFreightCost),
                   const SizedBox(height: 24),
                   
                   // Дастаҳои фурӯш (агар якчанд бошад)
@@ -201,7 +202,9 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
     );
   }
   
-  Widget _buildSummaryCard(int totalPieces, double totalWeight, double totalAmount) {
+  Widget _buildSummaryCard(int totalPieces, double totalWeight, double totalAmount, double totalFreightCost) {
+    final cottonAmount = totalAmount - totalFreightCost;
+    final grandTotal = totalAmount;
     return Card(
       elevation: 2,
       color: Colors.teal.withOpacity(0.05),
@@ -255,7 +258,7 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
             ),
             
             // Маблағ агар мавҷуд бошад
-            if (totalAmount > 0) ...[
+            if (cottonAmount > 0) ...[
               const SizedBox(height: 12),
               const Divider(),
               const SizedBox(height: 16),
@@ -282,9 +285,41 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
                   ),
                   TableRow(
                     children: [
+                      _buildSummaryCell('Нархи пахта:', isLabel: true),
+                      _buildSummaryCell(
+                        '${cottonAmount.toStringAsFixed(2)} с',
+                        isValue: true,
+                      ),
+                    ],
+                  ),
+                  if (totalFreightCost > 0) ...[
+                    TableRow(
+                      children: [
+                        Container(height: 8),
+                        Container(height: 8),
+                      ],
+                    ),
+                    TableRow(
+                      children: [
+                        _buildSummaryCell('Хароҷоти грузчик:', isLabel: true),
+                        _buildSummaryCell(
+                          '${totalFreightCost.toStringAsFixed(2)} с',
+                          isValue: true,
+                        ),
+                      ],
+                    ),
+                  ],
+                  TableRow(
+                    children: [
+                      Container(height: 12),
+                      Container(height: 12),
+                    ],
+                  ),
+                  TableRow(
+                    children: [
                       _buildSummaryCell('Ҷамъи маблағ:', isLabel: true, isBold: true),
                       _buildSummaryCell(
-                        '${totalAmount.toStringAsFixed(2)} с',
+                        '${grandTotal.toStringAsFixed(2)} с',
                         isValue: true,
                         isBold: true,
                         isTotal: true,
@@ -395,6 +430,22 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (sale.freightCost > 0) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Хароҷоти грузчик:', style: TextStyle(color: Colors.grey)),
+                        Text(
+                          '${sale.freightCost.toStringAsFixed(2)} с',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange,
                           ),
                         ),
                       ],

@@ -42,6 +42,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
   final _formKey = GlobalKey<FormState>();
   final _buyerNameController = TextEditingController();
   final _pricePerKgController = TextEditingController(text: '0');
+  final _freightCostController = TextEditingController(text: '0');
   
   // UI State
   List<Buyer> buyers = [];
@@ -69,6 +70,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
   void dispose() {
     _buyerNameController.dispose();
     _pricePerKgController.dispose();
+    _freightCostController.dispose();
     for (final item in saleItems) {
       item.dispose();
     }
@@ -136,6 +138,8 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
             _buildBuyerNameInput(),
             const SizedBox(height: 16),
             _buildPricePerKgInput(),
+            const SizedBox(height: 16),
+            _buildFreightCostInput(),
             const SizedBox(height: 24),
             
             _buildSectionTitle('Дастаҳои фуруш'),
@@ -444,6 +448,32 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
     );
   }
 
+  Widget _buildFreightCostInput() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: TextFormField(
+          controller: _freightCostController,
+          decoration: const InputDecoration(
+            labelText: 'Хароҷоти грузчик',
+            prefixIcon: Icon(Icons.inventory_2),
+            suffixText: 'с',            
+          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          validator: (value) {
+            if (value != null && value.trim().isNotEmpty) {
+              final cost = double.tryParse(value);
+              if (cost == null || cost < 0) {
+                return 'Хароҷоти дуруст ворид кунед';
+              }
+            }
+            return null;
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildPricePerKgInput() {
     return Card(
       child: Padding(
@@ -707,11 +737,12 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
       ),
     );
   }
-
   Widget _buildSaleSummary() {
     final totalPieces = saleItems.fold<int>(0, (sum, item) => sum + item.pieces);
     final totalWeight = saleItems.fold<double>(0, (sum, item) => sum + item.totalWeight);
-    final totalAmount = totalWeight * pricePerKg;
+    final cottonAmount = totalWeight * pricePerKg;
+    final freightCost = double.tryParse(_freightCostController.text) ?? 0;
+    final totalAmount = cottonAmount + freightCost;
     
     return Card(
       color: Colors.green.withOpacity(0.1),
@@ -734,6 +765,12 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
             _buildSummaryRow('Ҷамъи вазн', '${totalWeight.toStringAsFixed(1)} кг'),
             const SizedBox(height: 8),
             _buildSummaryRow('Нархи 1 кг', '${pricePerKg.toStringAsFixed(2)} сомонӣ'),
+            const SizedBox(height: 8),
+            _buildSummaryRow('Нархи пахта', '${cottonAmount.toStringAsFixed(2)} сомонӣ'),
+            if (freightCost > 0) ...[
+              const SizedBox(height: 8),
+              _buildSummaryRow('Хароҷоти грузчик', '${freightCost.toStringAsFixed(2)} сомонӣ'),
+            ],
             const Divider(height: 24),
             _buildSummaryRow(
               'Ҷамъи маблағ',
@@ -745,11 +782,10 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
       ),
     );
   }
-
-  Widget _buildSummaryRow(String label, String value, {bool isTotal = false}) {
+   Widget _buildSummaryRow(String label, String value, {bool isTotal = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
+         children: [
         Text(
           label,
           style: TextStyle(
@@ -974,9 +1010,16 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
         salePricePerKg = pricePerKg;
       }
 
+      // Get freight cost and distribute it proportionally across items
+      final totalFreightCost = double.tryParse(_freightCostController.text) ?? 0;
+      final totalWeight = saleItems.fold<double>(0, (sum, item) => sum + item.totalWeight);
+
       // Save each sale item as separate sale record
       final List<int> savedSaleIds = [];
       for (final item in saleItems) {
+        // Calculate proportional freight cost for this item
+        final itemFreightCost = totalWeight > 0 ? (item.totalWeight / totalWeight) * totalFreightCost : 0.0;
+        
         final sale = CottonStockSale(
           buyerId: buyer.id!,
           saleDate: selectedDate,
@@ -985,6 +1028,7 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
           totalWeight: item.totalWeight,
           pricePerKg: salePricePerKg,
           totalAmount: salePricePerKg != null ? item.totalWeight * salePricePerKg : null,
+          freightCost: itemFreightCost.toDouble(),
         );
 
         final saleId = await DatabaseHelper.instance.insertCottonStockSale(sale);

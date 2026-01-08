@@ -4,7 +4,8 @@ class CottonPurchaseRegistry {
   final int? id;
   final DateTime purchaseDate;
   final String supplierName;        // Seller name
-  final double transportationCost;  // Optional freight cost
+  final double transportationCost;  // Transportation cost
+  final double freightCost;         // Freight/loading cost
   final String? notes;              // Optional purchase notes
 
   CottonPurchaseRegistry({
@@ -12,6 +13,7 @@ class CottonPurchaseRegistry {
     required this.purchaseDate,
     required this.supplierName,
     this.transportationCost = 0,
+    this.freightCost = 0,
     this.notes,
   });
 
@@ -21,6 +23,7 @@ class CottonPurchaseRegistry {
       'purchaseDate': purchaseDate.toIso8601String(),
       'supplierName': supplierName,
       'transportationCost': transportationCost,
+      'freightCost': freightCost,
       'notes': notes,
     };
   }
@@ -31,6 +34,7 @@ class CottonPurchaseRegistry {
       purchaseDate: map['purchaseDate'] != null ? DateTime.parse(map['purchaseDate'] as String) : DateTime.now(),
       supplierName: map['supplierName'] as String? ?? '',
       transportationCost: (map['transportationCost'] as num?)?.toDouble() ?? 0,
+      freightCost: (map['freightCost'] as num?)?.toDouble() ?? 0,
       notes: map['notes'] as String?,
     );
   }
@@ -40,6 +44,7 @@ class CottonPurchaseRegistry {
     DateTime? purchaseDate,
     String? supplierName,
     double? transportationCost,
+    double? freightCost,
     String? notes,
   }) {
     return CottonPurchaseRegistry(
@@ -47,6 +52,7 @@ class CottonPurchaseRegistry {
       purchaseDate: purchaseDate ?? this.purchaseDate,
       supplierName: supplierName ?? this.supplierName,
       transportationCost: transportationCost ?? this.transportationCost,
+      freightCost: freightCost ?? this.freightCost,
       notes: notes ?? this.notes,
     );
   }
