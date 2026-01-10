@@ -152,6 +152,41 @@ class CottonRegistryProvider with ChangeNotifier {
     debugPrint('✅ Cotton purchase registry updated');
   }
 
+  /// Update cotton purchase with items (full update)
+  Future<void> updatePurchaseWithItems(
+    CottonPurchaseRegistry registry,
+    List<CottonPurchaseItem> items,
+  ) async {
+    final db = await _dbHelper.database;
+    await db.transaction((txn) async {
+      // Update registry
+      await txn.update(
+        'cotton_purchase_registry',
+        registry.toMap(),
+        where: 'id = ?',
+        whereArgs: [registry.id],
+      );
+      
+      // Delete old items
+      await txn.delete(
+        'cotton_purchase_items',
+        where: 'purchaseId = ?',
+        whereArgs: [registry.id],
+      );
+      
+      // Insert new items
+      for (final item in items) {
+        await txn.insert(
+          'cotton_purchase_items',
+          item.copyWith(purchaseId: registry.id!).toMap(),
+        );
+      }
+    });
+    
+    await loadAllData();
+    debugPrint('✅ Cotton purchase updated with items');
+  }
+
   /// Delete cotton purchase registry and related data
   Future<void> deletePurchaseRegistry(int registryId) async {
     final db = await _dbHelper.database;
@@ -165,6 +200,75 @@ class CottonRegistryProvider with ChangeNotifier {
     });
     await loadAllData();
     debugPrint('✅ Cotton purchase registry deleted');
+  }
+
+  /// Update cotton processing registry (basic info only)
+  Future<void> updateProcessingRegistry(CottonProcessingRegistry registry) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'cotton_processing_registry',
+      registry.toMap(),
+      where: 'id = ?',
+      whereArgs: [registry.id],
+    );
+    await loadProcessingRegistry();
+    debugPrint('✅ Cotton processing registry updated');
+  }
+
+  /// Delete cotton processing registry and related data
+  Future<void> deleteProcessingRegistry(int registryId) async {
+    final db = await _dbHelper.database;
+    await db.transaction((txn) async {
+      // Delete processing inputs
+      await txn.delete('cotton_processing_inputs', where: 'processingId = ?', whereArgs: [registryId]);
+      // Delete processing outputs
+      await txn.delete('cotton_processing_outputs', where: 'processingId = ?', whereArgs: [registryId]);
+      // Delete registry
+      await txn.delete('cotton_processing_registry', where: 'id = ?', whereArgs: [registryId]);
+    });
+    await loadAllData();
+    debugPrint('✅ Cotton processing registry deleted');
+  }
+
+  /// Update cotton processing with items (full update)
+  Future<void> updateProcessingWithItems(
+    CottonProcessingRegistry registry,
+    List<CottonProcessingInput> inputs,
+    List<CottonProcessingOutput> outputs,
+  ) async {
+    final db = await _dbHelper.database;
+    await db.transaction((txn) async {
+      // Update registry
+      await txn.update(
+        'cotton_processing_registry',
+        registry.toMap(),
+        where: 'id = ?',
+        whereArgs: [registry.id],
+      );
+      
+      // Delete old inputs and outputs
+      await txn.delete('cotton_processing_inputs', where: 'processingId = ?', whereArgs: [registry.id]);
+      await txn.delete('cotton_processing_outputs', where: 'processingId = ?', whereArgs: [registry.id]);
+      
+      // Insert new inputs
+      for (final input in inputs) {
+        await txn.insert(
+          'cotton_processing_inputs',
+          input.copyWith(processingId: registry.id!).toMap(),
+        );
+      }
+      
+      // Insert new outputs
+      for (final output in outputs) {
+        await txn.insert(
+          'cotton_processing_outputs',
+          output.copyWith(processingId: registry.id!).toMap(),
+        );
+      }
+    });
+    
+    await loadAllData();
+    debugPrint('✅ Cotton processing updated with items');
   }
 
   /// Transfer purchased cotton items to warehouse inventory

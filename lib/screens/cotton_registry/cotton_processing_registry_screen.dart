@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/cotton_registry_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../models/cotton_processing_registry.dart';
 import '../../models/cotton_processing_calculator.dart';
 import '../../theme/app_theme.dart';
@@ -101,29 +102,71 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
         ? DateFormat('dd.MM.yyyy').format(processing.processingDate!)
         : 'Санаи номаълум';
 
-    return GestureDetector(
-      onTap: () => _showProcessingDetailsModal(processing, inputs, outputs, provider),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Row - Date and status indicator
-              Row(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Edit/Delete buttons at the top
+          Consumer<SettingsProvider>(
+            builder: (context, settingsProvider, _) {
+              if (!settingsProvider.editDeleteEnabled) {
+                return const SizedBox.shrink();
+              }
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                      onPressed: () => _navigateToEditProcessing(context, processing, inputs, outputs),
+                      tooltip: 'Таҳрир',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      iconSize: 18,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                      onPressed: () => _confirmDeleteProcessing(context, processing),
+                      tooltip: 'Нест кардан',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      iconSize: 18,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          // Card content
+          GestureDetector(
+            onTap: () => _showProcessingDetailsModal(processing, inputs, outputs, provider),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Row - Date and status indicator
+                  Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
@@ -244,19 +287,21 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
                 ),
               ),
               
-              // Arrow at bottom
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Colors.grey[500],
-                ),
+                  // Arrow at bottom
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -649,5 +694,246 @@ class _CottonProcessingRegistryScreenState extends State<CottonProcessingRegistr
       
       return dateStr.toLowerCase().contains(_searchQuery);
     }).toList();
+  }
+  
+  // Navigate to full edit form (same as add form)
+  void _navigateToEditProcessing(
+    BuildContext context,
+    CottonProcessingRegistry processing,
+    List<CottonProcessingInput> inputs,
+    List<CottonProcessingOutput> outputs,
+  ) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddCottonProcessingScreen(
+          processing: processing,
+          inputs: inputs,
+          outputs: outputs,
+        ),
+      ),
+    );
+    
+    // Refresh after editing
+    if (mounted) {
+      await context.read<CottonRegistryProvider>().loadAllData();
+    }
+  }
+  
+  // Quick inline edit form for cotton processing (kept for quick date/notes edits)
+  void _showProcessingEditForm(BuildContext context, CottonProcessingRegistry processing) {
+    final formKey = GlobalKey<FormState>();
+    final notesController = TextEditingController(text: processing.notes ?? '');
+    DateTime processingDate = processing.processingDate ?? DateTime.now();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Таҳрири коркард',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Processing date
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: processingDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) {
+                          setState(() => processingDate = picked);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today, color: Colors.purple),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Санаи коркард',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    DateFormat('dd/MM/yyyy').format(processingDate),
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_drop_down),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Notes
+                    TextFormField(
+                      controller: notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Эзоҳ (ихтиёрӣ)',
+                        prefixIcon: Icon(Icons.note, color: Colors.purple),
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Save button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (formKey.currentState!.validate()) {
+                            try {
+                              final provider = context.read<CottonRegistryProvider>();
+                              
+                              final updatedProcessing = processing.copyWith(
+                                processingDate: processingDate,
+                                notes: notesController.text.trim().isNotEmpty 
+                                  ? notesController.text.trim() 
+                                  : null,
+                              );
+                              
+                              await provider.updateProcessingRegistry(updatedProcessing);
+                              
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Коркард бомуваффақият таҳрир шуд'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Хато: ${e.toString()}'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Text('Нигоҳ доштан'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  // Confirm delete processing
+  Future<void> _confirmDeleteProcessing(BuildContext context, CottonProcessingRegistry processing) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Тасдиқ кунед'),
+        content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин коркардро нест кунед? Ин амал бозгашт карда намешавад.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Бекор кардан'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Нест кардан'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm == true && context.mounted) {
+      try {
+        final provider = context.read<CottonRegistryProvider>();
+        await provider.deleteProcessingRegistry(processing.id!);
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Коркард бомуваффақият нест карда шуд'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Хато: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 }

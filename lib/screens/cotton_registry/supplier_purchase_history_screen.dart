@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/cotton_registry_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../models/cotton_purchase_registry.dart';
 import '../../models/cotton_purchase_item.dart';
+import 'add_cotton_purchase_screen.dart';
 
 /// Supplier Purchase History Screen
 /// Shows all cotton purchases for a specific supplier
@@ -212,29 +214,71 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
     final itemsTotal = items.fold(0.0, (sum, item) => sum + item.totalPrice);
     final totalAmount = itemsTotal + purchase.transportationCost;
 
-    return GestureDetector(
-      onTap: () => _showPurchaseDetailsModal(purchase, items, totalWeight, totalUnits, totalAmount),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 2,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header row
-              Row(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Edit/Delete buttons at the top
+          Consumer<SettingsProvider>(
+            builder: (context, settingsProvider, _) {
+              if (!settingsProvider.editDeleteEnabled) {
+                return const SizedBox.shrink();
+              }
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                      onPressed: () => _navigateToEditPurchase(context, purchase, items),
+                      tooltip: 'Таҳрир',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      iconSize: 18,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                      onPressed: () => _confirmDeletePurchase(context, purchase),
+                      tooltip: 'Нест кардан',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      iconSize: 18,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          // Card content
+          GestureDetector(
+            onTap: () => _showPurchaseDetailsModal(purchase, items, totalWeight, totalUnits, totalAmount),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header row
+                  Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
@@ -354,21 +398,74 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
                 ),
               ),
               
-              // Arrow indicator
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Colors.grey[500],
-                ),
+                  // Arrow indicator
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
+  }
+  
+  // Confirm delete purchase
+  Future<void> _confirmDeletePurchase(BuildContext context, CottonPurchaseRegistry purchase) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Тасдиқ кунед'),
+        content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин харидро нест кунед? Ин амал бозгашт карда намешавад.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Бекор кардан'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Нест кардан'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm == true && context.mounted) {
+      try {
+        final provider = context.read<CottonRegistryProvider>();
+        await provider.deletePurchaseRegistry(purchase.id!);
+        await _loadSupplierPurchases();
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Харид бомуваффақият нест карда шуд'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Хато: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   double _calculateTotalWeight() {
@@ -476,7 +573,7 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
                       IconButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          _showPurchaseEditForm(context, purchase);
+                          _navigateToEditPurchase(context, purchase, items);
                         },
                         icon: const Icon(Icons.edit, size: 24, color: Colors.blue),
                         tooltip: 'Таҳрир',
@@ -676,7 +773,29 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
     );
   }
   
-  // Inline edit form for cotton purchase basic info
+  // Navigate to full edit form (same as add form)
+  void _navigateToEditPurchase(
+    BuildContext context,
+    CottonPurchaseRegistry purchase,
+    List<CottonPurchaseItem> items,
+  ) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddCottonPurchaseScreen(
+          purchase: purchase,
+          purchaseItems: items,
+        ),
+      ),
+    );
+    
+    // Refresh after editing
+    if (mounted) {
+      await _loadSupplierPurchases();
+    }
+  }
+  
+  // Inline edit form for cotton purchase basic info (kept for quick edits)
   void _showPurchaseEditForm(BuildContext context, CottonPurchaseRegistry purchase) {
     final formKey = GlobalKey<FormState>();
     final supplierController = TextEditingController(text: purchase.supplierName);

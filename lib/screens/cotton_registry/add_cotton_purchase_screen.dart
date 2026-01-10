@@ -6,10 +6,18 @@ import '../../models/cotton_purchase_registry.dart';
 import '../../models/cotton_purchase_item.dart';
 import '../../theme/app_theme.dart';
 
-/// Add Cotton Purchase Screen - Registry Master+Items pattern
+/// Add/Edit Cotton Purchase Screen - Registry Master+Items pattern
 /// One purchase can contain 1-3 cotton types (Lint, Uluk, Valakno)
+/// Same form used for both adding new and editing existing purchases
 class AddCottonPurchaseScreen extends StatefulWidget {
-  const AddCottonPurchaseScreen({super.key});
+  final CottonPurchaseRegistry? purchase;
+  final List<CottonPurchaseItem>? purchaseItems;
+  
+  const AddCottonPurchaseScreen({
+    super.key,
+    this.purchase,
+    this.purchaseItems,
+  });
 
   @override
   State<AddCottonPurchaseScreen> createState() => _AddCottonPurchaseScreenState();
@@ -31,15 +39,47 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
   @override
   void initState() {
     super.initState();
-    // Start with one cotton item
-    _addCottonItem();
+    
+    // If editing, load existing data
+    if (widget.purchase != null && widget.purchaseItems != null) {
+      _supplierController.text = widget.purchase!.supplierName;
+      _transportationCostController.text = widget.purchase!.transportationCost.toString();
+      _freightCostController.text = widget.purchase!.freightCost.toString();
+      _notesController.text = widget.purchase!.notes ?? '';
+      _purchaseDate = widget.purchase!.purchaseDate;
+      
+      // Load existing cotton items
+      for (var item in widget.purchaseItems!) {
+        _addCottonItemFromExisting(item);
+      }
+    } else {
+      // Start with one cotton item for new purchase
+      _addCottonItem();
+    }
+  }
+  
+  void _addCottonItemFromExisting(CottonPurchaseItem item) {
+    final itemData = CottonPurchaseItemData();
+    itemData.cottonType = item.cottonType;
+    itemData.weightController.text = item.weight.toString();
+    itemData.unitsController.text = item.units.toString();
+    itemData.pricePerKgController.text = item.pricePerKg.toString();
+    itemData.totalPrice = item.totalPrice;
+    
+    _cottonItems.add(itemData);
+    
+    // Add listener for total price calculation
+    itemData.weightController.addListener(() => _calculateTotalPrice(_cottonItems.length - 1));
+    itemData.pricePerKgController.addListener(() => _calculateTotalPrice(_cottonItems.length - 1));
   }
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.purchase != null;
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Харидании нави пахта'),
+        title: Text(isEditing ? 'Таҳрири харид' : 'Харидании нави пахта'),
       ),
       body: Form(
         key: _formKey,
@@ -539,6 +579,8 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
   }
 
   Widget _buildSaveButton() {
+    final isEditing = widget.purchase != null;
+    
     return SizedBox(
       width: double.infinity,
       height: 56,
@@ -551,7 +593,10 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
         ),
         child: _isLoading
             ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-            : const Text('Хариданӣ сабт кардан', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            : Text(
+                isEditing ? 'Нигоҳ доштан' : 'Хариданӣ сабт кардан',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
       ),
     );
   }
@@ -612,8 +657,11 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
       setState(() => _isLoading = true);
 
       try {
+        final isEditing = widget.purchase != null;
+        final provider = context.read<CottonRegistryProvider>();
+        
         final purchase = CottonPurchaseRegistry(
-          id: null,
+          id: widget.purchase?.id,
           purchaseDate: _purchaseDate,
           supplierName: _supplierController.text.trim(),
           transportationCost: double.tryParse(_transportationCostController.text) ?? 0,
@@ -625,7 +673,7 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
           final weight = double.parse(itemData.weightController.text);
           final pricePerKg = double.parse(itemData.pricePerKgController.text);
           return CottonPurchaseItem(
-            purchaseId: 0,
+            purchaseId: widget.purchase?.id ?? 0,
             cottonType: itemData.cottonType,
             weight: weight,
             units: int.parse(itemData.unitsController.text),
@@ -635,7 +683,13 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
           );
         }).toList();
 
-        await context.read<CottonRegistryProvider>().addCottonPurchase(registry: purchase, items: items);
+        if (isEditing) {
+          // Update existing purchase
+          await provider.updatePurchaseWithItems(purchase, items);
+        } else {
+          // Add new purchase
+          await provider.addCottonPurchase(registry: purchase, items: items);
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

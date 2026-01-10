@@ -232,128 +232,153 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header row with buyer name and status indicator
-              Row(
-                children: [
-                  // Status indicator (like the colored circle in the image)
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(sales),
-                      shape: BoxShape.circle,
+        child: Column(
+          children: [
+            // Edit/Delete buttons at the top
+            Consumer<SettingsProvider>(
+              builder: (context, settingsProvider, _) {
+                if (!settingsProvider.editDeleteEnabled) {
+                  return const SizedBox.shrink();
+                }
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      buyerName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BuyerCottonSalesDetailScreen(
+                                buyerName: buyerName,
+                                buyerId: buyerId,
+                              ),
+                            ),
+                          );
+                        },
+                        tooltip: 'Таҳрир',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        iconSize: 18,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Consumer<SettingsProvider>(
-                    builder: (context, settingsProvider, _) {
-                      if (settingsProvider.editDeleteEnabled) {
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit, size: 20),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BuyerCottonSalesDetailScreen(
-                                      buyerName: buyerName,
-                                      buyerId: buyerId,
-                                    ),
-                                  ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                        onPressed: () async {
+                          final confirm = await _confirmDeleteBuyerSales(context, buyerName, sales);
+                          if (confirm == true && context.mounted) {
+                            try {
+                              for (final sale in sales) {
+                                await context.read<CottonWarehouseProvider>().deleteCottonStockSale(sale.id!);
+                              }
+                              if (context.mounted) {
+                                await _loadData();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Фурӯшҳо бомуваффақият нест карда шуданд')),
                                 );
-                              },
-                              tooltip: 'Таҳрир',
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-                              onPressed: () async {
-                                final confirm = await _confirmDeleteBuyerSales(context, buyerName, sales);
-                                if (confirm == true && context.mounted) {
-                                  try {
-                                    for (final sale in sales) {
-                                      await context.read<CottonWarehouseProvider>().deleteCottonStockSale(sale.id!);
-                                    }
-                                    if (context.mounted) {
-                                      await _loadData();
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Фурӯшҳо бомуваффақият нест карда шуданд')),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('Хато: ${e.toString()}')),
-                                      );
-                                    }
-                                  }
-                                }
-                              },
-                              tooltip: 'Нест кардан',
-                            ),
-                          ],
-                        );
-                      }
-                      return Icon(
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Хато: ${e.toString()}')),
+                                );
+                              }
+                            }
+                          }
+                        },
+                        tooltip: 'Нест кардан',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        iconSize: 18,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            // Card content
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header row with buyer name and status indicator
+                  Row(
+                    children: [
+                      // Status indicator (like the colored circle in the image)
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(sales),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          buyerName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Icon(
                         Icons.arrow_forward_ios,
                         size: 16,
                         color: Colors.grey[400],
-                      );
-                    },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Date and sales count
+                  Padding(
+                    padding: const EdgeInsets.only(left: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
+                            const SizedBox(width: 6),
+                            Text(
+                              DateFormat('dd.MM.yyyy').format(latestDate),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Icon(Icons.shopping_cart, size: 14, color: Colors.grey[600]),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${sales.length} фурӯш',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),                                      
+                      ],
+                    ),
                   ),
                 ],
               ),
-              // Date and sales count
-              Padding(
-                padding: const EdgeInsets.only(left: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
-                        const SizedBox(width: 6),
-                        Text(
-                          DateFormat('dd.MM.yyyy').format(latestDate),
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Icon(Icons.shopping_cart, size: 14, color: Colors.grey[600]),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${sales.length} фурӯш',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),                                      
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

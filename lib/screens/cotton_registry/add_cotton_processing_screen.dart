@@ -11,10 +11,20 @@ import '../../models/cotton_purchase_item.dart';
 import '../../models/raw_cotton_warehouse.dart';
 import '../../models/processed_cotton_warehouse.dart';
 
-/// Add Cotton Processing Screen - Process cotton from purchases
+/// Add/Edit Cotton Processing Screen - Process cotton from purchases
 /// Implements the complex processing formulas and automatic calculations
+/// Same form used for both adding new and editing existing processing
 class AddCottonProcessingScreen extends StatefulWidget {
-  const AddCottonProcessingScreen({super.key});
+  final CottonProcessingRegistry? processing;
+  final List<CottonProcessingInput>? inputs;
+  final List<CottonProcessingOutput>? outputs;
+  
+  const AddCottonProcessingScreen({
+    super.key,
+    this.processing,
+    this.inputs,
+    this.outputs,
+  });
 
   @override
   State<AddCottonProcessingScreen> createState() => _AddCottonProcessingScreenState();
@@ -50,8 +60,50 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
   @override
   void initState() {
     super.initState();
-    _autoSelectPurchase();
+    
+    // If editing, load existing data
+    if (widget.processing != null && widget.inputs != null && widget.outputs != null) {
+      _loadExistingData();
+    } else {
+      _autoSelectPurchase();
+    }
+    
     _setupListeners();
+  }
+  
+  void _loadExistingData() {
+    // Load processing info
+    _notesController.text = widget.processing!.notes ?? '';
+    processingDate = widget.processing!.processingDate ?? DateTime.now();
+    
+    // Load inputs
+    for (var input in widget.inputs!) {
+      switch (input.inputType) {
+        case RawCottonType.lint:
+          _lintWeightController.text = input.weightUsed.toString();
+          _lintPiecesController.text = input.piecesUsed.toString();
+          break;
+        case RawCottonType.sliver:
+          _ulukWeightController.text = input.weightUsed.toString();
+          _ulukPiecesController.text = input.piecesUsed.toString();
+          break;
+        case RawCottonType.other:
+          _valaknoWeightController.text = input.weightUsed.toString();
+          _valaknoPiecesController.text = input.piecesUsed.toString();
+          break;
+      }
+    }
+    
+    // Load outputs
+    setState(() {
+      outputBatches = List.from(widget.outputs!);
+    });
+    
+    // Find the linked purchase
+    final provider = context.read<CottonRegistryProvider>();
+    selectedPurchase = provider.purchaseRegistry
+        .where((p) => p.id == widget.processing!.linkedPurchaseId)
+        .firstOrNull;
   }
 
   @override
@@ -118,9 +170,11 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.processing != null;
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Коркарди пахта'),
+        title: Text(isEditing ? 'Таҳрири коркард' : 'Коркарди пахта'),
       ),
       body: Form(
         key: _formKey,
@@ -716,7 +770,7 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
             ),
             child: isLoading
                 ? const CircularProgressIndicator(color: Colors.white)
-                : const Text('Сабт кардан'),
+                : Text(widget.processing == null ? 'Сабт кардан' : 'Нигоҳ доштан'),
           ),
         ),
       ],
@@ -862,14 +916,16 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
     setState(() => isLoading = true);
     
     try {
+      final isEditing = widget.processing != null;
       final provider = context.read<CottonRegistryProvider>();
       final warehouseProvider = context.read<CottonWarehouseProvider>();
       
       // Use auto-selected purchase or create a simple record
-      int purchaseId = selectedPurchase?.id ?? 1;
+      int purchaseId = selectedPurchase?.id ?? widget.processing?.linkedPurchaseId ?? 1;
       
       // Create processing registry with raw cotton inputs
       final processing = CottonProcessingRegistry(
+        id: widget.processing?.id,
         linkedPurchaseId: purchaseId,
         processingDate: processingDate,
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
@@ -953,16 +1009,24 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
       }
       
       // Save processing with inputs and outputs
-      await provider.addCottonProcessing(
-        registry: processing,
-        inputs: inputs,
-        outputs: outputBatches,
-      );
+      if (isEditing) {
+        await provider.updateProcessingWithItems(processing, inputs, outputBatches);
+      } else {
+        await provider.addCottonProcessing(
+          registry: processing,
+          inputs: inputs,
+          outputs: outputBatches,
+        );
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Коркард сабт шуд ва аз анбор кам карда шуд'),
+          SnackBar(
+            content: Text(
+              isEditing 
+                ? '✅ Коркард таҳрир шуд' 
+                : '✅ Коркард сабт шуд ва аз анбор кам карда шуд'
+            ),
             backgroundColor: Colors.green,
           ),
         );
