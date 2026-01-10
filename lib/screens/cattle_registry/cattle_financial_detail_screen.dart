@@ -11,6 +11,7 @@ import '../../models/cattle_sale.dart';
 import '../../models/cattle_weight.dart';
 import '../../theme/app_theme.dart';
 import 'cattle_weight_tracking_screen.dart';
+import 'add_cattle_registry_screen.dart';
 
 class CattleFinancialDetailScreen extends StatefulWidget {
   final int cattleId;
@@ -678,12 +679,28 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
     }
   }
 
-  void _editCattle(BuildContext context) {
+  void _editCattle(BuildContext context) async {
     if (cattle == null) return;
-    _showCattleEditForm(context, cattle!);
+    
+    // Navigate to same form used for adding cattle
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddCattleRegistryScreen(
+          cattle: cattle,
+          purchase: purchase,
+          initialWeight: weights.isNotEmpty ? weights.first : null,
+        ),
+      ),
+    );
+    
+    // Refresh data after editing
+    if (mounted) {
+      await _loadData();
+    }
   }
   
-  // Inline modal form for editing cattle information
+  // Inline modal form for editing cattle information (kept for quick edits)
   void _showCattleEditForm(BuildContext context, CattleRegistry cattle) {
     final formKey = GlobalKey<FormState>();
     final earTagController = TextEditingController(text: cattle.earTag);

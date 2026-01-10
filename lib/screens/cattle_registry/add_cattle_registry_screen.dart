@@ -8,10 +8,20 @@ import '../../models/cattle_weight.dart';
 import '../../models/barn.dart';
 import '../../theme/app_theme.dart';
 
-/// Add Cattle Registry Screen - Register new cattle identity only
-/// Clean Registry approach: only ear tag, gender, age category, barn, registration date
+/// Add/Edit Cattle Registry Screen - Register new or edit existing cattle
+/// Clean Registry approach: ear tag, gender, age category, barn, registration date
+/// Same form used for both adding new and editing existing cattle
 class AddCattleRegistryScreen extends StatefulWidget {
-  const AddCattleRegistryScreen({super.key});
+  final CattleRegistry? cattle;
+  final CattlePurchase? purchase;
+  final CattleWeight? initialWeight;
+  
+  const AddCattleRegistryScreen({
+    super.key,
+    this.cattle,
+    this.purchase,
+    this.initialWeight,
+  });
 
   @override
   State<AddCattleRegistryScreen> createState() => _AddCattleRegistryScreenState();
@@ -34,6 +44,30 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // If editing, load existing data
+    if (widget.cattle != null) {
+      _earTagController.text = widget.cattle!.earTag;
+      _nameController.text = widget.cattle!.name ?? '';
+      _selectedGender = widget.cattle!.gender;
+      _selectedAgeCategory = widget.cattle!.ageCategory;
+      _selectedBarnId = widget.cattle!.barnId;
+      _registrationDate = widget.cattle!.registrationDate;
+      
+      // Load purchase data if available
+      if (widget.purchase != null) {
+        _initialWeightController.text = widget.purchase!.weightAtPurchase.toString();
+        if (widget.purchase!.totalPrice != null) {
+          _purchasePriceController.text = widget.purchase!.totalPrice.toString();
+        }
+      }
+      
+      // Load initial weight if available
+      if (widget.initialWeight != null) {
+        _initialWeightController.text = widget.initialWeight!.weight.toString();
+      }
+    }
+    
     // Load barns when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BarnProvider>().loadBarns();
@@ -51,9 +85,11 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.cattle != null;
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Бақайдгирии чорво'),
+        title: Text(isEditing ? 'Таҳрири чорво' : 'Бақайдгирии чорво'),
         elevation: 0,
         backgroundColor: AppTheme.primaryIndigo,
         foregroundColor: Colors.white,
@@ -571,9 +607,9 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
                   strokeWidth: 2,
                 ),
               )
-            : const Text(
-                'Ворид кардан',
-                style: TextStyle(
+            : Text(
+                widget.cattle == null ? 'Ворид кардан' : 'Нигоҳ доштан',
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -584,10 +620,9 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
 
   Future<void> _registerCattle() async {
     if (_formKey.currentState!.validate()) {
-      // Check if ear tag already exists
+      final isEditing = widget.cattle != null;
       final provider = context.read<CattleRegistryProvider>();
       final earTag = _earTagController.text.trim();
-            
       
       // Validate: if purchase price is entered, weight must also be entered
       if (_purchasePriceController.text.trim().isNotEmpty && 
@@ -606,9 +641,9 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
       });
 
       try {
-        debugPrint('🐄 Starting cattle registration...');
         final name = _nameController.text.trim();
         final cattle = CattleRegistry(
+          id: widget.cattle?.id,
           earTag: earTag,
           name: name.isNotEmpty ? name : null,
           gender: _selectedGender,
@@ -617,9 +652,17 @@ class _AddCattleRegistryScreenState extends State<AddCattleRegistryScreen> {
           registrationDate: _registrationDate,
         );
 
-        debugPrint('🐄 Adding cattle to registry...');
-        final cattleId = await provider.addCattleToRegistry(cattle);
-        debugPrint('🐄 Cattle registered with ID: $cattleId');
+        int cattleId;
+        if (isEditing) {
+          debugPrint('🐄 Updating cattle...');
+          await provider.updateCattle(cattle);
+          cattleId = widget.cattle!.id!;
+          debugPrint('🐄 Cattle updated: $cattleId');
+        } else {
+          debugPrint('🐄 Adding new cattle to registry...');
+          cattleId = await provider.addCattleToRegistry(cattle);
+          debugPrint('🐄 Cattle registered with ID: $cattleId');
+        }
         
         // Add initial weight record
         if (_initialWeightController.text.trim().isNotEmpty && cattleId != null) {
