@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../models/cotton_stock_sale.dart';
 import '../../models/buyer.dart';
 import '../../database/database_helper.dart';
+import '../../providers/cotton_warehouse_provider.dart';
+import '../../providers/settings_provider.dart';
 
 class CottonSaleDetailScreen extends StatefulWidget {
   final List<CottonStockSale> sales;
@@ -84,9 +87,105 @@ class _CottonSaleDetailScreenState extends State<CottonSaleDetailScreen> {
                   
                   // Ҷадвали муфассал
                   _buildDetailsTable(),
+                  
+                  // Edit/Delete Buttons (conditionally shown)
+                  Consumer<SettingsProvider>(
+                    builder: (context, settingsProvider, _) {
+                      if (!settingsProvider.editDeleteEnabled) {
+                        return const SizedBox(height: 24);
+                      }
+                      return Column(
+                        children: [
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Таҳрири фурӯш дар ин версия пурра дастгирӣ намешавад.'),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.edit),
+                                  label: const Text('Таҳрир'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    final confirm = await _confirmDeleteSales(context);
+                                    if (confirm == true && context.mounted) {
+                                      try {
+                                        for (final sale in widget.sales) {
+                                          await DatabaseHelper.instance.deleteCottonStockSale(sale.id!);
+                                        }
+                                        
+                                        // Refresh warehouse data after deletion
+                                        if (context.mounted) {
+                                          await context.read<CottonWarehouseProvider>().loadAllData();
+                                          
+                                          Navigator.pop(context, true); // Pass true to indicate deletion occurred
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Фурӯш бомуваффақият нест карда шуд'),
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Хато: ${e.toString()}')),
+                                          );
+                                        }
+                                      }
+                                    }
+                                  },
+                                  icon: const Icon(Icons.delete),
+                                  label: const Text('Нест кардан'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
+    );
+  }
+  
+  Future<bool?> _confirmDeleteSales(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Тасдиқ кунед'),
+        content: Text('Шумо мутмаин ҳастед, ки мехоҳед ин ${widget.sales.length} фурӯшро нест кунед? Ин амал бозгашт карда намешавад.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Бекор кардан'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Нест кардан'),
+          ),
+        ],
+      ),
     );
   }
   

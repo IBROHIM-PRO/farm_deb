@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/daily_expense_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../models/daily_expense.dart';
 import '../../theme/app_theme.dart';
+import '../../screens/settings_screen.dart';
 import 'all_expenses_screen.dart';
 
 class TodayExpensesScreen extends StatefulWidget {
@@ -14,6 +16,9 @@ class TodayExpensesScreen extends StatefulWidget {
 }
 
 class _TodayExpensesScreenState extends State<TodayExpensesScreen> {
+  int _titleTapCount = 0;
+  DateTime? _lastTapTime;
+
   @override
   void initState() {
     super.initState();
@@ -22,11 +27,34 @@ class _TodayExpensesScreenState extends State<TodayExpensesScreen> {
     });
   }
 
+  void _onTitleTap() {
+    final now = DateTime.now();
+    
+    // Reset counter if more than 2 seconds passed since last tap
+    if (_lastTapTime != null && now.difference(_lastTapTime!).inSeconds > 2) {
+      _titleTapCount = 0;
+    }
+    
+    _lastTapTime = now;
+    _titleTapCount++;
+    
+    if (_titleTapCount >= 3) {
+      _titleTapCount = 0;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Хароҷоти имрӯза'),
+        title: GestureDetector(
+          onTap: _onTitleTap,
+          child: const Text('Хароҷоти имрӯза'),
+        ),
         backgroundColor: AppTheme.primaryIndigo,
         foregroundColor: Colors.white,
         actions: [
@@ -245,44 +273,55 @@ class _TodayExpensesScreenState extends State<TodayExpensesScreen> {
             _buildDetailRow('Сана', DateFormat('dd.MM.yyyy').format(expense.expenseDate)),
             if (expense.notes != null && expense.notes!.isNotEmpty)
               _buildDetailRow('Эзоҳ', expense.notes!),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showEditExpenseForm(context, expense);
-                    },
-                    icon: const Icon(Icons.edit),
-                    label: const Text('Таҳрир'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      final confirm = await _confirmDelete(context);
-                      if (confirm == true && context.mounted) {
-                        await Provider.of<DailyExpenseProvider>(context, listen: false)
-                            .deleteExpense(expense.id!);
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Харочот нест карда шуд')),
-                          );
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.delete),
-                    label: const Text('Нест кардан'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
+            Consumer<SettingsProvider>(
+              builder: (context, settingsProvider, _) {
+                if (!settingsProvider.editDeleteEnabled) {
+                  return const SizedBox.shrink();
+                }
+                return Column(
+                  children: [
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _showEditExpenseForm(context, expense);
+                            },
+                            icon: const Icon(Icons.edit),
+                            label: const Text('Таҳрир'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final confirm = await _confirmDelete(context);
+                              if (confirm == true && context.mounted) {
+                                await Provider.of<DailyExpenseProvider>(context, listen: false)
+                                    .deleteExpense(expense.id!);
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Харочот нест карда шуд')),
+                                  );
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.delete),
+                            label: const Text('Нест кардан'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ],
         ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../providers/daily_expense_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../models/daily_expense.dart';
 import '../../theme/app_theme.dart';
 
@@ -668,44 +669,55 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
             _buildDetailRow('Сана', DateFormat('dd.MM.yyyy').format(expense.expenseDate)),
             if (expense.notes != null && expense.notes!.isNotEmpty)
               _buildDetailRow('Эзоҳ', expense.notes!),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showEditExpenseForm(context, expense);
-                    },
-                    icon: const Icon(Icons.edit),
-                    label: const Text('Таҳрир'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      final confirm = await _confirmDelete(context);
-                      if (confirm == true && context.mounted) {
-                        await Provider.of<DailyExpenseProvider>(context, listen: false)
-                            .deleteExpense(expense.id!);
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Харочот нест карда шуд')),
-                          );
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.delete),
-                    label: const Text('Нест кардан'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
+            Consumer<SettingsProvider>(
+              builder: (context, settingsProvider, _) {
+                if (!settingsProvider.editDeleteEnabled) {
+                  return const SizedBox.shrink();
+                }
+                return Column(
+                  children: [
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _showEditExpenseForm(context, expense);
+                            },
+                            icon: const Icon(Icons.edit),
+                            label: const Text('Таҳрир'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final confirm = await _confirmDelete(context);
+                              if (confirm == true && context.mounted) {
+                                await Provider.of<DailyExpenseProvider>(context, listen: false)
+                                    .deleteExpense(expense.id!);
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Харочот нест карда шуд')),
+                                  );
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.delete),
+                            label: const Text('Нест кардан'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ],
         ),

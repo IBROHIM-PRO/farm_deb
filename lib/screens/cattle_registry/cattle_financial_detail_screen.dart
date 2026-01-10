@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/cattle_registry_provider.dart';
 import '../../providers/barn_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../models/cattle_registry.dart';
 import '../../models/cattle_purchase.dart';
 import '../../models/cattle_expense.dart';
@@ -128,6 +129,45 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
             ).then((_) => _loadData());
           },
         ),
+      Consumer<SettingsProvider>(
+        builder: (context, settingsProvider, _) {
+          if (!settingsProvider.editDeleteEnabled) {
+            return const SizedBox.shrink();
+          }
+          return PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              if (value == 'edit') {
+                _editCattle(context);
+              } else if (value == 'delete') {
+                _confirmDeleteCattle(context);
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, size: 20),
+                    SizedBox(width: 8),
+                    Text('Таҳрир'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, color: Colors.red, size: 20),
+                    SizedBox(width: 8),
+                    Text('Нест кардан', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     ],
   ),
       body: RefreshIndicator(
@@ -635,6 +675,61 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
         return 'Тиббӣ';
       case ExpenseType.other:
         return 'Дигар';
+    }
+  }
+
+  void _editCattle(BuildContext context) {
+    // Note: Cattle editing would require AddCattleRegistryScreen to support editing mode
+    // For now, show a message that editing needs to be implemented in the screen
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Таҳрири чорво дар ин версия пурра дастгирӣ намешавад. Барои тағйир додани маълумот, лутфан чорвои нав эҷод кунед.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Future<void> _confirmDeleteCattle(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Тасдиқ кунед'),
+        content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин чорворо нест кунед? Ин амал бозгашт карда намешавад ва ҳамаи маълумоти марбут нест карда мешаванд.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Бекор кардан'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Нест кардан'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted && cattle != null) {
+      try {
+        await context.read<CattleRegistryProvider>().deleteCattleFromRegistry(cattle!.id!);
+        if (context.mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Чорво бомуваффақият нест карда шуд')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Хато: ${e.toString()}')),
+          );
+        }
+      }
     }
   }
 }

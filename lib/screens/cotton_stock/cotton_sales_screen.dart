@@ -201,8 +201,8 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
     final buyerId = sales.first.buyerId;
     
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => BuyerCottonSalesDetailScreen(
@@ -211,6 +211,11 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
             ),
           ),
         );
+        
+        // Refresh sales history after returning (in case of deletions)
+        if (mounted) {
+          await _loadData();
+        }
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),

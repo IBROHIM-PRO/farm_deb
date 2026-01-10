@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/barn_provider.dart';
 import '../../providers/cattle_registry_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../models/barn.dart';
 import '../../models/barn_expense.dart';
 import '../../models/cattle_registry.dart';
@@ -185,6 +186,44 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
                 const Divider(),
                 const SizedBox(height: 16),
                 _buildActiveToggle(barn, provider),
+                // Edit/Delete Buttons (conditionally shown)
+                Consumer<SettingsProvider>(
+                  builder: (context, settingsProvider, _) {
+                    if (!settingsProvider.editDeleteEnabled) {
+                      return const SizedBox.shrink();
+                    }
+                    return Column(
+                      children: [
+                        const SizedBox(height: 16),
+                        const Divider(),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _editBarn(),
+                                icon: const Icon(Icons.edit),
+                                label: const Text('Таҳрири оғул'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => _deleteBarn(),
+                                icon: const Icon(Icons.delete),
+                                label: const Text('Нест кардан'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -884,7 +923,73 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
                         ),
                       ],
                       
-                      const SizedBox(height: 30),
+                      // Edit/Delete Buttons (conditionally shown)
+                      Consumer<SettingsProvider>(
+                        builder: (context, settingsProvider, _) {
+                          if (!settingsProvider.editDeleteEnabled) {
+                            return const SizedBox(height: 30);
+                          }
+                          return Column(
+                            children: [
+                              const SizedBox(height: 24),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () async {
+                                        Navigator.pop(context);
+                                        await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => AddBarnExpenseScreen(
+                                              barnId: expense.barnId,
+                                              expense: expense,
+                                            ),
+                                          ),
+                                        );
+                                        
+                                        // Refresh data after edit
+                                        if (context.mounted) {
+                                          await context.read<BarnProvider>().loadBarnExpenses(expense.barnId);
+                                        }
+                                      },
+                                      icon: const Icon(Icons.edit),
+                                      label: const Text('Таҳрир'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () async {
+                                        final confirm = await _confirmDeleteBarnExpense(context);
+                                        if (confirm == true && context.mounted) {
+                                          await context.read<BarnProvider>()
+                                              .deleteBarnExpense(expense.id!, expense.barnId);
+                                          if (context.mounted) {
+                                            Navigator.pop(context);
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Харочот бомуваффақият нест карда шуд'),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      },
+                                      icon: const Icon(Icons.delete),
+                                      label: const Text('Нест кардан'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 30),
+                            ],
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -892,6 +997,30 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
             );
           },
         ),
+      ),
+    );
+  }
+  
+  Future<bool?> _confirmDeleteBarnExpense(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Тасдиқ кунед'),
+        content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин харочотро нест кунед?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Бекор кардан'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Нест кардан'),
+          ),
+        ],
       ),
     );
   }
@@ -992,16 +1121,23 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
     }
   }
 
-  void _editBarn() {
+  void _editBarn() async {
     final provider = context.read<BarnProvider>();
     final barn = provider.getBarnById(widget.barnId);
     if (barn != null) {
-      Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => AddBarnScreen(barn: barn),
         ),
       );
+      
+      // Refresh all data after returning from edit
+      if (mounted) {
+        await provider.loadBarns();
+        await provider.loadBarnExpenses(widget.barnId);
+        await context.read<CattleRegistryProvider>().loadAllData();
+      }
     }
   }
 
@@ -1074,7 +1210,7 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Тасдиқ кунед'),
-        content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин оғулро нест кунед?'),
+        content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин оғулро нест кунед? Ин амал бозгашт карда намешавад ва ҳамаи маълумоти марбут нест карда мешаванд.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -1082,7 +1218,10 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Нест кардан'),
           ),
         ],

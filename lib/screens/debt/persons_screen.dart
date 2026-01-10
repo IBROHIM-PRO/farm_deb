@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../models/person.dart';
 import '../../models/debt.dart';
 
@@ -96,6 +97,12 @@ class PersonsScreen extends StatelessWidget {
   }
 
   void _showPersonOptions(BuildContext context, Person person) {
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    
+    if (!settingsProvider.editDeleteEnabled) {
+      return; // Don't show options if edit/delete is disabled
+    }
+    
     showModalBottomSheet(
       context: context,
       builder: (ctx) => SafeArea(

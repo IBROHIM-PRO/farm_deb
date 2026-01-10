@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/app_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../models/person.dart';
 import '../../models/debt.dart';
 import 'debt_transaction_history_screen.dart';
@@ -335,6 +336,12 @@ class SimpleDebtsScreen extends StatelessWidget {
             ),
           );
         },
+        onLongPress: () {
+          final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+          if (settingsProvider.editDeleteEnabled) {
+            _showDebtOptions(context, debt, provider);
+          }
+        },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -349,7 +356,50 @@ class SimpleDebtsScreen extends StatelessWidget {
                           fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
-                  _buildStatusChip(debt),
+                  Consumer<SettingsProvider>(
+                    builder: (context, settingsProvider, _) {
+                      if (settingsProvider.editDeleteEnabled) {
+                        return PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert, size: 20),
+                          onSelected: (value) {
+                            if (value == 'edit') {
+                              // Debt editing - show message for now
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Барои таҳрир кардани қарз, ба тафсилоти қарз гузаред'),
+                                ),
+                              );
+                            } else if (value == 'delete') {
+                              _confirmDeleteDebt(context, debt, provider);
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.edit, size: 20),
+                                  SizedBox(width: 8),
+                                  Text('Таҳрир'),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete, color: Colors.red, size: 20),
+                                  SizedBox(width: 8),
+                                  Text('Нест кардан', style: TextStyle(color: Colors.red)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                      return _buildStatusChip(debt);
+                    },
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -365,6 +415,80 @@ class SimpleDebtsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _showDebtOptions(BuildContext context, Debt debt, AppProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Таҳрир'),
+              onTap: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Барои таҳрир кардани қарз, ба тафсилоти қарз гузаред'),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Нест кардан', style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _confirmDeleteDebt(context, debt, provider);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteDebt(BuildContext context, Debt debt, AppProvider provider) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Тасдиқ кунед'),
+        content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин қарзро нест кунед? Ин амал бозгашт карда намешавад.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Бекор кардан'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Нест кардан'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      try {
+        await provider.deleteDebt(debt.id!);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Қарз бомуваффақият нест карда шуд')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Хато: ${e.toString()}')),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildStatusChip(Debt debt) {

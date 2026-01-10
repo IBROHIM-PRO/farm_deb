@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/cotton_registry_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../models/cotton_purchase_registry.dart';
 import '../../models/cotton_purchase_item.dart';
 
@@ -132,6 +133,87 @@ class _CottonPurchaseDetailScreenState extends State<CottonPurchaseDetailScreen>
             const SizedBox(height: 12),
             _buildNotesCard(),
           ],
+          
+          // Edit/Delete Buttons (conditionally shown)
+          Consumer<SettingsProvider>(
+            builder: (context, settingsProvider, _) {
+              if (!settingsProvider.editDeleteEnabled) {
+                return const SizedBox(height: 24);
+              }
+              return Column(
+                children: [
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            // Note: Editing cotton purchase would require AddCottonPurchaseScreen to support edit mode
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Таҳрири харид дар ин версия пурра дастгирӣ намешавад. Барои тағйир додани маълумот, лутфан хариди нав эҷод кунед.'),
+                                duration: Duration(seconds: 3),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.edit),
+                          label: const Text('Таҳрир'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final confirm = await _confirmDeletePurchase(context);
+                            if (confirm == true && context.mounted) {
+                              // Note: Delete functionality would need to be implemented in provider
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Функсияи несткунии харид дар ин версия дастгирӣ намешавад.'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.delete),
+                          label: const Text('Нест кардан'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Future<bool?> _confirmDeletePurchase(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Тасдиқ кунед'),
+        content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин харидро нест кунед? Ин амал бозгашт карда намешавад ва ҳамаи маълумоти марбут нест карда мешаванд.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Бекор кардан'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Нест кардан'),
+          ),
         ],
       ),
     );

@@ -3,9 +3,11 @@
   import 'package:intl/intl.dart';
 
   import '../../providers/app_provider.dart';
+  import '../../providers/settings_provider.dart';
   import '../../models/debt.dart';
   import '../../models/person.dart';
   import '../../models/payment.dart';
+  import 'add_debt_screen.dart';
 
   class DebtTransactionHistoryScreen extends StatefulWidget {
     final Debt debt;
@@ -105,6 +107,46 @@
                 icon: const Icon(Icons.add),
                 tooltip: 'Пардохт',
               ),
+            Consumer<SettingsProvider>(
+              builder: (context, settingsProvider, _) {
+                if (!settingsProvider.editDeleteEnabled) {
+                  return const SizedBox.shrink();
+                }
+                
+                return PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _editDebt(context);
+                    } else if (value == 'delete') {
+                      _confirmDeleteDebt(context);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 20),
+                          SizedBox(width: 8),
+                          Text('Таҳрир'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red, size: 20),
+                          SizedBox(width: 8),
+                          Text('Нест кардан', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ],
         ),
         backgroundColor: Colors.grey[100],
@@ -265,6 +307,61 @@
 
       if (result == true) {
         await _loadData();
+      }
+    }
+
+    Future<void> _editDebt(BuildContext context) async {
+      // Note: Debt editing might require a separate screen or dialog
+      // For now, show a message that editing is not fully implemented
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Таҳрири қарз дар ин версия дастгирӣ намешавад. Лутфан қарзи нав эҷод кунед ва қарзи кӯҳнаро нест кунед.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+
+    Future<void> _confirmDeleteDebt(BuildContext context) async {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Тасдиқ кунед'),
+          content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин қарзро нест кунед? Ин амал бозгашт карда намешавад.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Бекор кардан'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Нест кардан'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm == true && context.mounted) {
+        try {
+          await context.read<AppProvider>().deleteDebt(_currentDebt.id!);
+          if (context.mounted) {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Қарз бомуваффақият нест карда шуд')),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Хато: ${e.toString()}')),
+            );
+          }
+        }
       }
     }
   }
