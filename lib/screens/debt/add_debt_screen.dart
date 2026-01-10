@@ -5,7 +5,9 @@ import '../../models/person.dart';
 import '../../models/debt.dart';
 
 class AddDebtScreen extends StatefulWidget {
-  const AddDebtScreen({super.key});
+  final Debt? debt; // For editing mode
+  
+  const AddDebtScreen({super.key, this.debt});
 
   @override
   State<AddDebtScreen> createState() => _AddDebtScreenState();
@@ -20,13 +22,46 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
   DebtType _debtType = DebtType.given;
   String _currency = 'TJS';
   final List<String> _currencies = ['TJS', 'USD', 'EUR', 'RUB'];
+  bool _isEditing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.debt != null) {
+      _isEditing = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final provider = context.read<AppProvider>();
+        _selectedPerson = provider.getPersonById(widget.debt!.personId);
+        if (_selectedPerson != null) {
+          setState(() {
+            _personNameController.text = _selectedPerson!.fullName;
+          });
+        }
+        setState(() {
+          _amountController.text = widget.debt!.totalAmount.toString();
+          _debtType = widget.debt!.type;
+          _currency = widget.debt!.currency;
+          // Note: Debt model doesn't have a note field
+          // If you need notes functionality, add it to the Debt model
+        });
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _noteController.dispose();
+    _personNameController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Илова кардани қарз')),
+      appBar: AppBar(title: Text(_isEditing ? 'Таҳрири қарз' : 'Илова кардани қарз')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -265,7 +300,9 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                 foregroundColor: Colors.white,
               ),
               child: Text(
-                _debtType == DebtType.given ? 'Қарзи додашударо сабт кунед' : 'Қарзи гирифташударо сабт кунед',
+                _isEditing
+                  ? (_debtType == DebtType.given ? 'Таҳрири қарзи додашуда' : 'Таҳрири қарзи гирифташуда')
+                  : (_debtType == DebtType.given ? 'Қарзи додашударо сабт кунед' : 'Қарзи гирифташударо сабт кунед'),
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
@@ -355,6 +392,12 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
       try {
         final provider = context.read<AppProvider>();
         
+        if (_isEditing && widget.debt != null) {
+          // Editing existing debt - delete old and create new
+          // Note: This is a simplification - ideally we'd have an updateDebt method
+          await provider.deleteDebt(widget.debt!.id!);
+        }
+        
         // If person doesn't have ID, create them first
         Person personToUse = _selectedPerson!;
         if (personToUse.id == null) {
@@ -373,7 +416,9 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Қарз барои ${personToUse.fullName} сабт шуд'),
+              content: Text(_isEditing 
+                ? 'Қарз барои ${personToUse.fullName} таҳрир шуд'
+                : 'Қарз барои ${personToUse.fullName} сабт шуд'),
               backgroundColor: Colors.green,
             ),
           );

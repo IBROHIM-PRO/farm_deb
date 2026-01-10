@@ -474,6 +474,14 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
                         ),
                       ),
                       IconButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showPurchaseEditForm(context, purchase);
+                        },
+                        icon: const Icon(Icons.edit, size: 24, color: Colors.blue),
+                        tooltip: 'Таҳрир',
+                      ),
+                      IconButton(
                         onPressed: () => Navigator.pop(context),
                         icon: const Icon(Icons.close, size: 24),
                       ),
@@ -665,6 +673,311 @@ class _SupplierPurchaseHistoryScreenState extends State<SupplierPurchaseHistoryS
           ),
         ),
       ],
+    );
+  }
+  
+  // Inline edit form for cotton purchase basic info
+  void _showPurchaseEditForm(BuildContext context, CottonPurchaseRegistry purchase) {
+    final formKey = GlobalKey<FormState>();
+    final supplierController = TextEditingController(text: purchase.supplierName);
+    final transportController = TextEditingController(
+      text: purchase.transportationCost.toString(),
+    );
+    final freightController = TextEditingController(
+      text: purchase.freightCost.toString(),
+    );
+    final notesController = TextEditingController(text: purchase.notes ?? '');
+    DateTime purchaseDate = purchase.purchaseDate;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Таҳрири харид',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Supplier name
+                    TextFormField(
+                      controller: supplierController,
+                      decoration: const InputDecoration(
+                        labelText: 'Номи таъминкунанда',
+                        prefixIcon: Icon(Icons.person),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Номи таъминкунанда зарур аст';
+                        }
+                        return null;
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Purchase date
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: purchaseDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) {
+                          setState(() => purchaseDate = picked);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Санаи харид',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    DateFormat('dd/MM/yyyy').format(purchaseDate),
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_drop_down),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Transportation cost
+                    TextFormField(
+                      controller: transportController,
+                      decoration: const InputDecoration(
+                        labelText: 'Хароҷоти нақлиёт',
+                        suffixText: 'с',
+                        prefixIcon: Icon(Icons.local_shipping),
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value != null && value.isNotEmpty) {
+                          if (double.tryParse(value) == null) {
+                            return 'Адади дуруст ворид кунед';
+                          }
+                        }
+                        return null;
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Freight cost
+                    TextFormField(
+                      controller: freightController,
+                      decoration: const InputDecoration(
+                        labelText: 'Хароҷоти грузчик',
+                        suffixText: 'с',
+                        prefixIcon: Icon(Icons.inventory_2),
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value != null && value.isNotEmpty) {
+                          if (double.tryParse(value) == null) {
+                            return 'Адади дуруст ворид кунед';
+                          }
+                        }
+                        return null;
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Notes
+                    TextFormField(
+                      controller: notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Эзоҳ (ихтиёрӣ)',
+                        prefixIcon: Icon(Icons.note),
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Save and Delete buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (formKey.currentState!.validate()) {
+                                try {
+                                  final provider = context.read<CottonRegistryProvider>();
+                                  
+                                  final updatedPurchase = purchase.copyWith(
+                                    supplierName: supplierController.text.trim(),
+                                    purchaseDate: purchaseDate,
+                                    transportationCost: double.tryParse(transportController.text) ?? 0,
+                                    freightCost: double.tryParse(freightController.text) ?? 0,
+                                    notes: notesController.text.trim().isNotEmpty 
+                                      ? notesController.text.trim() 
+                                      : null,
+                                  );
+                                  
+                                  await provider.updatePurchaseRegistry(updatedPurchase);
+                                  await _loadSupplierPurchases();
+                                  
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Харид бомуваффақият таҳрир шуд'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Хато: ${e.toString()}'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: const Text('Нигоҳ доштан'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Тасдиқ кунед'),
+                                  content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин харидро нест кунед? Ин амал бозгашт карда намешавад.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx, false),
+                                      child: const Text('Бекор кардан'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: const Text('Нест кардан'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              
+                              if (confirm == true && context.mounted) {
+                                try {
+                                  final provider = context.read<CottonRegistryProvider>();
+                                  await provider.deletePurchaseRegistry(purchase.id!);
+                                  await _loadSupplierPurchases();
+                                  
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Харид бомуваффақият нест карда шуд'),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Хато: ${e.toString()}'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.delete),
+                            label: const Text('Нест кардан'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

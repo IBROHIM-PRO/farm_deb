@@ -43,12 +43,80 @@ class PersonsScreen extends StatelessWidget {
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: CircleAvatar(backgroundColor: Theme.of(context).colorScheme.primaryContainer, child: Text(person.fullName[0].toUpperCase(), style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold))),
-                    title: Text(person.fullName),
-                    subtitle: Text(person.phone ?? 'Рақами телефон нест'),
-                    trailing: activeCount > 0 ? Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer, borderRadius: BorderRadius.circular(12)), child: Text('$activeCount фаъол', style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer, fontSize: 12))) : null,
-                    onLongPress: () => _showPersonOptions(context, person),
+                  child: Column(
+                    children: [
+                      // Edit/Delete buttons ABOVE the information
+                      Consumer<SettingsProvider>(
+                        builder: (context, settingsProvider, _) {
+                          if (!settingsProvider.editDeleteEnabled) {
+                            return const SizedBox.shrink();
+                          }
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(4),
+                                topRight: Radius.circular(4),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                                  onPressed: () => _showEditPersonDialog(context, person),
+                                  tooltip: 'Таҳрир',
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  iconSize: 18,
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                                  onPressed: () => _showDeleteConfirm(context, person),
+                                  tooltip: 'Нест кардан',
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  iconSize: 18,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      // Information display
+                      ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          child: Text(
+                            person.fullName[0].toUpperCase(),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        title: Text(person.fullName),
+                        subtitle: Text(person.phone ?? 'Рақами телефон нест'),
+                        trailing: activeCount > 0
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.primaryContainer,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '$activeCount фаъол',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              )
+                            : null,
+                        onTap: null,
+                      ),
+                    ],
                   ),
                 );
               },
@@ -74,18 +142,41 @@ class PersonsScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextFormField(controller: nameController, decoration: const InputDecoration(labelText: 'Номи пурра', prefixIcon: Icon(Icons.person)), validator: (v) => v?.isEmpty == true ? 'Зарур аст' : null, textCapitalization: TextCapitalization.words),
+              TextFormField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Номи пурра',
+                  prefixIcon: Icon(Icons.person),
+                ),
+                validator: (v) => v?.isEmpty == true ? 'Зарур аст' : null,
+                textCapitalization: TextCapitalization.words,
+              ),
               const SizedBox(height: 16),
-              TextFormField(controller: phoneController, decoration: const InputDecoration(labelText: 'Телефон (ихтиёрӣ)', prefixIcon: Icon(Icons.phone)), keyboardType: TextInputType.phone),
+              TextFormField(
+                controller: phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Телефон (ихтиёрӣ)',
+                  prefixIcon: Icon(Icons.phone),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Бекор кардан')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Бекор кардан'),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (formKey.currentState?.validate() ?? false) {
-                await ctx.read<AppProvider>().addPerson(Person(fullName: nameController.text.trim(), phone: phoneController.text.isEmpty ? null : phoneController.text.trim()));
+                await ctx.read<AppProvider>().addPerson(
+                  Person(
+                    fullName: nameController.text.trim(),
+                    phone: phoneController.text.isEmpty ? null : phoneController.text.trim(),
+                  ),
+                );
                 if (ctx.mounted) Navigator.pop(ctx);
               }
             },
@@ -96,26 +187,6 @@ class PersonsScreen extends StatelessWidget {
     );
   }
 
-  void _showPersonOptions(BuildContext context, Person person) {
-    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-    
-    if (!settingsProvider.editDeleteEnabled) {
-      return; // Don't show options if edit/delete is disabled
-    }
-    
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(leading: const Icon(Icons.edit), title: const Text('Таҳрир кардан'), onTap: () { Navigator.pop(ctx); _showEditPersonDialog(context, person); }),
-            ListTile(leading: const Icon(Icons.delete, color: Colors.red), title: const Text('Нест кардан', style: TextStyle(color: Colors.red)), onTap: () { Navigator.pop(ctx); _showDeleteConfirm(context, person); }),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _showEditPersonDialog(BuildContext context, Person person) {
     final nameController = TextEditingController(text: person.fullName);
@@ -131,18 +202,41 @@ class PersonsScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextFormField(controller: nameController, decoration: const InputDecoration(labelText: 'Номи пурра'), validator: (v) => v?.isEmpty == true ? 'Зарур аст' : null),
+              TextFormField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Номи пурра',
+                  prefixIcon: Icon(Icons.person),
+                ),
+                validator: (v) => v?.isEmpty == true ? 'Зарур аст' : null,
+                textCapitalization: TextCapitalization.words,
+              ),
               const SizedBox(height: 16),
-              TextFormField(controller: phoneController, decoration: const InputDecoration(labelText: 'Телефон (ихтиёрӣ)')),
+              TextFormField(
+                controller: phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Телефон (ихтиёрӣ)',
+                  prefixIcon: Icon(Icons.phone),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Бекор кардан')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Бекор кардан'),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (formKey.currentState?.validate() ?? false) {
-                await ctx.read<AppProvider>().updatePerson(person.copyWith(fullName: nameController.text.trim(), phone: phoneController.text.isEmpty ? null : phoneController.text.trim()));
+                await ctx.read<AppProvider>().updatePerson(
+                  person.copyWith(
+                    fullName: nameController.text.trim(),
+                    phone: phoneController.text.isEmpty ? null : phoneController.text.trim(),
+                  ),
+                );
                 if (ctx.mounted) Navigator.pop(ctx);
               }
             },

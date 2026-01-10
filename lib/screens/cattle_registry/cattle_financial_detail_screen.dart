@@ -679,16 +679,325 @@ class _CattleFinancialDetailScreenState extends State<CattleFinancialDetailScree
   }
 
   void _editCattle(BuildContext context) {
-    // Note: Cattle editing would require AddCattleRegistryScreen to support editing mode
-    // For now, show a message that editing needs to be implemented in the screen
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Таҳрири чорво дар ин версия пурра дастгирӣ намешавад. Барои тағйир додани маълумот, лутфан чорвои нав эҷод кунед.'),
-          duration: Duration(seconds: 3),
+    if (cattle == null) return;
+    _showCattleEditForm(context, cattle!);
+  }
+  
+  // Inline modal form for editing cattle information
+  void _showCattleEditForm(BuildContext context, CattleRegistry cattle) {
+    final formKey = GlobalKey<FormState>();
+    final earTagController = TextEditingController(text: cattle.earTag);
+    final nameController = TextEditingController(text: cattle.name ?? '');
+    
+    CattleGender selectedGender = cattle.gender;
+    AgeCategory selectedAgeCategory = cattle.ageCategory;
+    int? selectedBarnId = cattle.barnId;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Таҳрири чорво',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Ear Tag
+                    TextFormField(
+                      controller: earTagController,
+                      decoration: const InputDecoration(
+                        labelText: 'Рақами гӯш',
+                        prefixIcon: Icon(Icons.qr_code),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Рақами гӯш зарур аст';
+                        }
+                        return null;
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Name (optional)
+                    TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Ном (ихтиёрӣ)',
+                        prefixIcon: Icon(Icons.pets),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Gender selection
+                    const Text(
+                      'Ҷинс',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildGenderCard(
+                            'Нар',
+                            Icons.male,
+                            Colors.blue,
+                            CattleGender.male,
+                            selectedGender,
+                            (gender) => setState(() => selectedGender = gender),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildGenderCard(
+                            'Мода',
+                            Icons.female,
+                            Colors.pink,
+                            CattleGender.female,
+                            selectedGender,
+                            (gender) => setState(() => selectedGender = gender),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Age Category
+                    const Text(
+                      'Категорияи синну сол',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildAgeCategoryCard(
+                            'Калонсол',
+                            AgeCategory.adult,
+                            selectedAgeCategory,
+                            (age) => setState(() => selectedAgeCategory = age),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildAgeCategoryCard(
+                            'Бачагӣ',
+                            AgeCategory.young,
+                            selectedAgeCategory,
+                            (age) => setState(() => selectedAgeCategory = age),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildAgeCategoryCard(
+                            'Гӯсола',
+                            AgeCategory.calf,
+                            selectedAgeCategory,
+                            (age) => setState(() => selectedAgeCategory = age),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Barn selection
+                    Consumer<BarnProvider>(
+                      builder: (context, barnProvider, _) {
+                        final barns = barnProvider.barns;
+                        
+                        return DropdownButtonFormField<int?>(
+                          value: selectedBarnId,
+                          decoration: const InputDecoration(
+                            labelText: 'Оғул',
+                            prefixIcon: Icon(Icons.home_work),
+                            border: OutlineInputBorder(),
+                          ),
+                          items: [
+                            const DropdownMenuItem<int?>(
+                              value: null,
+                              child: Text('Бидуни оғул'),
+                            ),
+                            ...barns.map((barn) => DropdownMenuItem<int?>(
+                              value: barn.id,
+                              child: Text(barn.name),
+                            )),
+                          ],
+                          onChanged: (value) => setState(() => selectedBarnId = value),
+                        );
+                      },
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Save button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (formKey.currentState!.validate()) {
+                            try {
+                              final provider = context.read<CattleRegistryProvider>();
+                              
+                              final updatedCattle = cattle.copyWith(
+                                earTag: earTagController.text.trim(),
+                                name: nameController.text.trim().isNotEmpty 
+                                  ? nameController.text.trim() 
+                                  : null,
+                                gender: selectedGender,
+                                ageCategory: selectedAgeCategory,
+                                barnId: selectedBarnId,
+                              );
+                              
+                              await provider.updateCattle(updatedCattle);
+                              await _loadData();
+                              
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Маълумот бомуваффақият таҳрир шуд'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Хато: ${e.toString()}'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryIndigo,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Text('Нигоҳ доштан'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  Widget _buildGenderCard(
+    String title,
+    IconData icon,
+    Color color,
+    CattleGender gender,
+    CattleGender currentGender,
+    Function(CattleGender) onTap,
+  ) {
+    final isSelected = currentGender == gender;
+    return GestureDetector(
+      onTap: () => onTap(gender),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.1) : null,
+          border: Border.all(
+            color: isSelected ? color : Colors.grey.withOpacity(0.3),
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
         ),
-      );
-    }
+        child: Column(
+          children: [
+            Icon(icon, color: isSelected ? color : Colors.grey, size: 32),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? color : Colors.grey,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildAgeCategoryCard(
+    String title,
+    AgeCategory age,
+    AgeCategory currentAge,
+    Function(AgeCategory) onTap,
+  ) {
+    final isSelected = currentAge == age;
+    return GestureDetector(
+      onTap: () => onTap(age),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue.withOpacity(0.1) : null,
+          border: Border.all(
+            color: isSelected ? Colors.blue : Colors.grey.withOpacity(0.3),
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          title,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: isSelected ? Colors.blue : Colors.grey,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _confirmDeleteCattle(BuildContext context) async {

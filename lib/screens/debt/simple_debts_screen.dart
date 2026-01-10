@@ -8,7 +8,6 @@ import '../../providers/settings_provider.dart';
 import '../../models/person.dart';
 import '../../models/debt.dart';
 import 'debt_transaction_history_screen.dart';
-import 'add_debt_screen.dart';
 import 'person_debt_history_screen.dart';
 
 class SimpleDebtsScreen extends StatelessWidget {
@@ -23,12 +22,8 @@ class SimpleDebtsScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AddDebtScreen()),
-              );
-            },
+            onPressed: () => _showDebtForm(context, null),
+            tooltip: 'Қарзи нав',
           ),
         ],
       ),
@@ -326,129 +321,92 @@ class SimpleDebtsScreen extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => DebtTransactionHistoryScreen(debt: debt),
-            ),
-          );
-        },
-        onLongPress: () {
-          final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-          if (settingsProvider.editDeleteEnabled) {
-            _showDebtOptions(context, debt, provider);
-          }
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      person.fullName,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
+      child: Column(
+        children: [
+          // Edit/Delete buttons ABOVE the information
+          Consumer<SettingsProvider>(
+            builder: (context, settingsProvider, _) {
+              if (!settingsProvider.editDeleteEnabled) {
+                return const SizedBox.shrink();
+              }
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                      onPressed: () => _showDebtForm(context, debt),
+                      tooltip: 'Таҳрир',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      iconSize: 18,
                     ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                      onPressed: () => _confirmDeleteDebt(context, debt, provider),
+                      tooltip: 'Нест кардан',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      iconSize: 18,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          // Information display
+          InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DebtTransactionHistoryScreen(debt: debt),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          person.fullName,
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      _buildStatusChip(debt),
+                    ],
                   ),
-                  Consumer<SettingsProvider>(
-                    builder: (context, settingsProvider, _) {
-                      if (settingsProvider.editDeleteEnabled) {
-                        return PopupMenuButton<String>(
-                          icon: const Icon(Icons.more_vert, size: 20),
-                          onSelected: (value) {
-                            if (value == 'edit') {
-                              // Debt editing - show message for now
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Барои таҳрир кардани қарз, ба тафсилоти қарз гузаред'),
-                                ),
-                              );
-                            } else if (value == 'delete') {
-                              _confirmDeleteDebt(context, debt, provider);
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.edit, size: 20),
-                                  SizedBox(width: 8),
-                                  Text('Таҳрир'),
-                                ],
-                              ),
-                            ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.delete, color: Colors.red, size: 20),
-                                  SizedBox(width: 8),
-                                  Text('Нест кардан', style: TextStyle(color: Colors.red)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-                      return _buildStatusChip(debt);
-                    },
-                  ),
+                  const SizedBox(height: 12),
+                  _info('Намуди қарз:', debt.typeDisplay),
+                  _info('Маблағи умумӣ:',
+                      '${debt.totalAmount.toStringAsFixed(2)} ${debt.currency}'),
+                  _info('Боқӣ мондааст:',
+                      '${debt.remainingAmount.toStringAsFixed(2)} ${debt.currency}'),
+                  _info('Сана:',
+                      '${debt.date.day}/${debt.date.month}/${debt.date.year}'),
                 ],
               ),
-              const SizedBox(height: 12),
-              _info('Намуди қарз:', debt.typeDisplay),
-              _info('Маблағи умумӣ:',
-                  '${debt.totalAmount.toStringAsFixed(2)} ${debt.currency}'),
-              _info('Боқӣ мондааст:',
-                  '${debt.remainingAmount.toStringAsFixed(2)} ${debt.currency}'),
-              _info('Сана:',
-                  '${debt.date.day}/${debt.date.month}/${debt.date.year}'),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  void _showDebtOptions(BuildContext context, Debt debt, AppProvider provider) {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Таҳрир'),
-              onTap: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Барои таҳрир кардани қарз, ба тафсилоти қарз гузаред'),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Нест кардан', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _confirmDeleteDebt(context, debt, provider);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Future<void> _confirmDeleteDebt(BuildContext context, Debt debt, AppProvider provider) async {
     final confirm = await showDialog<bool>(
@@ -569,6 +527,391 @@ class SimpleDebtsScreen extends StatelessWidget {
             child: const Text('Пардохт'),
           ),
         ],
+      ),
+    );
+  }
+
+  // ---------------- INLINE DEBT FORM (ADD/EDIT) ----------------
+  static void _showDebtForm(BuildContext context, Debt? debt) {
+    final formKey = GlobalKey<FormState>();
+    final personNameController = TextEditingController();
+    final amountController = TextEditingController(
+      text: debt?.totalAmount.toString() ?? '',
+    );
+    final notesController = TextEditingController();
+    
+    DebtType debtType = debt?.type ?? DebtType.given;
+    String currency = debt?.currency ?? 'TJS';
+    Person? selectedPerson;
+    
+    // If editing, load the person data
+    if (debt != null) {
+      final provider = context.read<AppProvider>();
+      selectedPerson = provider.getPersonById(debt.personId);
+      if (selectedPerson != null) {
+        personNameController.text = selectedPerson.fullName;
+      }
+    }
+    
+    final currencies = ['TJS', 'USD', 'EUR', 'RUB'];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          debt == null ? 'Қарзи нав' : 'Таҳрири қарз',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Person Name with Autocomplete
+                    Autocomplete<String>(
+                      initialValue: TextEditingValue(text: personNameController.text),
+                      optionsBuilder: (TextEditingValue textEditingValue) async {
+                        try {
+                          final allPersons = await context.read<AppProvider>().getPersonNames();
+                          if (textEditingValue.text.isEmpty) {
+                            return allPersons;
+                          }
+                          final query = textEditingValue.text.toLowerCase();
+                          return allPersons.where((person) => 
+                            person.toLowerCase().contains(query)).toList();
+                        } catch (e) {
+                          return <String>[];
+                        }
+                      },
+                      onSelected: (String selection) {
+                        personNameController.text = selection;
+                        final provider = context.read<AppProvider>();
+                        final person = provider.persons.firstWhere(
+                          (p) => p.fullName == selection,
+                          orElse: () => Person(fullName: selection),
+                        );
+                        selectedPerson = person;
+                      },
+                      fieldViewBuilder: (
+                        BuildContext context,
+                        TextEditingController fieldTextEditingController,
+                        FocusNode fieldFocusNode,
+                        VoidCallback onFieldSubmitted,
+                      ) {
+                        fieldTextEditingController.addListener(() {
+                          personNameController.text = fieldTextEditingController.text;
+                          final provider = context.read<AppProvider>();
+                          final existingPerson = provider.persons.cast<Person?>().firstWhere(
+                            (p) => p?.fullName == fieldTextEditingController.text,
+                            orElse: () => null,
+                          );
+                          if (existingPerson != null) {
+                            selectedPerson = existingPerson;
+                          } else if (fieldTextEditingController.text.isNotEmpty) {
+                            selectedPerson = Person(fullName: fieldTextEditingController.text.trim());
+                          }
+                        });
+                        
+                        return TextFormField(
+                          controller: fieldTextEditingController,
+                          focusNode: fieldFocusNode,
+                          decoration: const InputDecoration(
+                            labelText: 'Номи шахс',
+                            prefixIcon: Icon(Icons.person),
+                            suffixIcon: Icon(Icons.arrow_drop_down),
+                            border: OutlineInputBorder(),
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                          validator: (value) {
+                            if (value?.trim().isEmpty == true) {
+                              return 'Номи шахс зарур аст';
+                            }
+                            return null;
+                          },
+                          onFieldSubmitted: (value) => onFieldSubmitted(),
+                        );
+                      },
+                      optionsViewBuilder: (
+                        BuildContext context,
+                        AutocompleteOnSelected<String> onSelected,
+                        Iterable<String> options,
+                      ) {
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: Material(
+                            elevation: 4.0,
+                            child: Container(
+                              constraints: const BoxConstraints(maxHeight: 200),
+                              color: Colors.white,
+                              child: ListView.builder(
+                                padding: EdgeInsets.zero,
+                                shrinkWrap: true,
+                                itemCount: options.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  final String option = options.elementAt(index);
+                                  return InkWell(
+                                    onTap: () => onSelected(option),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(16.0),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: Colors.grey.withOpacity(0.2),
+                                            width: 1,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.person, size: 20),
+                                          const SizedBox(width: 12),
+                                          Expanded(child: Text(option)),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Debt Type Selection
+                    const Text(
+                      'Намуди қарз',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTypeCard(
+                            'Додашуда',
+                            'Пуле, ки шумо додаед',
+                            Icons.arrow_upward,
+                            Colors.green,
+                            DebtType.given,
+                            debtType,
+                            (type) => setState(() => debtType = type),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildTypeCard(
+                            'Гирифташуда',
+                            'Пуле, ки шумо гирифтаед',
+                            Icons.arrow_downward,
+                            Colors.red,
+                            DebtType.taken,
+                            debtType,
+                            (type) => setState(() => debtType = type),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Amount and Currency
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: TextFormField(
+                            controller: amountController,
+                            decoration: const InputDecoration(
+                              labelText: 'Маблағ',
+                              prefixIcon: Icon(Icons.attach_money),
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            validator: (v) {
+                              if (v?.isEmpty == true) return 'Мавҷуд аст';
+                              if (double.tryParse(v!) == null || double.parse(v) <= 0) 
+                                return 'Нодуруст';
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: currency,
+                            decoration: const InputDecoration(
+                              labelText: 'Асъор',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: currencies.map((c) => 
+                              DropdownMenuItem(value: c, child: Text(c))
+                            ).toList(),
+                            onChanged: (v) {
+                              if (v != null) setState(() => currency = v);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Save Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (formKey.currentState!.validate() && selectedPerson != null) {
+                            try {
+                              final provider = context.read<AppProvider>();
+                              
+                              if (debt != null) {
+                                // Editing - delete old and create new
+                                await provider.deleteDebt(debt.id!);
+                              }
+                              
+                              // If person doesn't have ID, create them first
+                              Person personToUse = selectedPerson!;
+                              if (personToUse.id == null) {
+                                final newPersonId = await provider.addPerson(personToUse);
+                                personToUse = personToUse.copyWith(id: newPersonId);
+                              }
+
+                              // Add the debt
+                              await provider.addDebt(
+                                personId: personToUse.id!,
+                                amount: double.parse(amountController.text),
+                                currency: currency,
+                                type: debtType,
+                              );
+
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      debt == null 
+                                        ? 'Қарз барои ${personToUse.fullName} сабт шуд'
+                                        : 'Қарз барои ${personToUse.fullName} таҳрир шуд',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Хатогӣ: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: debtType == DebtType.given 
+                            ? Colors.green 
+                            : Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: Text(
+                          debt == null 
+                            ? (debtType == DebtType.given ? 'Қарзи додашударо сабт кунед' : 'Қарзи гирифташударо сабт кунед')
+                            : 'Нигоҳ доштан',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  static Widget _buildTypeCard(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+    DebtType type,
+    DebtType currentType,
+    Function(DebtType) onTap,
+  ) {
+    final isSelected = currentType == type;
+    return GestureDetector(
+      onTap: () => onTap(type),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.1) : null,
+          border: Border.all(
+            color: isSelected ? color : Colors.grey.withOpacity(0.3),
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: isSelected ? color : Colors.grey, size: 32),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? color : Colors.grey,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: isSelected ? color : Colors.grey,
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

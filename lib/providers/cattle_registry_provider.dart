@@ -82,6 +82,11 @@ class CattleRegistryProvider with ChangeNotifier {
     await loadCattleRegistry();
   }
 
+  /// Alias for updateCattleInRegistry
+  Future<void> updateCattle(CattleRegistry cattle) async {
+    return updateCattleInRegistry(cattle);
+  }
+
   /// Delete cattle from registry (and all linked data)
   Future<void> deleteCattleFromRegistry(int cattleId) async {
     final db = await _dbHelper.database;
@@ -196,6 +201,14 @@ class CattleRegistryProvider with ChangeNotifier {
     await loadCattleWeights();
     debugPrint('✅ Database automatically refreshed after cattle weight measurement');
     return id;
+  }
+
+  /// Delete cattle weight
+  Future<void> deleteCattleWeight(int weightId) async {
+    final db = await _dbHelper.database;
+    await db.delete('cattle_weights', where: 'id = ?', whereArgs: [weightId]);
+    await loadCattleWeights();
+    debugPrint('✅ Cattle weight deleted');
   }
 
   /// Get weights for specific cattle

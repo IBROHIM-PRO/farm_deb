@@ -139,6 +139,34 @@ class CottonRegistryProvider with ChangeNotifier {
     return purchaseId;
   }
 
+  /// Update cotton purchase registry (basic info only)
+  Future<void> updatePurchaseRegistry(CottonPurchaseRegistry registry) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'cotton_purchase_registry',
+      registry.toMap(),
+      where: 'id = ?',
+      whereArgs: [registry.id],
+    );
+    await loadPurchaseRegistry();
+    debugPrint('✅ Cotton purchase registry updated');
+  }
+
+  /// Delete cotton purchase registry and related data
+  Future<void> deletePurchaseRegistry(int registryId) async {
+    final db = await _dbHelper.database;
+    await db.transaction((txn) async {
+      // Delete purchase items
+      await txn.delete('cotton_purchase_items', where: 'purchaseId = ?', whereArgs: [registryId]);
+      // Delete traceability records
+      await txn.delete('cotton_traceability', where: 'purchaseId = ?', whereArgs: [registryId]);
+      // Delete registry
+      await txn.delete('cotton_purchase_registry', where: 'id = ?', whereArgs: [registryId]);
+    });
+    await loadAllData();
+    debugPrint('✅ Cotton purchase registry deleted');
+  }
+
   /// Transfer purchased cotton items to warehouse inventory
   Future<void> _transferPurchaseToWarehouse(List<CottonPurchaseItem> items) async {
     for (final item in items) {

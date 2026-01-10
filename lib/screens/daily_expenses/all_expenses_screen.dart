@@ -572,59 +572,108 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
   }
 
   Widget _buildExpenseItem(DailyExpense expense) {
-    return InkWell(
-      onTap: () => _showExpenseDetails(expense),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: _getCategoryColor(expense.category).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                _getCategoryIcon(expense.category),
-                color: _getCategoryColor(expense.category),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      children: [
+        // Edit/Delete buttons ABOVE the information
+        Consumer<SettingsProvider>(
+          builder: (context, settingsProvider, _) {
+            if (!settingsProvider.editDeleteEnabled) {
+              return const SizedBox.shrink();
+            }
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              color: Colors.grey[50],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(
-                    expense.itemName,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 16, color: Colors.blue),
+                    onPressed: () => _showEditExpenseForm(context, expense),
+                    tooltip: 'Таҳрир',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    iconSize: 16,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    expense.category,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, size: 16, color: Colors.red),
+                    onPressed: () async {
+                      final confirm = await _confirmDelete(context);
+                      if (confirm == true && context.mounted) {
+                        await Provider.of<DailyExpenseProvider>(context, listen: false)
+                            .deleteExpense(expense.id!);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Харочот нест карда шуд')),
+                          );
+                        }
+                      }
+                    },
+                    tooltip: 'Нест кардан',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    iconSize: 16,
                   ),
                 ],
               ),
-            ),
-            Text(
-              '${expense.amount.toStringAsFixed(2)} ${expense.currency}',
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Colors.red,
-              ),
-            ),
-          ],
+            );
+          },
         ),
-      ),
+        // Information display
+        InkWell(
+          onTap: () => _showExpenseDetails(expense),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: _getCategoryColor(expense.category).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    _getCategoryIcon(expense.category),
+                    color: _getCategoryColor(expense.category),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        expense.itemName,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        expense.category,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  '${expense.amount.toStringAsFixed(2)} ${expense.currency}',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -809,6 +858,7 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
                   value: categoryController.text,
                   decoration: const InputDecoration(
                     labelText: 'Категория',
+                    prefixIcon: Icon(Icons.category),
                     border: OutlineInputBorder(),
                   ),
                   items: categories.map((cat) {
@@ -823,6 +873,7 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
                   controller: itemNameController,
                   decoration: const InputDecoration(
                     labelText: 'Номи мавод',
+                    prefixIcon: Icon(Icons.inventory_2),
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
@@ -841,6 +892,7 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
                         controller: amountController,
                         decoration: const InputDecoration(
                           labelText: 'Маблағ',
+                          prefixIcon: Icon(Icons.attach_money),
                           border: OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.number,
@@ -861,6 +913,7 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
                         value: currencyController.text,
                         decoration: const InputDecoration(
                           labelText: 'Асъор',
+                          prefixIcon: Icon(Icons.currency_exchange),
                           border: OutlineInputBorder(),
                         ),
                         items: ['TJS', 'USD', 'RUB'].map((curr) {
@@ -878,6 +931,7 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
                   controller: notesController,
                   decoration: const InputDecoration(
                     labelText: 'Эзоҳ (ихтиёрӣ)',
+                    prefixIcon: Icon(Icons.note),
                     border: OutlineInputBorder(),
                   ),
                   maxLines: 3,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import '../../providers/settings_provider.dart';
 import '../../database/database_helper.dart';
 import '../../models/buyer.dart';
 import '../../models/cotton_stock_sale.dart';
@@ -260,16 +261,65 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
-                    color: Colors.grey[400],
+                  Consumer<SettingsProvider>(
+                    builder: (context, settingsProvider, _) {
+                      if (settingsProvider.editDeleteEnabled) {
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, size: 20),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BuyerCottonSalesDetailScreen(
+                                      buyerName: buyerName,
+                                      buyerId: buyerId,
+                                    ),
+                                  ),
+                                );
+                              },
+                              tooltip: 'Таҳрир',
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                              onPressed: () async {
+                                final confirm = await _confirmDeleteBuyerSales(context, buyerName, sales);
+                                if (confirm == true && context.mounted) {
+                                  try {
+                                    for (final sale in sales) {
+                                      await context.read<CottonWarehouseProvider>().deleteCottonStockSale(sale.id!);
+                                    }
+                                    if (context.mounted) {
+                                      await _loadData();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Фурӯшҳо бомуваффақият нест карда шуданд')),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Хато: ${e.toString()}')),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                              tooltip: 'Нест кардан',
+                            ),
+                          ],
+                        );
+                      }
+                      return Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: Colors.grey[400],
+                      );
+                    },
                   ),
                 ],
               ),
-              
-              const SizedBox(height: 12),
-              
               // Date and sales count
               Padding(
                 padding: const EdgeInsets.only(left: 24),
@@ -1280,6 +1330,30 @@ class _CottonSalesScreenState extends State<CottonSalesScreen> {
           ],
         ],
         ),
+      ),
+    );
+  }
+
+  Future<bool?> _confirmDeleteBuyerSales(BuildContext context, String buyerName, List<CottonStockSale> sales) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Тасдиқ кунед'),
+        content: Text('Шумо мутмаин ҳастед, ки мехоҳед ҳамаи ${sales.length} фурӯшҳои $buyerName-ро нест кунед? Ин амал бозгашт карда намешавад.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Бекор кардан'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Нест кардан'),
+          ),
+        ],
       ),
     );
   }

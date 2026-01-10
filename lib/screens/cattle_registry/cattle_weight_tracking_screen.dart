@@ -20,10 +20,6 @@ class CattleWeightTrackingScreen extends StatefulWidget {
 }
 
 class _CattleWeightTrackingScreenState extends State<CattleWeightTrackingScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _weightController = TextEditingController();
-  final _notesController = TextEditingController();
-  DateTime _measurementDate = DateTime.now();
   bool _isLoading = false;
   List<CattleWeight> weights = [];
 
@@ -31,13 +27,6 @@ class _CattleWeightTrackingScreenState extends State<CattleWeightTrackingScreen>
   void initState() {
     super.initState();
     _loadWeights();
-  }
-
-  @override
-  void dispose() {
-    _weightController.dispose();
-    _notesController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadWeights() async {
@@ -66,15 +55,17 @@ class _CattleWeightTrackingScreenState extends State<CattleWeightTrackingScreen>
         title: Text('Вазнкунӣ - ${widget.earTag}'),
         backgroundColor: AppTheme.primaryIndigo,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => _showWeightForm(context, null),
+            tooltip: 'Илова кардани вазн',
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Expanded(child: _buildWeightHistory()),
-                _buildAddWeightForm(),
-              ],
-            ),
+          : _buildWeightHistory(),
     );
   }
 
@@ -115,40 +106,43 @@ class _CattleWeightTrackingScreenState extends State<CattleWeightTrackingScreen>
       
       return Card(
         margin: const EdgeInsets.only(bottom: 12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.calendar_today, size: 20, color: AppTheme.primaryIndigo),
-                  const SizedBox(width: 8),
-                  Text(
-                    DateFormat('dd/MM/yyyy').format(weight.measurementDate),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${weight.weight} кг',
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _showWeightForm(context, weight),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 20, color: AppTheme.primaryIndigo),
+                    const SizedBox(width: 8),
+                    Text(
+                      DateFormat('dd/MM/yyyy').format(weight.measurementDate),
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue,
                       ),
                     ),
-                  ),
-                ],
-              ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${weight.weight} кг',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               if (previousWeight != null) ...[
                 const SizedBox(height: 8),
                 Row(
@@ -180,14 +174,15 @@ class _CattleWeightTrackingScreenState extends State<CattleWeightTrackingScreen>
                   ],
                 ),
               ],
-              if (weight.notes != null && weight.notes!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  weight.notes!,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                ),
+                if (weight.notes != null && weight.notes!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    weight.notes!,
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       );
@@ -195,100 +190,320 @@ class _CattleWeightTrackingScreenState extends State<CattleWeightTrackingScreen>
   );
 }
 
-  Widget _buildAddWeightForm() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _weightController,
-              decoration: const InputDecoration(
-                labelText: 'Вазн (кг)',
-                prefixIcon: Icon(Icons.monitor_weight),
-                border: OutlineInputBorder(),
+  // Inline modal form for adding/editing weight
+  void _showWeightForm(BuildContext context, CattleWeight? weight) {
+    final formKey = GlobalKey<FormState>();
+    final weightController = TextEditingController(
+      text: weight?.weight.toString() ?? '',
+    );
+    final notesController = TextEditingController(
+      text: weight?.notes ?? '',
+    );
+    DateTime measurementDate = weight?.measurementDate ?? DateTime.now();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Вазн зарур аст';
-                }
-                final weight = double.tryParse(value);
-                if (weight == null || weight <= 0) {
-                  return 'Вазни дуруст ворид кунед';
-                }
-                return null;
-              },
-            ),            
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _saveWeight,
-                icon: const Icon(Icons.add),
-                label: const Text('Илова кардан'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryIndigo,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          weight == null ? 'Илова кардани вазн' : 'Таҳрири вазн',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Weight input
+                    TextFormField(
+                      controller: weightController,
+                      decoration: const InputDecoration(
+                        labelText: 'Вазн (кг)',
+                        prefixIcon: Icon(Icons.monitor_weight),
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Вазн зарур аст';
+                        }
+                        final w = double.tryParse(value);
+                        if (w == null || w <= 0) {
+                          return 'Вазни дуруст ворид кунед';
+                        }
+                        return null;
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Date selector
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: measurementDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) {
+                          setState(() => measurementDate = picked);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Санаи вазнкунӣ',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    DateFormat('dd/MM/yyyy').format(measurementDate),
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_drop_down),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Notes
+                    TextFormField(
+                      controller: notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Эзоҳ (ихтиёрӣ)',
+                        prefixIcon: Icon(Icons.note),
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Save button (and delete if editing)
+                    if (weight == null)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (formKey.currentState!.validate()) {
+                              try {
+                                final provider = context.read<CattleRegistryProvider>();
+                                
+                                final newWeight = CattleWeight(
+                                  cattleId: widget.cattleId,
+                                  weight: double.parse(weightController.text.trim()),
+                                  measurementDate: measurementDate,
+                                  notes: notesController.text.trim().isNotEmpty 
+                                    ? notesController.text.trim() 
+                                    : null,
+                                );
+                                
+                                await provider.addCattleWeight(newWeight);
+                                await _loadWeights();
+                                
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Вазн бомуваффақият илова шуд'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Хато: ${e.toString()}'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryIndigo,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: const Text('Илова кардан'),
+                        ),
+                      )
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                if (formKey.currentState!.validate()) {
+                                  try {
+                                    final provider = context.read<CattleRegistryProvider>();
+                                    
+                                    final newWeight = CattleWeight(
+                                      id: weight!.id,
+                                      cattleId: widget.cattleId,
+                                      weight: double.parse(weightController.text.trim()),
+                                      measurementDate: measurementDate,
+                                      notes: notesController.text.trim().isNotEmpty 
+                                        ? notesController.text.trim() 
+                                        : null,
+                                    );
+                                    
+                                    // For editing, delete and recreate
+                                    await provider.deleteCattleWeight(weight!.id!);
+                                    await provider.addCattleWeight(newWeight);
+                                    await _loadWeights();
+                                    
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Вазн бомуваффақият таҳрир шуд'),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Хато: ${e.toString()}'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryIndigo,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                              child: const Text('Нигоҳ доштан'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Тасдиқ кунед'),
+                                    content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин вазнро нест кунед?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx, false),
+                                        child: const Text('Бекор кардан'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () => Navigator.pop(ctx, true),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                          foregroundColor: Colors.white,
+                                        ),
+                                        child: const Text('Нест кардан'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                
+                                if (confirm == true && context.mounted) {
+                                  try {
+                                    final provider = context.read<CattleRegistryProvider>();
+                                    await provider.deleteCattleWeight(weight!.id!);
+                                    await _loadWeights();
+                                    
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Вазн нест карда шуд'),
+                                          backgroundColor: Colors.orange,
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Хато: ${e.toString()}'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                              icon: const Icon(Icons.delete),
+                              label: const Text('Нест кардан'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
-  }
-
-  Future<void> _saveWeight() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final weight = CattleWeight(
-      cattleId: widget.cattleId,
-      weight: double.parse(_weightController.text.trim()),
-      measurementDate: _measurementDate,
-      notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
-    );
-
-    try {
-      final provider = context.read<CattleRegistryProvider>();
-      await provider.addCattleWeight(weight);
-      
-      _weightController.clear();
-      _notesController.clear();
-      _measurementDate = DateTime.now();
-      
-      await _loadWeights();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Вазн бомуваффақият илова шуд'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Хато: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 }

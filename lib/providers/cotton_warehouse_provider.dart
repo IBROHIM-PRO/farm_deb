@@ -173,6 +173,18 @@ class CottonWarehouseProvider extends ChangeNotifier {
     }
   }
 
+  /// Delete a cotton stock sale
+  Future<bool> deleteCottonStockSale(int id) async {
+    try {
+      await _dbHelper.deleteCottonStockSale(id);
+      await loadAllData();
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting cotton stock sale: $e');
+      return false;
+    }
+  }
+
   /// Load all warehouse data
   Future<void> loadAllData() async {
     debugPrint('🔄 CottonWarehouseProvider.loadAllData() started');
