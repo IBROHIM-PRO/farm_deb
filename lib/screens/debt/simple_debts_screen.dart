@@ -365,14 +365,7 @@ class SimpleDebtsScreen extends StatelessWidget {
           // Information display
           InkWell(
             borderRadius: BorderRadius.circular(8),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => DebtTransactionHistoryScreen(debt: debt),
-                ),
-              );
-            },
+            onTap: () => _showDebtDetailsModal(context, debt, person, provider),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -484,8 +477,144 @@ class SimpleDebtsScreen extends StatelessWidget {
     );
   }
 
+  // ---------------- DEBT DETAILS MODAL ----------------
+  static void _showDebtDetailsModal(BuildContext context, Debt debt, Person person, AppProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        person.fullName,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        debt.typeDisplay,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: debt.type == DebtType.given ? Colors.green : Colors.red,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            
+            // Details
+            _buildDetailRow('Маблағи умумӣ', '${debt.totalAmount.toStringAsFixed(2)} ${debt.currency}'),
+            _buildDetailRow('Боқӣ мондааст', '${debt.remainingAmount.toStringAsFixed(2)} ${debt.currency}'),
+            _buildDetailRow('Пардохт шудааст', '${debt.paidAmount.toStringAsFixed(2)} ${debt.currency}'),
+            _buildDetailRow('Сана', DateFormat('dd/MM/yyyy').format(debt.date)),
+            _buildDetailRow('Ҳолат', debt.statusDisplay),
+            
+            const SizedBox(height: 24),
+            
+            // Actions
+            if (debt.remainingAmount > 0) ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showPaymentDialog(context, debt);
+                  },
+                  icon: const Icon(Icons.payment),
+                  label: const Text('Пардохт кардан'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            
+            // View full history
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DebtTransactionHistoryScreen(debt: debt),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.history),
+                label: const Text('Таърихи пурра'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  static Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ---------------- PAYMENT ----------------
-  void _showPaymentDialog(BuildContext context, Debt debt) {
+  static void _showPaymentDialog(BuildContext context, Debt debt) {
     final controller = TextEditingController();
     final key = GlobalKey<FormState>();
 

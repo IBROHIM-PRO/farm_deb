@@ -718,6 +718,11 @@ class DatabaseHelper {
   // Payment CRUD
   Future<int> insertPayment(Payment p) async => (await database).insert('payments', p.toMap());
   Future<List<Payment>> getPaymentsByDebtId(int debtId) async => (await (await database).query('payments', where: 'debtId = ?', whereArgs: [debtId], orderBy: 'date DESC')).map((m) => Payment.fromMap(m)).toList();
+  Future<Payment?> getPaymentById(int id) async {
+    final maps = await (await database).query('payments', where: 'id = ?', whereArgs: [id], limit: 1);
+    return maps.isEmpty ? null : Payment.fromMap(maps.first);
+  }
+  Future<int> deletePayment(int id) async => (await database).delete('payments', where: 'id = ?', whereArgs: [id]);
 
   // Field CRUD
   Future<int> insertField(Field f) async => (await database).insert('fields', f.toMap());

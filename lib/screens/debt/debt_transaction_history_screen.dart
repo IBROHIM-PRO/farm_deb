@@ -225,20 +225,65 @@
 
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                leading: Icon(
-                  entry.isPayment ? Icons.payment : Icons.assignment,
-                  color: entry.isPayment ? Colors.red : Colors.green,
-                ),
-                title: Text(entry.description),
-                subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(entry.date)),
-                trailing: Text(
-                  '${entry.isPayment ? '-' : '+'}${entry.amount.toStringAsFixed(3)} ${entry.currency}',
-                  style: TextStyle(
-                    color: entry.isPayment ? Colors.red : Colors.green,
-                    fontWeight: FontWeight.bold,
+              child: Column(
+                children: [
+                  // Edit/Delete buttons at the top (only for payments, not initial debt)
+                  if (entry.isPayment)
+                    Consumer<SettingsProvider>(
+                      builder: (context, settingsProvider, _) {
+                        if (!settingsProvider.editDeleteEnabled) {
+                          return const SizedBox.shrink();
+                        }
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(12),
+                              topRight: Radius.circular(12),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                                onPressed: () => _showEditPaymentDialog(context, entry, index),
+                                tooltip: 'Таҳрир',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                iconSize: 18,
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                                onPressed: () => _confirmDeletePayment(context, entry, index),
+                                tooltip: 'Нест кардан',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                iconSize: 18,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  // Transaction information
+                  ListTile(
+                    leading: Icon(
+                      entry.isPayment ? Icons.payment : Icons.assignment,
+                      color: entry.isPayment ? Colors.red : Colors.green,
+                    ),
+                    title: Text(entry.description),
+                    subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(entry.date)),
+                    trailing: Text(
+                      '${entry.isPayment ? '-' : '+'}${entry.amount.toStringAsFixed(3)} ${entry.currency}',
+                      style: TextStyle(
+                        color: entry.isPayment ? Colors.red : Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             );
           },
@@ -353,6 +398,131 @@
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Қарз бомуваффақият нест карда шуд')),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Хато: ${e.toString()}')),
+            );
+          }
+        }
+      }
+    }
+    
+    // Edit payment dialog
+    Future<void> _showEditPaymentDialog(BuildContext context, _TransactionEntry entry, int index) async {
+      // Find the actual payment record
+      final payment = _payments.firstWhere(
+        (p) => p.date == entry.date && p.amount == entry.amount,
+        orElse: () => Payment(
+          debtId: _currentDebt.id!,
+          amount: entry.amount,
+          date: entry.date,
+        ),
+      );
+      
+      final amountController = TextEditingController(text: entry.amount.toString());
+
+      final result = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Таҳрири пардохт'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Маблағ',
+                  suffixText: _currentDebt.currency,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Бекор'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final amount = double.tryParse(amountController.text);
+                if (amount == null || amount <= 0) return;
+
+                // Delete old payment and create new one
+                if (payment.id != null) {
+                  await ctx.read<AppProvider>().deletePayment(payment.id!);
+                }
+                
+                await ctx.read<AppProvider>().makePayment(
+                  debt: _currentDebt,
+                  amount: amount,
+                );
+                
+                Navigator.pop(ctx, true);
+              },
+              child: const Text('Нигоҳ доштан'),
+            ),
+          ],
+        ),
+      );
+
+      if (result == true && mounted) {
+        await _loadData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Пардохт таҳрир шуд')),
+          );
+        }
+      }
+    }
+    
+    // Confirm delete payment
+    Future<void> _confirmDeletePayment(BuildContext context, _TransactionEntry entry, int index) async {
+      // Find the actual payment record
+      final payment = _payments.firstWhere(
+        (p) => p.date == entry.date && p.amount == entry.amount,
+        orElse: () => Payment(
+          debtId: _currentDebt.id!,
+          amount: entry.amount,
+          date: entry.date,
+        ),
+      );
+      
+      if (payment.id == null) return;
+      
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Тасдиқ кунед'),
+          content: const Text('Шумо мутмаин ҳастед, ки мехоҳед ин пардохтро нест кунед?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Бекор кардан'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Нест кардан'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm == true && context.mounted) {
+        try {
+          await context.read<AppProvider>().deletePayment(payment.id!);
+          await _loadData();
+          
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Пардохт нест карда шуд')),
             );
           }
         } catch (e) {

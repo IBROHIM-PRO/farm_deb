@@ -251,6 +251,28 @@ class AppProvider with ChangeNotifier {
   }
   
   Future<void> deleteDebt(int id) async { await _db.deleteDebt(id); await loadAllData(); }
+  
+  /// Delete payment and update debt balance
+  Future<void> deletePayment(int paymentId) async {
+    // Get payment details before deleting
+    final payment = await _db.getPaymentById(paymentId);
+    if (payment == null) return;
+    
+    // Get the debt and restore the payment amount
+    final debt = await getDebtById(payment.debtId);
+    if (debt == null) return;
+    
+    // Restore the amount to the debt
+    final updatedDebt = debt.copyWith(
+      remainingAmount: debt.remainingAmount + payment.amount,
+      status: DebtStatus.active, // Always set to active when payment is deleted
+    );
+    
+    // Delete payment and update debt
+    await _db.deletePayment(paymentId);
+    await _db.updateDebt(updatedDebt);
+    await loadAllData();
+  }
 
   Map<String, Map<String, double>> getDebtTotalsByCurrency() {
     final currencies = _debts.map((d) => d.currency).toSet();

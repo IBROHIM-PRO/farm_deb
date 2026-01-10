@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../models/cotton_stock_sale.dart';
 import '../../models/buyer.dart';
 import '../../database/database_helper.dart';
+import '../../providers/settings_provider.dart';
+import '../../providers/cotton_warehouse_provider.dart';
 
 class BuyerCottonSalesDetailScreen extends StatefulWidget {
   final String buyerName;
@@ -475,27 +478,69 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
     final totalWeight = salesList.fold<double>(0, (sum, sale) => sum + sale.totalWeight);
     final totalPieces = salesList.fold<int>(0, (sum, sale) => sum + sale.units);
     
-    return GestureDetector(
-      onTap: () => _showSalesDetailsModal(salesList),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Date and status indicator
-              Row(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Edit/Delete buttons at the top
+          Consumer<SettingsProvider>(
+            builder: (context, settingsProvider, _) {
+              if (!settingsProvider.editDeleteEnabled) {
+                return const SizedBox.shrink();
+              }
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                      onPressed: () => _showSaleEditForm(context, salesList),
+                      tooltip: 'Таҳрир',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      iconSize: 18,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                      onPressed: () => _confirmDeleteSales(context, salesList),
+                      tooltip: 'Нест кардан',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      iconSize: 18,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          // Card content
+          GestureDetector(
+            onTap: () => _showSalesDetailsModal(salesList),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Date and status indicator
+                  Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
@@ -601,20 +646,83 @@ class _BuyerCottonSalesDetailScreenState extends State<BuyerCottonSalesDetailScr
                 ],
               ),
               
-              // Arrow indicator at bottom
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: Colors.grey[500],
-                ),
+                  // Arrow indicator at bottom
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
+  }
+  
+  // Edit form for sale group
+  void _showSaleEditForm(BuildContext context, List<CottonStockSale> salesList) {
+    // For now, just show details - full edit can be added later
+    _showSalesDetailsModal(salesList);
+  }
+  
+  // Confirm delete sales
+  Future<void> _confirmDeleteSales(BuildContext context, List<CottonStockSale> salesList) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Тасдиқ кунед'),
+        content: Text('Шумо мутмаин ҳастед, ки мехоҳед ${salesList.length} фурӯшро нест кунед? Ин амал бозгашт карда намешавад.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Бекор кардан'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Нест кардан'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm == true && context.mounted) {
+      try {
+        final provider = context.read<CottonWarehouseProvider>();
+        
+        for (final sale in salesList) {
+          await provider.deleteCottonStockSale(sale.id!);
+        }
+        
+        await _loadData();
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${salesList.length} фурӯш бомуваффақият нест карда шуд'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Хато: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 }

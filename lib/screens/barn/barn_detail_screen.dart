@@ -186,44 +186,6 @@ class _BarnDetailScreenState extends State<BarnDetailScreen> with TickerProvider
                 const Divider(),
                 const SizedBox(height: 16),
                 _buildActiveToggle(barn, provider),
-                // Edit/Delete Buttons (conditionally shown)
-                Consumer<SettingsProvider>(
-                  builder: (context, settingsProvider, _) {
-                    if (!settingsProvider.editDeleteEnabled) {
-                      return const SizedBox.shrink();
-                    }
-                    return Column(
-                      children: [
-                        const SizedBox(height: 16),
-                        const Divider(),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => _editBarn(),
-                                icon: const Icon(Icons.edit),
-                                label: const Text('Таҳрири оғул'),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () => _deleteBarn(),
-                                icon: const Icon(Icons.delete),
-                                label: const Text('Нест кардан'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
-                ),
               ],
             ),
           ),
