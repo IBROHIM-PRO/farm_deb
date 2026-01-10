@@ -78,18 +78,18 @@ class _AddCottonProcessingScreenState extends State<AddCottonProcessingScreen> {
     
     // Load inputs
     for (var input in widget.inputs!) {
-      switch (input.inputType) {
-        case RawCottonType.lint:
+      switch (input.cottonType) {
+        case CottonType.lint:
           _lintWeightController.text = input.weightUsed.toString();
-          _lintPiecesController.text = input.piecesUsed.toString();
+          _lintPiecesController.text = input.unitsUsed.toString();
           break;
-        case RawCottonType.sliver:
+        case CottonType.uluk:
           _ulukWeightController.text = input.weightUsed.toString();
-          _ulukPiecesController.text = input.piecesUsed.toString();
+          _ulukPiecesController.text = input.unitsUsed.toString();
           break;
-        case RawCottonType.other:
+        case CottonType.valakno:
           _valaknoWeightController.text = input.weightUsed.toString();
-          _valaknoPiecesController.text = input.piecesUsed.toString();
+          _valaknoPiecesController.text = input.unitsUsed.toString();
           break;
       }
     }

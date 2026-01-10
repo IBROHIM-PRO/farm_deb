@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../providers/cotton_registry_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../models/cotton_processing_registry.dart';
+import '../../models/cotton_processing_input.dart';
+import '../../models/cotton_processing_output.dart';
 import '../../models/cotton_processing_calculator.dart';
 import '../../theme/app_theme.dart';
 import 'add_cotton_processing_screen.dart';

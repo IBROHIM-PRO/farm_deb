@@ -233,7 +233,8 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 35,
+                      reservedSize: 50,
+                      interval: chartData.values.isEmpty ? 20000 : (chartData.values.reduce((a, b) => a > b ? a : b) * 1.2 / 5).ceilToDouble(),
                       getTitlesWidget: (value, meta) {
                         return Text(
                           value.toInt().toString(),
@@ -574,51 +575,7 @@ class _AllExpensesScreenState extends State<AllExpensesScreen> {
   Widget _buildExpenseItem(DailyExpense expense) {
     return Column(
       children: [
-        // Edit/Delete buttons ABOVE the information
-        Consumer<SettingsProvider>(
-          builder: (context, settingsProvider, _) {
-            if (!settingsProvider.editDeleteEnabled) {
-              return const SizedBox.shrink();
-            }
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              color: Colors.grey[50],
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, size: 16, color: Colors.blue),
-                    onPressed: () => _showEditExpenseForm(context, expense),
-                    tooltip: 'Таҳрир',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    iconSize: 16,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, size: 16, color: Colors.red),
-                    onPressed: () async {
-                      final confirm = await _confirmDelete(context);
-                      if (confirm == true && context.mounted) {
-                        await Provider.of<DailyExpenseProvider>(context, listen: false)
-                            .deleteExpense(expense.id!);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Харочот нест карда шуд')),
-                          );
-                        }
-                      }
-                    },
-                    tooltip: 'Нест кардан',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    iconSize: 16,
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-        // Information display
+        // Information display (edit/delete buttons removed from this view)
         InkWell(
           onTap: () => _showExpenseDetails(expense),
           child: Padding(

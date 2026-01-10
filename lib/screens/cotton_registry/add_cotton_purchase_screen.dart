@@ -59,8 +59,7 @@ class _AddCottonPurchaseScreenState extends State<AddCottonPurchaseScreen> {
   }
   
   void _addCottonItemFromExisting(CottonPurchaseItem item) {
-    final itemData = CottonPurchaseItemData();
-    itemData.cottonType = item.cottonType;
+    final itemData = CottonPurchaseItemData(cottonType: item.cottonType);
     itemData.weightController.text = item.weight.toString();
     itemData.unitsController.text = item.units.toString();
     itemData.pricePerKgController.text = item.pricePerKg.toString();
